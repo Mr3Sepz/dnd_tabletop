@@ -1,0 +1,26 @@
+{
+  "name": "dnd_tabletop",
+  "version": "0.1.0",
+  "description": "Lokal gehostetes DnD-Tabletop: der DM startet den Server, bis zu 5 Spieler treten per Browser bei (LAN oder Tailscale).",
+  "main": "server/index.js",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/server.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "express": "^4.22.3",
+    "konva": "^10.9.1",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}
