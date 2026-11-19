@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spieler – DnD-Tabletop</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="player">
+  <header class="topbar">
+    <span class="brand" id="who">DnD-Tabletop</span>
+    <span class="live-info" id="sceneName"></span>
+    <span class="spacer"></span>
+    <button class="icon" id="zoomOut" title="Verkleinern">−</button>
+    <button class="icon" id="zoomFit" title="Ganze Karte">⤢</button>
+    <button class="icon" id="zoomIn" title="Vergrößern">+</button>
+    <span id="conn" class="conn" title="Verbindung"></span>
+    <button class="small primary" id="panelToggle">Mein Charakter</button>
+  </header>
+  <div id="initiative" class="initiative"></div>
+  <main class="layout">
+    <div id="board" class="board"></div>
+    <aside class="panel" id="panel">
+      <div class="tab-body" id="sheet"></div>
+    </aside>
+  </main>
+  <div id="gone" class="login hidden"><div class="card"><h1 id="goneTitle"></h1><p id="goneMsg"></p><a class="button primary" href="/">Zur Platzwahl</a></div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/vendor/konva.min.js"></script>
+  <script type="module" src="/js/player.js"></script>
+</body>
+</html>

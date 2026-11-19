@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Beitreten – DnD-Tabletop</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="join">
+  <main class="card join-card">
+    <h1>DnD-Tabletop</h1>
+    <div id="resume"></div>
+    <p>Wähle deinen Platz:</p>
+    <div id="seats" class="seats"></div>
+    <form id="joinForm" class="hidden">
+      <label class="field"><span>Dein Name</span><input name="playerName" maxlength="40" autocomplete="nickname" placeholder="z. B. Mia"></label>
+      <label class="field" id="pinField"><span>Raum-PIN</span><input name="pin" inputmode="numeric" autocomplete="off" placeholder="vom DM"></label>
+      <button class="primary" type="submit">Beitreten</button>
+    </form>
+    <p id="msg" class="error"></p>
+    <p class="muted small"><a href="/dm">Ich bin der DM</a></p>
+  </main>
+  <script type="module">
+    import { h } from '/js/util.js';
+    import { storedSeat } from '/js/net.js';
+
+    let chosen = null;
+    const info = await fetch('/api/public-info').then((r) => r.json());
+    const form = document.getElementById('joinForm');
+    document.getElementById('pinField').classList.toggle('hidden', !info.pinRequired);
+
+    const prev = storedSeat();
+    if (prev && prev.claimToken) {
+      document.getElementById('resume').append(
+        h('a.button.primary.wide', { href: `/player?seat=${prev.seat}` }, `Weiter auf Platz ${prev.seat}`));
+    }
+
+    const seats = document.getElementById('seats');
+    for (const s of info.seats) {
+      const ch = info.characters.find((c) => c.seat === s.seat);
+      const mine = prev && prev.seat === s.seat;
+      const btn = h(`button.seat${s.taken && !mine ? '.taken' : ''}`, {
+        type: 'button',
+        disabled: s.taken && !mine,
+        onclick: () => {
+          if (mine) { location.href = `/player?seat=${s.seat}`; return; }
+          chosen = s.seat;
+          [...seats.children].forEach((b) => b.classList.toggle('selected', b === btn));
+          form.classList.remove('hidden');
+          form.elements.playerName.focus();
+        },
+      }, h('b', {}, `Platz ${s.seat}`), h('span', {}, ch ? ch.name : ''), h('small', {}, s.taken ? (s.playerName || 'belegt') : 'frei'));
+      seats.append(btn);
+    }
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if (!chosen) return;
+      sessionStorage.setItem('dnd.join', JSON.stringify({ seat: chosen, playerName: form.elements.playerName.value, pin: form.elements.pin.value }));
+      location.href = `/player?seat=${chosen}`;
+    };
+  </script>
+</body>
+</html>

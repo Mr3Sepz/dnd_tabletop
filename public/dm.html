@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DM – DnD-Tabletop</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="dm">
+  <div id="login" class="login hidden">
+    <form class="card" id="loginForm">
+      <h1>DM-Anmeldung</h1>
+      <p id="loginMsg"></p>
+      <label class="field"><span>DM-Passwort</span><input type="password" name="password" autocomplete="current-password"></label>
+      <button class="primary" type="submit">Anmelden</button>
+    </form>
+  </div>
+
+  <header class="topbar">
+    <span class="brand">DnD-Tabletop <small>DM</small></span>
+    <span class="live-info">Spieler sehen: <b id="liveName">–</b></span>
+    <label class="edit-scene">Bearbeite:
+      <select id="editScene" aria-label="Szene bearbeiten"></select>
+    </label>
+    <button id="goLive" class="primary small" title="Diese Szene für alle Spieler anzeigen (S3)">Live schalten</button>
+    <label class="preview">Spielersicht:
+      <select id="preview" aria-label="Als Spieler ansehen (A4)"><option value="0">aus</option></select>
+    </label>
+    <span class="spacer"></span>
+    <button class="icon" id="zoomOut" title="Verkleinern">−</button>
+    <button class="icon" id="zoomFit" title="Ganze Karte">⤢</button>
+    <button class="icon" id="zoomIn" title="Vergrößern">+</button>
+    <span id="conn" class="conn" title="Verbindung"></span>
+    <button class="icon panel-toggle" id="panelToggle" title="Seitenleiste">☰</button>
+  </header>
+
+  <div id="initiative" class="initiative"></div>
+  <div id="banner" class="banner hidden"></div>
+
+  <main class="layout">
+    <div id="board" class="board"></div>
+    <aside class="panel" id="panel">
+      <nav class="tabs" id="tabs">
+        <button data-tab="scenes" class="active">Szenen</button>
+        <button data-tab="tokens">Figuren</button>
+        <button data-tab="players">Spieler</button>
+        <button data-tab="npcs">NPCs</button>
+        <button data-tab="notes">Notizen</button>
+        <button data-tab="game">Spiel</button>
+      </nav>
+      <div class="tab-body" id="tabBody"></div>
+    </aside>
+  </main>
+
+  <div id="ctxMenu" class="ctx-menu hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/vendor/konva.min.js"></script>
+  <script type="module" src="/js/dm.js"></script>
+</body>
+</html>

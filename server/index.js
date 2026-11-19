@@ -63,7 +63,9 @@ function createApp(overrides = {}) {
 
   // ---------- HTTP ----------
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
-  app.get('/vendor/konva.min.js', (_req, res) => res.sendFile(require.resolve('konva/konva.min.js')));
+  const konvaPath = path.join(ROOT, 'node_modules', 'konva', 'konva.min.js');
+  app.get('/vendor/konva.min.js', (_req, res) => res.sendFile(konvaPath));
+  app.get('/favicon.ico', (_req, res) => res.redirect(301, '/favicon.svg'));
 
   app.get('/assets/:file', (req, res) => {
     let p;
@@ -301,7 +303,7 @@ function createApp(overrides = {}) {
 }
 
 function openBrowser(url) {
-  const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '""', url]]
+  const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
     : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
   try {
     const p = spawn(cmd[0], cmd[1], { stdio: 'ignore', detached: true, windowsHide: true });

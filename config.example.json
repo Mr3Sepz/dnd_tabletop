@@ -1,0 +1,8 @@
+{
+  "port": 7777,
+  "dmPassword": "",
+  "pin": "",
+  "autosaveMinutes": 5,
+  "dataDir": "data",
+  "openBrowser": true
+}
