@@ -1,0 +1,32 @@
+{
+  "conditions": [
+    { "key": "blinded",       "label": "Blind",          "color": "#5b5b5b" },
+    { "key": "charmed",       "label": "Bezaubert",      "color": "#e05aa8" },
+    { "key": "deafened",      "label": "Taub",           "color": "#8d8d8d" },
+    { "key": "frightened",    "label": "Verängstigt",    "color": "#7b4fb3" },
+    { "key": "grappled",      "label": "Gepackt",        "color": "#b07a3c" },
+    { "key": "incapacitated", "label": "Kampfunfähig",   "color": "#9c6b52" },
+    { "key": "invisible",     "label": "Unsichtbar",     "color": "#7fc8e8" },
+    { "key": "paralyzed",     "label": "Gelähmt",        "color": "#c2b23a" },
+    { "key": "petrified",     "label": "Versteinert",    "color": "#9a9a88" },
+    { "key": "poisoned",      "label": "Vergiftet",      "color": "#3f9b57" },
+    { "key": "prone",         "label": "Liegend",        "color": "#8a6d3b" },
+    { "key": "restrained",    "label": "Festgesetzt",    "color": "#6b4a2b" },
+    { "key": "stunned",       "label": "Betäubt",        "color": "#e6c22e" },
+    { "key": "unconscious",   "label": "Bewusstlos",     "color": "#3a3a6a" },
+    { "key": "exhaustion",    "label": "Erschöpft",      "color": "#a0522d" },
+    { "key": "surprised",     "label": "Überrascht",     "color": "#f08c2e" },
+    { "key": "burning",       "label": "Brennt",         "color": "#f26b1d" },
+    { "key": "blessed",       "label": "Segen",          "color": "#f2d16b" },
+    { "key": "concentration", "label": "Konzentration",  "color": "#3c7dd9" },
+    { "key": "slowed",        "label": "Verlangsamt",    "color": "#5fa8a8" }
+  ],
+  "health": {
+    "unverletzt": "#3f9b57",
+    "angeschlagen": "#d9a520",
+    "schwer verletzt": "#d2542c",
+    "am Boden": "#6d4c9f",
+    "tot": "#444444",
+    "unbekannt": "#999999"
+  }
+}

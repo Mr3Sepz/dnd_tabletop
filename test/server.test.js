@@ -35,7 +35,9 @@ async function joinDM() {
 async function joinPlayer(seat, extra = {}) {
   const c = connect();
   const st = nextState(c);
-  const res = await emit(c, 'join', { mode: 'player', seat, pin: '4711', playerName: `P${seat}`, ...extra });
+  // Ist der Platz aus einem früheren Test noch belegt, mit dessen Schlüssel wieder einsteigen.
+  const claimToken = inst.getState().seats.find((s) => s.seat === seat).claimToken || undefined;
+  const res = await emit(c, 'join', { mode: 'player', seat, pin: '4711', playerName: `P${seat}`, claimToken, ...extra });
   if (!res.ok) return { c, res };
   return { c, res, state: await st };
 }
@@ -138,7 +140,7 @@ test('Spieler bewegt nur eigene Figuren, DM alle', async () => {
 test('Belegter Platz: abgelehnt, mit Schlüssel wieder verbinden, DM gibt frei', async () => {
   const first = await joinPlayer(5);
   assert.equal(first.res.ok, true, first.res.error);
-  const intruder = await joinPlayer(5);
+  const intruder = await joinPlayer(5, { claimToken: undefined });
   assert.equal(intruder.res.ok, false);
   // Wiederverbinden mit dem gemerkten Schlüssel (V9), ohne PIN
   const back = connect();
@@ -149,7 +151,7 @@ test('Belegter Platz: abgelehnt, mit Schlüssel wieder verbinden, DM gibt frei',
   const kicked = new Promise((r) => back.once('kicked', r));
   await act(dm.c, { type: 'seat.release', seat: 5 });
   await kicked;
-  const now = await joinPlayer(5);
+  const now = await joinPlayer(5, { claimToken: undefined });
   assert.equal(now.res.ok, true, now.res.error);
 });
 
@@ -163,7 +165,7 @@ test('Export und Import stellen den Stand exakt wieder her (L3, L4)', async () =
   const sceneId = inst.getState().activeSceneId;
   await act(dm.c, { type: 'scene.update', id: sceneId, patch: { background: { assetId: asset.id }, night: true, grid: { size: 55 } } });
   await settle();
-  const before = JSON.stringify(inst.getState().scenes);
+  const before = JSON.parse(JSON.stringify(inst.getState().scenes));
 
   const res = await fetch(`${base}/api/export?session=${dm.session}`);
   assert.equal(res.status, 200);
@@ -174,7 +176,7 @@ test('Export und Import stellen den Stand exakt wieder her (L3, L4)', async () =
   await act(dm.c, { type: 'scene.update', id: sceneId, patch: { night: false } });
   const imp = await fetch(`${base}/api/import`, { method: 'POST', headers: { 'content-type': 'application/zip', 'x-session': dm.session }, body: zip });
   assert.equal(imp.status, 200, await imp.text());
-  assert.equal(JSON.stringify(inst.getState().scenes), before);
+  assert.deepEqual(inst.getState().scenes, before);
   const img = await fetch(`${base}/assets/${asset.file}`);
   assert.equal(img.status, 200);
 
@@ -200,11 +202,218 @@ test('Initiative-Leiste: hinzufügen, umsortieren, weiterschalten (N7)', async (
   await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: n });
   await act(dm.c, { type: 'initiative.add', kind: 'character', refId: s.characters[0].id });
   const ids = inst.getState().initiative.entries.map((e) => e.id);
+  assert.equal(inst.getState().initiative.currentId, ids[0]);
   assert.equal((await act(dm.c, { type: 'initiative.reorder', ids: [...ids].reverse() })).ok, true);
   let ini = inst.getState().initiative;
   assert.equal(ini.entries[0].kind, 'character');
-  assert.equal(ini.current, 1, 'die Markierung bleibt beim Ork, auch wenn er nach hinten rutscht');
+  assert.equal(ini.currentId, ids[0], 'die Markierung bleibt beim Ork, auch wenn er nach hinten rutscht');
   await act(dm.c, { type: 'initiative.next' });
   ini = inst.getState().initiative;
-  assert.equal(ini.current, 0, 'nach dem letzten geht es wieder vorne los');
+  assert.equal(ini.currentId, ini.entries[0].id, 'nach dem letzten geht es wieder vorne los');
+});
+
+// ---------------------------------------------------------------- Stufe 0
+
+test('Leck geschlossen: versteckte Gegner tauchen nicht in der Porträtleiste auf (P1)', async () => {
+  const dm = await joinDM();
+  const sceneId = inst.getState().activeSceneId;
+  await act(dm.c, { type: 'initiative.clear' });
+  const n = (await act(dm.c, { type: 'npc.create', name: 'Lauernder Goblin' })).result.id;
+  const t = (await act(dm.c, { type: 'token.create', sceneId, token: { kind: 'npc', refId: n, name: 'Goblin', hidden: true } })).result.id;
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: n, value: 15 });
+  const p = await joinPlayer(1, { claimToken: undefined });
+  const view = () => require('../server/state').viewForPlayer(inst.getState(), 1);
+  assert.equal(view().initiative.entries.some((e) => e.name === 'Lauernder Goblin'), false, 'versteckt = nicht in der Leiste');
+  await act(dm.c, { type: 'token.update', sceneId, id: t, patch: { hidden: false } });
+  assert.equal(view().initiative.entries.some((e) => e.name === 'Lauernder Goblin'), true, 'aufgedeckt = in der Leiste');
+  const entry = inst.getState().initiative.entries.find((e) => e.refId === n);
+  await act(dm.c, { type: 'initiative.update', id: entry.id, patch: { visibility: 'hide' } });
+  assert.equal(view().initiative.entries.some((e) => e.name === 'Lauernder Goblin'), false, 'DM kann Eintrag fest verbergen');
+  p.c.close();
+});
+
+test('Bei 0 HP: Spieler sehen „am Boden“, erst „tot“ wenn der DM es sagt (P5)', async () => {
+  const dm = await joinDM();
+  const sceneId = inst.getState().activeSceneId;
+  const n = (await act(dm.c, { type: 'npc.create', name: 'Gefangener' })).result.id;
+  await act(dm.c, { type: 'npc.update', id: n, patch: { hp: { max: 7, cur: 7 } } });
+  await act(dm.c, { type: 'token.create', sceneId, token: { kind: 'npc', refId: n, name: 'Gefangener' } });
+  const res = await act(dm.c, { type: 'hp.apply', targets: [{ kind: 'npc', id: n }], amount: 9, mode: 'damage' });
+  assert.deepEqual(res.result.downed.map((d) => d.id), [n], 'DM bekommt Rückmeldung: wer ist auf 0');
+  const { viewForPlayer } = require('../server/state');
+  const tok = () => viewForPlayer(inst.getState(), 1).scenes[0].tokens.find((t) => t.refId === n);
+  assert.equal(tok().condition, 'am Boden');
+  await act(dm.c, { type: 'npc.update', id: n, patch: { dead: true } });
+  assert.equal(tok().condition, 'tot');
+  await act(dm.c, { type: 'hp.apply', targets: [{ kind: 'npc', id: n }], amount: 3, mode: 'heal' });
+  assert.equal(tok().condition, 'schwer verletzt', 'Heilung hebt „tot“ wieder auf');
+});
+
+// ---------------------------------------------------------------- Stufe 1
+
+test('Zustände: DM an NPCs, Spieler nur am eigenen Charakter; Spieler sehen sie an Figuren (P4)', async () => {
+  const dm = await joinDM();
+  const sceneId = inst.getState().activeSceneId;
+  const n = (await act(dm.c, { type: 'npc.create', name: 'Wolf' })).result.id;
+  await act(dm.c, { type: 'token.create', sceneId, token: { kind: 'npc', refId: n, name: 'Wolf' } });
+  assert.equal((await act(dm.c, { type: 'conditions.set', target: { kind: 'npc', id: n }, conditions: [{ key: 'unconscious' }, { key: 'custom', label: 'Schläft (Sleep)', color: '#3a3a6a' }] })).ok, true);
+  const p = await joinPlayer(2);
+  const me = inst.getState().characters.find((c) => c.seat === 2);
+  assert.equal((await act(p.c, { type: 'conditions.set', target: { kind: 'character', id: me.id }, conditions: [{ key: 'prone' }] })).ok, true);
+  assert.equal((await act(p.c, { type: 'conditions.set', target: { kind: 'npc', id: n }, conditions: [] })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  const wolf = viewForPlayer(inst.getState(), 2).scenes[0].tokens.find((t) => t.refId === n);
+  assert.deepEqual(wolf.conditions.map((c) => c.label), ['Bewusstlos', 'Schläft (Sleep)']);
+  assert.equal(inst.getState().characters.find((c) => c.seat === 2).conditions[0].label, 'Liegend');
+  // Todesrettungswürfe
+  await act(p.c, { type: 'character.update', id: me.id, patch: { deathSaves: { success: 2, fail: 1 } } });
+  assert.deepEqual(inst.getState().characters.find((c) => c.seat === 2).deathSaves, { success: 2, fail: 1 });
+  p.c.close();
+});
+
+test('Initiativwerte sortieren, Gruppen-Eintrag „Goblins“ (P6)', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  await act(dm.c, { type: 'initiative.clear' });
+  const g1 = (await act(dm.c, { type: 'npc.create', name: 'G1' })).result.id;
+  const g2 = (await act(dm.c, { type: 'npc.create', name: 'G2' })).result.id;
+  await act(dm.c, { type: 'initiative.add', kind: 'character', refId: st.characters[0].id, value: 12 });
+  await act(dm.c, { type: 'initiative.add', kind: 'character', refId: st.characters[1].id, value: 20 });
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: g1 });
+  const grp = (await act(dm.c, { type: 'initiative.addGroup', name: 'Goblins', refIds: [g1, g2], value: 15 })).result.id;
+  const ini = inst.getState().initiative;
+  assert.equal(ini.entries.filter((e) => e.kind === 'npc').length, 0, 'einzelner Eintrag wandert in die Gruppe');
+  await act(dm.c, { type: 'initiative.sort', startTop: true });
+  const order = inst.getState().initiative.entries.map((e) => e.value);
+  assert.deepEqual(order, [20, 15, 12]);
+  assert.equal(inst.getState().initiative.entries[1].id, grp);
+  assert.equal(inst.getState().initiative.currentId, inst.getState().initiative.entries[0].id);
+});
+
+test('Schaden für mehrere auf einmal, temporäre HP zuerst (P7)', async () => {
+  const dm = await joinDM();
+  const [a, b] = inst.getState().characters;
+  await act(dm.c, { type: 'character.update', id: a.id, patch: { hp: { max: 20, cur: 20, temp: 5 } } });
+  await act(dm.c, { type: 'character.update', id: b.id, patch: { hp: { max: 20, cur: 20, temp: 0 } } });
+  await act(dm.c, { type: 'hp.apply', targets: [{ kind: 'character', id: a.id }, { kind: 'character', id: b.id }], amount: 8, mode: 'damage' });
+  const s = inst.getState();
+  assert.deepEqual(s.characters[0].hp, { max: 20, cur: 17, temp: 0 });
+  assert.deepEqual(s.characters[1].hp, { max: 20, cur: 12, temp: 0 });
+});
+
+test('Mehrfach setzen: 5 Goblins mit eigenen HP und Kennungen (P8)', async () => {
+  const dm = await joinDM();
+  const sceneId = inst.getState().activeSceneId;
+  const base = (await act(dm.c, { type: 'npc.create', name: 'Goblin' })).result.id;
+  await act(dm.c, { type: 'npc.update', id: base, patch: { hp: { max: 7, cur: 7 } } });
+  const res = await act(dm.c, { type: 'npc.spawn', sceneId, npcId: base, labels: ['A', 'B', 'C', 'D', 'E'], x: 35, y: 35, hidden: true });
+  assert.equal(res.result.created.length, 5);
+  const s = inst.getState();
+  const names = res.result.created.map((c) => s.npcs.find((n) => n.id === c.npcId).name);
+  assert.deepEqual(names, ['Goblin A', 'Goblin B', 'Goblin C', 'Goblin D', 'Goblin E']);
+  assert.equal(new Set(res.result.created.map((c) => c.npcId)).size, 5, 'jeder Goblin hat eigene HP');
+  const toks = s.scenes.find((x) => x.id === sceneId).tokens.filter((t) => res.result.created.some((c) => c.tokenId === t.id));
+  assert.ok(toks.every((t) => t.hidden));
+  assert.deepEqual(toks.map((t) => t.label), ['A', 'B', 'C', 'D', 'E']);
+  // Zweite Welle: Namen wachsen nicht ("Goblin A 1")
+  const again = await act(dm.c, { type: 'npc.spawn', sceneId, npcId: base, labels: ['F'], x: 0, y: 0 });
+  assert.equal(inst.getState().npcs.find((n) => n.id === again.result.created[0].npcId).name, 'Goblin F');
+});
+
+// ---------------------------------------------------------------- Stufe 2
+
+test('Fog of War: Figuren im Nebel kommen beim Spieler nicht an, eigene schon (P2)', async () => {
+  const dm = await joinDM();
+  const sceneId = (await act(dm.c, { type: 'scene.create', name: 'Höhle' })).result.id;
+  await act(dm.c, { type: 'scene.activate', id: sceneId });
+  const inFog = (await act(dm.c, { type: 'token.create', sceneId, token: { name: 'Bugbear', x: 500, y: 500 } })).result.id;
+  const mine = (await act(dm.c, { type: 'token.create', sceneId, token: { name: 'Held', ownerSeat: 1, x: 900, y: 900 } })).result.id;
+  await act(dm.c, { type: 'fog.reset', sceneId, mode: 'hideAll' });
+  const { viewForPlayer } = require('../server/state');
+  const ids = () => viewForPlayer(inst.getState(), 1).scenes[0].tokens.map((t) => t.id);
+  assert.deepEqual(ids(), [mine]);
+  await act(dm.c, { type: 'fog.add', sceneId, shape: { op: 'reveal', type: 'rect', x: 400, y: 400, w: 200, h: 200 } });
+  assert.ok(ids().includes(inFog));
+  await act(dm.c, { type: 'fog.add', sceneId, shape: { op: 'hide', type: 'stroke', points: [450, 450, 550, 550], r: 30 } });
+  assert.ok(!ids().includes(inFog), 'Pinsel verdeckt wieder');
+  await act(dm.c, { type: 'fog.undo', sceneId });
+  assert.ok(ids().includes(inFog));
+  assert.equal(viewForPlayer(inst.getState(), 1).scenes[0].fog.enabled, true);
+});
+
+test('Szene pro Spieler: getrennte Gruppen, „Live schalten“ führt zusammen (P3)', async () => {
+  const dm = await joinDM();
+  const main = inst.getState().activeSceneId;
+  const side = (await act(dm.c, { type: 'scene.create', name: 'Kamin' })).result.id;
+  await act(dm.c, { type: 'seat.setScene', seat: 2, sceneId: side });
+  const { viewForPlayer } = require('../server/state');
+  assert.equal(viewForPlayer(inst.getState(), 2).scenes[0].id, side);
+  assert.equal(viewForPlayer(inst.getState(), 3).scenes[0].id, main);
+  const tok = (await act(dm.c, { type: 'token.create', sceneId: side, token: { name: 'Kletterer', ownerSeat: 2 } })).result.id;
+  const p = await joinPlayer(2);
+  assert.equal((await act(p.c, { type: 'token.move', sceneId: side, id: tok, x: 10, y: 10 })).ok, true);
+  await act(dm.c, { type: 'scene.activate', id: main });
+  assert.equal(viewForPlayer(inst.getState(), 2).scenes[0].id, main);
+  p.c.close();
+});
+
+test('Sicht pro Spieler: nur wer den Wurf geschafft hat, sieht den Goblin (P1/Vorschlag 9)', async () => {
+  const dm = await joinDM();
+  const sceneId = (await act(dm.c, { type: 'scene.create', name: 'Wald' })).result.id;
+  await act(dm.c, { type: 'scene.activate', id: sceneId });
+  const t = (await act(dm.c, { type: 'token.create', sceneId, token: { name: 'Späher', visibleTo: [1, 3] } })).result.id;
+  const { viewForPlayer } = require('../server/state');
+  const sees = (seat) => viewForPlayer(inst.getState(), seat).scenes[0].tokens.some((x) => x.id === t);
+  assert.deepEqual([1, 2, 3].map(sees), [true, false, true]);
+  await act(dm.c, { type: 'token.update', sceneId, id: t, patch: { visibleTo: null } });
+  assert.deepEqual([1, 2, 3].map(sees), [true, true, true]);
+});
+
+test('Zeichnungen: Spieler dürfen nur Schablonen legen, versteckte Zeichnungen bleiben geheim (P9)', async () => {
+  const dm = await joinDM();
+  const sceneId = inst.getState().activeSceneId;
+  const secret = (await act(dm.c, { type: 'drawing.create', sceneId, drawing: { type: 'rect', x: 10, y: 10, w: 50, h: 50, hidden: true, label: 'Falltür' } })).result.id;
+  const wagon = (await act(dm.c, { type: 'drawing.create', sceneId, drawing: { type: 'rect', x: 100, y: 100, w: 140, h: 70, rotation: 30, label: 'Wagen' } })).result.id;
+  const p = await joinPlayer(3);
+  assert.equal((await act(p.c, { type: 'drawing.create', sceneId, drawing: { type: 'rect' } })).ok, false);
+  const tpl = await act(p.c, { type: 'drawing.create', sceneId, drawing: { type: 'template', shape: 'cone', sizeFt: 15, x: 0, y: 0 } });
+  assert.equal(tpl.ok, true);
+  assert.equal((await act(p.c, { type: 'drawing.delete', sceneId, id: wagon })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  const ids = viewForPlayer(inst.getState(), 3).scenes[0].drawings.map((d) => d.id);
+  assert.ok(ids.includes(wagon) && ids.includes(tpl.result.id) && !ids.includes(secret));
+  assert.equal(inst.getState().scenes.find((x) => x.id === sceneId).drawings.find((d) => d.id === wagon).rotation, 30);
+  p.c.close();
+});
+
+// ---------------------------------------------------------------- Stufe 3
+
+test('Gruppenwerte: alle sehen sie, XP und Datum ändert nur der DM (P12)', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  assert.equal((await act(dm.c, { type: 'party.update', patch: { xp: 450, date: 'Tag 11, 14 Uhr' } })).ok, true);
+  assert.equal((await act(p.c, { type: 'party.update', patch: { notes: 'Quest: Gundren finden', gold: '23 GM' } })).ok, true);
+  assert.equal((await act(p.c, { type: 'party.update', patch: { xp: 99999 } })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  assert.deepEqual(viewForPlayer(inst.getState(), 4).party, { notes: 'Quest: Gundren finden', xp: 450, gold: '23 GM', date: 'Tag 11, 14 Uhr' });
+  p.c.close();
+});
+
+test('Würfel: offene Würfe sehen alle, verdeckte DM-Würfe nur der DM (X1, X2)', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(5);
+  const seen = [];
+  p.c.on('dice', (r) => seen.push(r));
+  const open = await act(p.c, { type: 'dice.roll', expr: '1d20+5' });
+  assert.ok(open.result.roll.total >= 6 && open.result.roll.total <= 25);
+  const hidden = await act(dm.c, { type: 'dice.roll', expr: '2d20kh1', secret: true });
+  assert.equal(hidden.ok, true);
+  assert.equal((await act(p.c, { type: 'dice.roll', expr: 'd20+' })).ok, false, 'Tippfehler gibt eine Meldung statt Absturz');
+  await settle();
+  const { viewForPlayer, viewForDM } = require('../server/state');
+  const pl = viewForPlayer(inst.getState(), 5).diceLog.map((d) => d.id);
+  assert.ok(pl.includes(open.result.roll.id) && !pl.includes(hidden.result.roll.id));
+  assert.ok(viewForDM(inst.getState()).diceLog.some((d) => d.id === hidden.result.roll.id));
+  assert.ok(seen.some((r) => r.id === open.result.roll.id) && !seen.some((r) => r.id === hidden.result.roll.id));
+  p.c.close();
 });

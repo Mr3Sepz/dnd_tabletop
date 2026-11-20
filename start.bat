@@ -2,11 +2,19 @@
 rem DnD-Tabletop starten (Windows). Doppelklick genuegt.
 chcp 65001 >nul
 cd /d "%~dp0"
+
+rem Portable Version: Node.js liegt im Ordner runtime\
+if exist "%~dp0runtime\node.exe" (
+  "%~dp0runtime\node.exe" server\index.js
+  pause
+  exit /b
+)
+
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo Node.js fehlt. Bitte die LTS-Version von https://nodejs.org installieren
-  echo und danach diese Datei erneut starten.
+  echo Node.js fehlt. Entweder die portable Version (DnD-Tabletop-...-windows-x64.zip)
+  echo aus den GitHub-Releases nehmen oder Node.js LTS von https://nodejs.org installieren.
   echo.
   pause
   exit /b 1

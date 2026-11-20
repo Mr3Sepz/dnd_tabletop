@@ -47,6 +47,7 @@ const safeEqual = (a, b) => {
 
 function createApp(overrides = {}) {
   const config = loadConfig(overrides);
+  S.configureSeats(config.seats);
   const store = new Store(config.dataDir);
   let state = store.loadLatest() || S.createInitialState();
   if (config.pin && !state.settings.pin) state.settings.pin = String(config.pin);
@@ -63,6 +64,7 @@ function createApp(overrides = {}) {
 
   // ---------- HTTP ----------
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
+  app.use('/shared', express.static(path.join(ROOT, 'shared')));
   const konvaPath = path.join(ROOT, 'node_modules', 'konva', 'konva.min.js');
   app.get('/vendor/konva.min.js', (_req, res) => res.sendFile(konvaPath));
   app.get('/favicon.ico', (_req, res) => res.redirect(301, '/favicon.svg'));
@@ -148,7 +150,7 @@ function createApp(overrides = {}) {
   function broadcastNow() {
     clearTimeout(timer); timer = null;
     io.to('dm').emit('state', withOnline(S.viewForDM(state)));
-    for (let seat = 1; seat <= S.SEAT_COUNT; seat++) {
+    for (let seat = 1; seat <= S.seatCount(); seat++) {
       if (seatOnline(seat)) io.to(`seat:${seat}`).emit('state', withOnline(S.viewForPlayer(state, seat)));
     }
   }
@@ -156,7 +158,10 @@ function createApp(overrides = {}) {
   async function infoForDM() {
     const addresses = networkAddresses(config.port);
     for (const a of addresses) a.qr = await QRCode.toDataURL(a.url, { margin: 1, width: 220 });
-    return { addresses, pin: state.settings.pin, dmPasswordSet: !!config.dmPassword, autosaveMinutes: config.autosaveMinutes, lastSaved };
+    return {
+      addresses, pin: state.settings.pin, dmPasswordSet: !!config.dmPassword, autosaveMinutes: config.autosaveMinutes, lastSaved,
+      dataDir: config.dataDir, configPath: config.configPath, canShutdown: !!shutdownHandler, maxSeats: S.MAX_SEATS,
+    };
   }
 
   // ---------- Socket.IO ----------
@@ -224,12 +229,17 @@ function createApp(overrides = {}) {
           const t = sc.tokens.find((x) => x.id === action.id);
           const msg = { sceneId: sc.id, id: t.id, x: t.x, y: t.y };
           socket.to('dm').emit('token:moved', msg);
-          if (sc.id === state.activeSceneId && !t.hidden) {
-            for (let seat = 1; seat <= S.SEAT_COUNT; seat++) socket.to(`seat:${seat}`).emit('token:moved', msg);
+          // Nur an Spieler, die in dieser Szene sind und die Figur sehen dürfen (Nebel, Sicht pro Spieler).
+          for (let seat = 1; seat <= S.seatCount(); seat++) {
+            if (S.sceneIdForSeat(state, seat) === sc.id && S.tokenVisibleToSeat(sc, t, seat)) socket.to(`seat:${seat}`).emit('token:moved', msg);
           }
           if (action.final) changed();
         } else {
           changed();
+        }
+        if (action.type === 'dice.roll') {
+          // Würfelergebnis kurz bei allen einblenden; verdeckte Würfe nur beim DM.
+          if (result.roll.secret) io.to('dm').emit('dice', result.roll); else io.emit('dice', result.roll);
         }
         ack({ ok: true, result });
       } catch (e) {
@@ -242,6 +252,14 @@ function createApp(overrides = {}) {
       if (!who || who.role !== 'dm') return ack({ ok: false, error: 'Nur für den DM' });
       saveNow();
       ack({ ok: true, lastSaved });
+    });
+
+    socket.on('server.shutdown', (ack = () => {}) => {
+      if (!who || who.role !== 'dm') return ack({ ok: false, error: 'Nur für den DM' });
+      if (!shutdownHandler) return ack({ ok: false, error: 'Beenden ist hier nicht möglich' });
+      ack({ ok: true });
+      io.emit('server:stopping');
+      setTimeout(() => shutdownHandler(), 300);
     });
 
     socket.on('info', async (ack = () => {}) => {
@@ -264,6 +282,9 @@ function createApp(overrides = {}) {
     seatSockets.delete(seatNo);
   }
 
+  // ---------- Beenden aus der DM-Ansicht ----------
+  let shutdownHandler = null;
+
   // ---------- Autosave (L1) ----------
   let lastSaved = null;
   function saveNow() {
@@ -283,6 +304,7 @@ function createApp(overrides = {}) {
     app, server, io, config,
     getState: () => state,
     saveNow,
+    setShutdownHandler(fn) { shutdownHandler = fn; },
     start() {
       return new Promise((resolve, reject) => {
         server.once('error', reject);
@@ -294,7 +316,7 @@ function createApp(overrides = {}) {
     },
     async stop() {
       clearInterval(autosave);
-      if (dirty) saveNow();
+      saveNow();
       io.close();
       await new Promise((r) => server.close(() => r()));
     },
@@ -314,16 +336,24 @@ function openBrowser(url) {
 
 async function main() {
   const inst = createApp();
+  const port = inst.config.port;
   try {
     await inst.start();
   } catch (e) {
     if (e.code === 'EADDRINUSE') {
-      console.error(`\nPort ${inst.config.port} ist schon belegt. Läuft die App schon? Sonst "port" in config.json ändern.\n`);
+      // Läuft die App schon (z. B. zweiter Doppelklick)? Dann einfach die DM-Ansicht öffnen.
+      const running = await fetch(`http://127.0.0.1:${port}/api/public-info`).then((r) => r.ok).catch(() => false);
+      if (running) {
+        console.log(`DnD-Tabletop läuft bereits auf Port ${port}. Öffne die DM-Ansicht …`);
+        if (inst.config.openBrowser) openBrowser(`http://localhost:${port}/dm`);
+        setTimeout(() => process.exit(0), 500);
+        return;
+      }
+      console.error(`\nPort ${port} ist von einem anderen Programm belegt. Bitte "port" in ${inst.config.configPath} ändern.\n`);
       process.exit(1);
     }
     throw e;
   }
-  const port = inst.config.port;
   const line = '─'.repeat(60);
   console.log(`\n${line}\n  DnD-Tabletop läuft\n${line}`);
   console.log(`  DM-Ansicht (hier am Rechner):  http://localhost:${port}/dm`);
@@ -331,7 +361,7 @@ async function main() {
     console.log(`  Spieler (${a.kind === 'tailscale' ? 'Tailscale' : 'LAN'}):${' '.repeat(a.kind === 'tailscale' ? 9 : 15)}${a.url}`);
   }
   console.log(`  Spielstand-Ordner:             ${inst.config.dataDir}`);
-  console.log(`${line}\n  Beenden mit Strg+C (speichert vorher automatisch)\n`);
+  console.log(`${line}\n  Beenden: Strg+C oder in der DM-Ansicht „Spiel > Server beenden“\n`);
   if (inst.config.openBrowser) openBrowser(`http://localhost:${port}/dm`);
 
   let stopping = false;
@@ -342,6 +372,7 @@ async function main() {
     await inst.stop();
     process.exit(0);
   };
+  inst.setShutdownHandler(shutdown);
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
   if (process.platform === 'win32') process.on('SIGBREAK', shutdown);

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Startpunkt im AppImage: mitgeliefertes Node.js startet den Server.
+HERE="$(dirname "$(readlink -f "$0")")"
+export DND_APP_MODE=appimage
+exec "$HERE/usr/bin/node" "$HERE/usr/lib/dnd-tabletop/server/index.js" "$@"

@@ -1,0 +1,82 @@
+name: Pakete bauen
+
+# Baut das Linux-AppImage und die portable Windows-ZIP (beide mit Node.js).
+# - Bei jedem Push: Pakete als Artefakte der Action (Tab "Actions" > Lauf > Artifacts)
+# - Bei einem Tag v*: zusätzlich als GitHub-Release veröffentlicht
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+      - name: AppImage bauen
+        run: bash scripts/build-appimage.sh
+
+      - name: AppImage starten und prüfen
+        run: |
+          APP=$(ls dist/*.AppImage)
+          # Entpackt starten (kein FUSE im CI); AppRun ist derselbe Startpunkt wie beim Doppelklick.
+          "$APP" --appimage-extract > /dev/null
+          export DND_NO_BROWSER=1 PORT=7799 XDG_DATA_HOME="$RUNNER_TEMP/data" XDG_CONFIG_HOME="$RUNNER_TEMP/config"
+          ./squashfs-root/AppRun > app.log 2>&1 &
+          PID=$!
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:7799/api/public-info && break; sleep 1; done
+          echo
+          curl -sf http://127.0.0.1:7799/dm | grep -q "DM-Anmeldung"
+          curl -sf http://127.0.0.1:7799/vendor/konva.min.js > /dev/null
+          kill -INT $PID; sleep 2
+          cat app.log
+          test -f "$RUNNER_TEMP/data/dnd-tabletop/state.json" || (echo "Spielstand nicht im Benutzerordner gespeichert" && exit 1)
+
+      - name: Windows-Portable bauen
+        run: bash scripts/build-windows.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DnD-Tabletop-Pakete
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Release veröffentlichen
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  windows-check:
+    # Prüft die portable ZIP auf echtem Windows: entpacken, mit mitgeliefertem Node starten.
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: DnD-Tabletop-Pakete
+          path: dist
+      - name: Portable ZIP starten
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist\*windows-x64.zip | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath portable
+          $env:DND_NO_BROWSER = "1"; $env:PORT = "7798"
+          $p = Start-Process -FilePath "portable\DnD-Tabletop\runtime\node.exe" -ArgumentList "server\index.js" -WorkingDirectory "portable\DnD-Tabletop" -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 30; $i++) { try { Invoke-RestMethod http://127.0.0.1:7798/api/public-info | Out-Null; $ok = $true; break } catch { Start-Sleep 1 } }
+          Stop-Process -Id $p.Id
+          if (-not $ok) { throw "Server nicht erreichbar" }
+          Write-Host "Portable Windows-Version läuft."

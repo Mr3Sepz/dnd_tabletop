@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=DnD-Tabletop
+GenericName=Virtueller Spieltisch
+Comment=Lokaler DnD-Spieltisch: DM hostet, Spieler treten per Browser bei
+Exec=AppRun
+Icon=dnd-tabletop
+Terminal=true
+Categories=Game;RolePlaying;

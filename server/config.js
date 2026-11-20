@@ -6,7 +6,17 @@
 const fs = require('fs');
 const path = require('path');
 
+const os = require('os');
+
 const ROOT = path.resolve(__dirname, '..');
+
+/**
+ * Als AppImage ist der Programmordner schreibgeschützt. Dann liegen Spielstand
+ * und config.json im Benutzerordner (XDG-Standard unter Linux).
+ */
+const PACKAGED = !!(process.env.APPIMAGE || process.env.DND_APP_MODE === 'appimage');
+const USER_DATA = path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'dnd-tabletop');
+const USER_CONFIG = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'dnd-tabletop', 'config.json');
 
 const defaults = {
   port: 7777,
@@ -17,13 +27,15 @@ const defaults = {
   // Start-PIN für Spieler. Kann der DM in der App jederzeit ändern.
   pin: '',
   autosaveMinutes: 5,
-  dataDir: path.join(ROOT, 'data'),
+  // Anzahl der Spielerplätze (1–10). Der DM zählt nicht mit.
+  seats: 5,
+  dataDir: PACKAGED ? USER_DATA : path.join(ROOT, 'data'),
   openBrowser: true,
 };
 
 function loadConfig(overrides = {}) {
   let file = {};
-  const cfgPath = process.env.DND_CONFIG || path.join(ROOT, 'config.json');
+  const cfgPath = process.env.DND_CONFIG || (PACKAGED ? USER_CONFIG : path.join(ROOT, 'config.json'));
   try {
     file = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
   } catch (e) {
@@ -34,11 +46,13 @@ function loadConfig(overrides = {}) {
   if (process.env.DND_DM_PASSWORD !== undefined) env.dmPassword = process.env.DND_DM_PASSWORD;
   if (process.env.DND_PIN !== undefined) env.pin = process.env.DND_PIN;
   if (process.env.DND_DATA_DIR) env.dataDir = process.env.DND_DATA_DIR;
+  if (process.env.DND_SEATS) env.seats = Number(process.env.DND_SEATS);
   if (process.env.DND_NO_BROWSER) env.openBrowser = false;
 
   const cfg = { ...defaults, ...file, ...env, ...overrides };
-  cfg.dataDir = path.resolve(ROOT, cfg.dataDir);
+  cfg.dataDir = path.resolve(PACKAGED ? path.dirname(USER_DATA) : ROOT, cfg.dataDir);
+  cfg.configPath = cfgPath;
   return cfg;
 }
 
-module.exports = { loadConfig, ROOT };
+module.exports = { loadConfig, ROOT, PACKAGED };
