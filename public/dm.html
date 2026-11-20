@@ -19,7 +19,7 @@
 
   <header class="topbar">
     <span class="brand">DnD-Tabletop <small>DM</small></span>
-    <span class="live-info">Spieler sehen: <b id="liveName">–</b></span>
+    <span class="live-info">Spieler sehen: <b id="liveName">–</b><span id="splitInfo"></span></span>
     <label class="edit-scene">Bearbeite:
       <select id="editScene" aria-label="Szene bearbeiten"></select>
     </label>
@@ -39,7 +39,11 @@
   <div id="banner" class="banner hidden"></div>
 
   <main class="layout">
-    <div id="board" class="board"></div>
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+      <div id="toolbar" class="toolbar" aria-label="Werkzeuge"></div>
+      <div id="selbar" class="selbar hidden"></div>
+    </div>
     <aside class="panel" id="panel">
       <nav class="tabs" id="tabs">
         <button data-tab="scenes" class="active">Szenen</button>

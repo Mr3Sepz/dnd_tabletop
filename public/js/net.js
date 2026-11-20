@@ -57,6 +57,8 @@ export function connect(joinPayload, handlers) {
   socket.on('token:moved', (m) => handlers.onTokenMoved?.(m));
   socket.on('info', (i) => handlers.onInfo?.(i));
   socket.on('saved', (i) => handlers.onSaved?.(i));
+  socket.on('dice', (r) => handlers.onDice?.(r));
+  socket.on('server:stopping', () => handlers.onStopping?.());
   socket.on('kicked', (k) => {
     storeSeat(null);
     handlers.onKicked?.(k);

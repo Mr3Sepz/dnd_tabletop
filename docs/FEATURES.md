@@ -1,120 +1,99 @@
 # Feature-Status
 
-Grundlage ist die vom DM bestätigte Featureliste (Stand 20.11.2026). Die Nummern entsprechen der Liste.
+Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschläge aus dem Praxistest mit einem echten Session-Protokoll (P1–P12).
 
-✅ umgesetzt · 🔶 teilweise · ⏳ später geplant · ❓ Rückfrage offen
+✅ umgesetzt · 🔶 teilweise · ⏳ später geplant
 
 ## 1. Start und Verbindung
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| V1 | Start per Doppelklick (optional) | 🔶 | `start.bat` / `start.sh`. Node.js muss installiert sein. Eine einzelne .exe-Datei ohne Node folgt später. |
+| V1 | Start per Doppelklick | ✅ | Linux: AppImage, Windows: portable ZIP mit `start.bat`. Beide bringen Node.js mit. Aus dem Quellcode: `start.sh` / `start.bat` |
 | V2 | Einladung per Adresse und QR-Code | ✅ | Reiter *Spiel*, zusätzlich Ausgabe im Terminal |
-| V3 | Raum-PIN | ✅ | Reiter *Spiel*, jederzeit änderbar |
-| V4 | DM-Passwort (optional) | ✅ | `dmPassword` in `config.json`. Ohne Passwort ist die DM-Ansicht nur am Host erreichbar. |
-| V5 | Spieler brauchen nur einen Browser | ✅ | |
-| V6 | Spielen am selben Tisch | ✅ | |
-| V7 | Spielen von zu Hause | ✅ | Tailscale-Adressen (100.x) werden erkannt und mit QR-Code angezeigt |
-| V8 | Platzübersicht | ✅ | Reiter *Spieler*, grüner Punkt = online |
-| V9 | Automatisch wieder verbinden | ✅ | Platz-Schlüssel im Browser, übersteht auch einen Server-Neustart |
-| V10 | Platz freigeben | ✅ | |
+| V3 | Raum-PIN | ✅ | |
+| V4 | DM-Passwort | ✅ | `dmPassword` in der config.json. Ohne Passwort ist die DM-Ansicht nur am Host erreichbar |
+| V5–V7 | Browser genügt, LAN, Tailscale | ✅ | Tailscale-Adressen (100.x) werden erkannt |
+| V8–V10 | Platzübersicht, Wiederverbinden, Freigeben | ✅ | |
+| — | Anzahl Plätze | ✅ | Standard 5, im Spiel einstellbar von 1 bis 20 (Reiter *Spiel*) |
+| — | Beenden ohne Terminal | ✅ | *Spiel → Server beenden*. Ein zweiter Doppelklick öffnet die laufende Runde |
 
 ## 2. Spielfläche und Szenen
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| S1 | Hintergrund mit Raster | ✅ | Raster automatisch an; Feldgröße, Versatz, Farbe, Deckkraft und Kartengröße einstellbar |
-| S2 | Szenen vorbereiten | ✅ | |
-| S3 | Szene live wechseln | ✅ | „Live schalten“ oben |
-| S4 | Im Hintergrund vorbereiten | ✅ | „Bearbeite:“ ist unabhängig von der Live-Szene |
-| S5 | Hintergrund tauschen (optional) | ✅ | Figuren bleiben stehen |
-| S6 | Zoomen und Verschieben | ✅ | Mausrad, zwei Finger, Ziehen |
-| S7 | Szenen verwalten, große Bilder verkleinern | ✅ | Bilder über 4096 px rechnet der Browser vor dem Upload herunter |
-| S8 | Nachtfilter (optional) | ✅ | |
+| S1 | Hintergrund mit Raster | ✅ | Feldgröße, Versatz, Farbe, Deckkraft, Kartengröße, Fuß pro Feld |
+| S2–S7 | Szenen vorbereiten, live wechseln, verwalten | ✅ | |
+| S8 | Nachtfilter | ✅ | |
+| P2 / X6 | Fog of War | ✅ | Rechteck und Pinsel, jeweils aufdecken/verdecken, *Alles aufdecken / verdecken*, Rückgängig. Figuren im Nebel kommen beim Spieler nicht an |
+| P3 | Szene pro Spieler (getrennte Gruppen) | ✅ | Reiter *Spieler → Ort*. „Live schalten“ führt alle zusammen |
 
 ## 3. Figuren und Marker
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| F1 | Figur von Hand setzen | ✅ ❓ | Bild ziehen oder antippen, dann auf die Karte tippen. Nur der DM setzt Figuren. Rückfrage: so gemeint? |
-| F2 | Charakterbild | ✅ | |
-| F3 | Kennung von Hand | ✅ | Feld „Kennung“ im Figurenmenü, Abzeichen oben rechts |
-| F4 | Namensfeld ändern | ✅ | |
-| F5 | Bild wechseln | ✅ | |
-| F6 | Figuren bewegen | ✅ | live bei allen |
-| F7 | Figur einem Spieler geben | ✅ | „Darf bewegen“ im Figurenmenü |
-| F8 | Verstecken über Menü | ✅ | Rechtsklick oder lange drücken |
-| F9 | Größe ändern | ✅ | |
-| F10 | Kopieren und löschen | ✅ | |
-| F11 | Bildersammlung | ✅ | auch Dateien direkt ins Fenster ziehen |
-| F12 | Figur mit Werten verknüpfen | ✅ | Klick auf Figur öffnet den Bogen |
+| F1–F12 | Setzen, Bild, Kennung, Name, bewegen, zuweisen, verstecken, Größe, kopieren, Sammlung, verknüpfen | ✅ | |
+| P8 | Mehrfach setzen | ✅ | NPC → *Auf Karte setzen …* → Anzahl, Kennungen (1…/A…, frei änderbar), versteckt |
+| P1 / 9 | Sicht pro Spieler | ✅ | Figurenmenü → *Sichtbar für …* |
+| P7 | Mehrfachauswahl | ✅ | Umschalt + Klick, Umschalt + Rahmen, ☐ in der Liste → gemeinsame Aktionen |
+| X4 | Einrasten im Raster | ✅ | abschaltbar pro Szene |
 
 ## 4. Ansichten und Rechte
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| A1 | Eigene DM-Ansicht | ✅ | |
-| A2 | Getrennte Spieleransicht | ✅ | Filterung auf dem Server, siehe ARCHITEKTUR.md |
-| A3 | 1 DM + 5 Plätze | ✅ | |
-| A4 | Als Spieler ansehen | 🔶 | Oben „Spielersicht“: zeigt Live-Szene ohne Verstecktes und mit grobem Zustand. Das ist eine Vorschau im DM-Browser, kein echter Spieler-Login. |
-| A5 | Spielerwerte bearbeiten | ✅ | |
-| A6 | Laptop, Tablet, Smartphone | ✅ | Spieleransicht auf 390 px Breite getestet |
+| A1–A3, A5, A6 | DM-Ansicht, Spieleransicht, Plätze, Werte bearbeiten, Handy | ✅ | |
+| A4 | Als Spieler ansehen | ✅ | zeigt die echte, vom Server gefilterte Sicht (Nebel, Verstecktes, Sicht pro Spieler) |
 
-## 5. Spielercharaktere
+## 5. Spielercharaktere und NPCs
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| C1 | Gruppenübersicht | ✅ | |
-| C2 | HP-Tracker | ✅ | Schaden zieht zuerst temporäre HP ab |
-| C3 | Zauberplätze | ✅ | „Anzahl ändern“ pro Grad, Kästchen abhaken, „Alle frei“ |
-| C4 | Eigene Zähler | ✅ | |
-| C5 | Inventar | ✅ ❓ | Spieler führt es, der DM sieht und bearbeitet es. Rückfrage: soll es privat sein? |
-| C6 | Sofort aktuell | ✅ | |
-| C7 | Weitere Werte (RK usw.) | ✅ | frei benennbar |
+| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Inventar, Werte | ✅ | |
+| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Segen, Konzentration, Verlangsamt + eigene. Farbige Ringe an Figur und Porträt |
+| P4 | Todesrettungswürfe | ✅ | erscheinen im Bogen bei 0 HP |
+| P5 | Am Boden statt besiegt | ✅ | Bei 0 HP fragt die App „tot oder am Boden?“. Spieler sehen das entsprechend |
+| P7 | Schaden/Heilung für mehrere | ✅ | temporäre HP zuerst |
+| N1–N5, N7, N8 | NPCs, Porträtleiste, grober Zustand | ✅ | |
+| N6 | NPC-Vorlagen über Kampagnen hinweg | ⏳ | Mehrfach setzen und Kopieren decken den häufigsten Fall ab |
 
-## 6. NPCs
+## 6. Porträtleiste / Initiative
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| N1–N4 | Anlegen, Tracker, Liste, Kopieren | ✅ | |
-| N5 | Besiegt markieren | ✅ | ausgegraut mit Kreuz, auch in der Leiste |
-| N6 | NPC-Vorlagen | ⏳ | |
-| N7 | Porträtleiste als Initiative | ✅ | Ziehen (Maus) oder Pfeile (Touch), Klick = ist dran |
-| N8 | Gegnerzustand grob sichtbar | ✅ | unverletzt / angeschlagen / schwer verletzt / besiegt, als farbiger Ring |
+| N7 / X3 | Porträtleiste = Initiative | ✅ | |
+| P1 | Kein Leck mehr | ✅ | NPC-Einträge erscheinen erst, wenn eine Figur für den Spieler sichtbar ist (oder fest: immer/nie) |
+| P6 | Initiativwert, Sortieren, Gruppen | ✅ | |
 
-## 7. Notizen
+## 7. Notizen, Gruppe, Würfel
 
 | Nr. | Funktion | Status |
 | --- | --- | --- |
-| T1 | Privater DM-Notizblock | ✅ |
-| T2 | Notizen pro Szene | ✅ |
-| T3 | Private Spielernotizen (auch für den DM unsichtbar) | ✅ |
-| T4 | Gemeinsame Gruppennotizen | ⏳ |
+| T1–T3 | DM-Notizblock, Szenen-Notizen, private Spielernotizen | ✅ |
+| T4 / P12 | Gemeinsame Notizen, XP, Gold, Spieldatum | ✅ |
+| X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (`1d20+5`, `2d20kh1`, `4d6kh3`) |
 
-## 8. Speichern und Laden
+## 8. Zeichnen und Messen
+
+| Nr. | Funktion | Status | Umsetzung |
+| --- | --- | --- | --- |
+| P9 | Rechteck, Ellipse, Freihand | ✅ | Farbe, Füllung, Strichstärke; verstecken, sperren, Reihenfolge |
+| P9 | Eckige, drehbare Objekte | ✅ | Bild aus der Sammlung, z. B. Wagen oder Tür |
+| X8 | Zauberschablonen | ✅ | Kreis, Kegel, Linie, Würfel in Fuß; auch Spieler dürfen eigene legen |
+| X5 / P10 | Entfernung messen | ✅ | Lineal in Fuß und Feldern, Anzeige beim Ziehen von Figuren |
+
+## 9. Speichern und Laden
 
 | Nr. | Funktion | Status |
 | --- | --- | --- |
-| L1 | Autosave alle 5 Minuten | ✅ |
-| L2 | Weitermachen nach Neustart | ✅ |
-| L3 | Spielstand herunterladen | ✅ |
-| L4 | Spielstand laden | ✅ |
-| L5 | Sicherung und Umzug | ✅ |
+| L1–L5 | Autosave (5 Min.), weitermachen, herunterladen, laden, umziehen | ✅ |
 | L6 | Spielstände in der App verwalten | ⏳ |
 
-## 9. Ausbau nach Version 1.0
+## 10. Noch offen
 
-| Nr. | Funktion | Status |
-| --- | --- | --- |
-| X1 | Würfel (optional) | ⏳ |
-| X2 | Verdeckte/öffentliche DM-Würfe | ⏳ |
-| X3 | Initiative-Tracker | ✅ als N7 |
-| X4 | Einrasten im Raster | 🔶 Beim Setzen landet eine Figur schon in der Feldmitte; beim Ziehen noch nicht |
-| X5 | Entfernung messen | ⏳ |
-| X6 | Fog of War (mit „alles aufdecken“) | ⏳ |
-| X7 | Zustände als farbige Ringe | ⏳ (Ringe für den groben Zustand sind schon da) |
-| X8 | Flächen-Schablonen | ⏳ |
-| X9 | Ping | ⏳ |
-| X10 | Private Nachrichten | ⏳ |
-| X11 | Handouts (privat und öffentlich) | ⏳ |
-| X12 | Rast-Knöpfe | ⏳ |
+| Nr. | Funktion |
+| --- | --- |
+| X9 | Ping auf der Karte |
+| X10 | Private Nachrichten |
+| X11 | Handouts (privat und öffentlich) |
+| X12 | Rast-Knöpfe |
+| — | Fog of War wasserdicht: Bisher kommt das Kartenbild komplett beim Spieler an, nur Figuren und Zeichnungen im Nebel werden auf dem Server herausgefiltert |

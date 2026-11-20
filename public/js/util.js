@@ -58,9 +58,17 @@ export function toast(msg, kind = 'info') {
 }
 
 /** Einfacher Bestätigungs-/Eingabedialog ohne Browser-Popups. */
-export function dialog({ title, body, fields = [], okText = 'OK', cancelText = 'Abbrechen', danger = false }) {
+export function dialog({ title, body, fields = [], okText = 'OK', cancelText = 'Abbrechen', danger = false, buttons = null }) {
   return new Promise((resolve) => {
     const inputs = fields.map((f) => {
+      if (f.type === 'checks') {
+        return h('fieldset.checks', {}, h('legend', {}, f.label),
+          ...f.options.map((o) => h('label.check', {}, h('input', { type: 'checkbox', name: f.name, value: o.value, checked: (f.value || []).includes(o.value) }),
+            o.color ? h('span.swatch', { style: { background: o.color } }) : null, o.label)));
+      }
+      if (f.type === 'checkbox') {
+        return h('label.check', {}, h('input', { type: 'checkbox', name: f.name, checked: !!f.value }), f.label);
+      }
       const input = f.type === 'select'
         ? h('select', { name: f.name }, ...f.options.map((o) => h('option', { value: o.value, selected: o.value === f.value }, o.label)))
         : f.type === 'textarea'
@@ -69,14 +77,20 @@ export function dialog({ title, body, fields = [], okText = 'OK', cancelText = '
       return h('label.field', {}, h('span', {}, f.label), input);
     });
     const close = (val) => { overlay.remove(); resolve(val); };
+    let submitter = null;
     const form = h('form.dialog', {
       onsubmit: (e) => {
         e.preventDefault();
+        submitter = e.submitter;
         const out = {};
         for (const f of fields) {
+          if (f.type === 'checks') { out[f.name] = [...form.querySelectorAll(`input[name="${f.name}"]:checked`)].map((i) => i.value); continue; }
+          if (f.type === 'checkbox') { out[f.name] = form.elements[f.name].checked; continue; }
           const v = form.elements[f.name].value;
-          out[f.name] = f.type === 'number' ? Number(v) : v;
+          out[f.name] = f.type === 'number' ? (v === '' ? null : Number(v)) : v;
         }
+        if (submitter && submitter.value) out._button = submitter.value;
+        if (!fields.length && buttons) return close(out._button || true);
         close(fields.length ? out : true);
       },
     },
@@ -85,7 +99,9 @@ export function dialog({ title, body, fields = [], okText = 'OK', cancelText = '
     ...inputs,
     h('div.dialog-buttons', {},
       cancelText ? h('button', { type: 'button', onclick: () => close(null) }, cancelText) : null,
-      h(`button.${danger ? 'danger' : 'primary'}`, { type: 'submit' }, okText)));
+      ...(buttons
+        ? buttons.map((b) => h(`button.${b.cls || 'primary'}`, { type: 'submit', value: b.value }, b.label))
+        : [h(`button.${danger ? 'danger' : 'primary'}`, { type: 'submit' }, okText)])));
     const overlay = h('div.overlay', { onclick: (e) => { if (e.target === overlay) close(null); } }, form);
     document.body.append(overlay);
     const first = form.querySelector('input, select, textarea, button.primary');
@@ -133,10 +149,14 @@ async function downscale(file, maxPx) {
   return { blob, width: w, height: hgt };
 }
 
-export const CONDITION_COLORS = {
-  unverletzt: '#3f9b57',
-  angeschlagen: '#d9a520',
-  'schwer verletzt': '#d2542c',
-  besiegt: '#777777',
-  unbekannt: '#999999',
-};
+// Gemeinsamer Katalog (auch der Server nutzt ihn): Zustände und Farben des groben Gesundheitszustands.
+export const CATALOG = await fetch('/shared/conditions.json').then((r) => r.json());
+export const HEALTH_COLORS = CATALOG.health;
+export const CONDITION_BY_KEY = new Map(CATALOG.conditions.map((c) => [c.key, c]));
+
+/** Entfernung nach 5e-Regel: jedes Feld zählt, auch diagonal (Chebyshev). */
+export function gridDistance(dx, dy, grid) {
+  const cells = Math.max(Math.abs(dx), Math.abs(dy)) / (grid.size || 70);
+  const rounded = Math.round(cells * 10) / 10;
+  return { cells: rounded, feet: Math.round(cells * (grid.feet || 5)) };
+}

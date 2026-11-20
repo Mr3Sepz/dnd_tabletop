@@ -20,9 +20,17 @@
   </header>
   <div id="initiative" class="initiative"></div>
   <main class="layout">
-    <div id="board" class="board"></div>
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+      <div id="toolbar" class="toolbar" aria-label="Werkzeuge"></div>
+    </div>
     <aside class="panel" id="panel">
+      <nav class="tabs" id="tabs">
+        <button data-tab="sheet" class="active">Charakter</button>
+        <button data-tab="party">Gruppe</button>
+      </nav>
       <div class="tab-body" id="sheet"></div>
+      <div class="tab-body hidden" id="party"></div>
     </aside>
   </main>
   <div id="gone" class="login hidden"><div class="card"><h1 id="goneTitle"></h1><p id="goneMsg"></p><a class="button primary" href="/">Zur Platzwahl</a></div></div>

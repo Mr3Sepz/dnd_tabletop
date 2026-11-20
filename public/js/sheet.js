@@ -7,6 +7,7 @@
 // Sonst werden nur die Werte der nicht fokussierten Felder aktualisiert.
 
 import { h, debounce, assetUrl, initials } from './util.js';
+import { editConditions, conditionChips } from './conditions.js';
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 10);
 
@@ -38,6 +39,7 @@ export class Sheet {
     this.state = state;
     const sig = JSON.stringify([
       data.id, data.portraitAssetId, (data.stats || []).map((s) => s.id), (data.counters || []).map((c) => c.id),
+      (data.conditions || []).map((c) => c.id), data.hp.cur <= 0, !!data.dead, data.deathSaves,
       (data.slots || []).map((s) => s.max), (data.slots || []).some((s) => s.used), (this.opts.actions || []).map((a) => a.label),
     ]);
     if (sig !== this.signature && !this.focusedInside()) {
@@ -126,6 +128,33 @@ export class Sheet {
       h('div.row', {}, amount,
         h('button.danger.small', { onclick: () => apply(-1) }, 'Schaden'),
         h('button.good.small', { onclick: () => apply(1) }, 'Heilung'))));
+
+    // Am Boden: Todesrettungswürfe (P4) und für NPCs "tot oder am Boden" (P5)
+    if (d.hp.cur <= 0) {
+      const ds = d.deathSaves || { success: 0, fail: 0 };
+      const row = (key, label, cls) => h('div.saves', {}, h('span', {}, label),
+        ...[1, 2, 3].map((i) => h(`button.save${i <= ds[key] ? `.${cls}` : ''}`, {
+          title: `${label} ${i}`,
+          onclick: () => { this.patch({ deathSaves: { ...this.data.deathSaves, [key]: i <= this.data.deathSaves[key] ? i - 1 : i } }); this.signature = ''; this.render(); },
+        })));
+      c.append(h('section.down', {},
+        h('h4', {}, o.kind === 'npc' ? (d.dead ? 'Tot' : 'Am Boden (bewusstlos)') : 'Am Boden: Todesrettungswürfe'),
+        o.kind === 'npc' ? h('div.row', {},
+          h(`button.small${d.dead ? '' : '.primary'}`, { onclick: () => { this.patch({ dead: false }); } }, 'Am Boden'),
+          h(`button.small${d.dead ? '.danger' : ''}`, { onclick: () => { this.patch({ dead: true }); } }, 'Tot'),
+          h('span.hint', {}, 'Spieler sehen „am Boden“ oder „tot“.')) : null,
+        row('success', 'Erfolge', 'ok'), row('fail', 'Fehlschläge', 'bad')));
+    }
+
+    // Zustände (P4)
+    c.append(h('section', {},
+      h('h4', {}, 'Zustände ', h('button.small', { onclick: async () => {
+        const list = await editConditions(this.data.conditions || [], `Zustände: ${this.data.name}`);
+        if (list) this.opts.onConditions ? this.opts.onConditions(list) : null;
+      } }, 'Ändern')),
+      (d.conditions || []).length
+        ? conditionChips(d.conditions, (cnd) => this.opts.onConditions?.(this.data.conditions.filter((x) => x.id !== cnd.id)))
+        : h('p.hint', {}, 'Keine.')));
 
     // Weitere Werte (C7)
     const stats = h('div.stats');

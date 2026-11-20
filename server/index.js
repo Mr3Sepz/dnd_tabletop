@@ -262,6 +262,14 @@ function createApp(overrides = {}) {
       setTimeout(() => shutdownHandler(), 300);
     });
 
+    // "Als Spieler ansehen" (A4): die echte, gefilterte Sicht eines Platzes
+    socket.on('preview', (seat, ack = () => {}) => {
+      if (!who || who.role !== 'dm') return ack({ ok: false });
+      const n = Number(seat);
+      if (!state.seats.some((x) => x.seat === n)) return ack({ ok: false });
+      ack({ ok: true, view: S.viewForPlayer(state, n) });
+    });
+
     socket.on('info', async (ack = () => {}) => {
       if (!who || who.role !== 'dm') return ack({ ok: false });
       ack({ ok: true, info: await infoForDM() });

@@ -9,10 +9,7 @@ Spieler-Browser ──Aktion──▶ Server: Rechte prüfen → Zustand ändern
                                                                        └──▶ Spieler-Browser (nur Erlaubtes)
 ```
 
-Dadurch gilt:
-- Geheimes (versteckte Figuren, NPC-Werte, andere Szenen, DM-Notizen) erreicht den Spieler-Browser **gar nicht erst**. Es wird also nicht bloß ausgeblendet und kann auch über die Entwicklertools nicht gefunden werden.
-- Private Spielernotizen erreichen den DM-Browser ebenfalls nicht.
-- Es gibt keine Konflikte zwischen Clients, denn der Server entscheidet.
+Was ein Spieler nicht sehen darf, erreicht seinen Browser gar nicht erst. Dazu gehören versteckte Figuren, Figuren im Nebel, Figuren, die nur für andere Plätze sichtbar sind, NPC-Werte, andere Szenen, verdeckte Würfe und DM-Notizen. Private Spielernotizen erreichen umgekehrt den DM-Browser nicht.
 
 ## Technik
 
@@ -20,57 +17,100 @@ Dadurch gilt:
 | --- | --- | --- |
 | Server | Node.js, Express | läuft gleich auf Windows, Linux, macOS; kein Kompilieren |
 | Echtzeit | Socket.IO | Wiederverbindung eingebaut, Fallback auf Polling |
-| Karte | Konva.js (Canvas) | Zoom, Ziehen, Touch, gut bei vielen Figuren |
-| Oberfläche | HTML, CSS, JavaScript-Module ohne Build-Schritt | einfach zu ändern, nichts zu kompilieren |
-| Speichern | JSON-Datei + Bilder im Ordner `data/`, Export als ZIP (adm-zip) | keine Datenbank, Spielstand ist eine Datei |
-| QR-Codes | qrcode | Einladen per Handy-Kamera |
+| Karte | Konva.js (Canvas) | Zoom, Ziehen, Drehen/Skalieren (Transformer), Touch |
+| Oberfläche | HTML, CSS, JavaScript-Module ohne Build-Schritt | einfach zu ändern |
+| Speichern | JSON + Bilder im Datenordner, Export als ZIP (adm-zip) | keine Datenbank |
+| Würfel | eigener Parser, `crypto.randomInt` auf dem Server | niemand kann im Browser schummeln |
+| Pakete | AppImage (Linux) und portable ZIP (Windows), beide mit Node.js | Start ohne Installation |
 
-Es gibt **keine nativen Abhängigkeiten**. `npm install` funktioniert deshalb auf jedem System ohne Compiler. Pfade baut der Server immer mit `path.join`, und es gibt keine Shell-Befehle in den npm-Skripten.
+Es gibt keine nativen Abhängigkeiten. `npm install` funktioniert deshalb überall, und die Windows-ZIP kann auf Linux gebaut werden.
+
+## Dateien
+
+```
+server/
+  index.js        HTTP + Socket.IO, Anmeldung, Plätze, Upload, Export/Import, Autosave, Beenden
+  state.js        Datenmodell, Aktionen mit Rechteprüfung, Sichtbarkeit, Sichten je Rolle
+  dice.js         Würfelausdrücke
+  persistence.js  Autosave-Datei, ZIP-Export und -Import
+  config.js       Einstellungen (inkl. Benutzerordner im AppImage)
+shared/
+  conditions.json Zustände und Farben (Server und Browser)
+public/
+  dm.html, player.html, index.html
+  js/board.js     Karte: Ebenen, Werkzeuge, Nebel, Auswahl, Messen
+  js/dm.js        DM-Oberfläche
+  js/player.js    Spieleroberfläche
+  js/sheet.js     Charakter-/NPC-Bogen
+  js/initiative.js Porträtleiste
+  js/dice.js      Würfel-Panel
+  js/conditions.js Zustandsdialog
+packaging/        AppImage-Startpunkt, Desktop-Datei, Icons
+scripts/          build-appimage.sh, build-windows.sh
+test/             Server-Tests (npm test), Browser-Rundgang, Testgrafiken
+```
 
 ## Datenmodell (`server/state.js`)
 
 ```
 state
-├─ activeSceneId            Szene, die Spieler sehen (S3)
-├─ settings.pin             Raum-PIN (V3)
-├─ scenes[]                 id, name, background{assetId}, mapScale, grid{enabled,size,offsetX,offsetY,color,opacity},
-│   └─ tokens[]             night, notes,
-│                           id, x, y, size, label, name, assetId, color, hidden, ownerSeat, kind (player|npc|marker), refId
-├─ assets[]                 id, file, name, width, height
-├─ seats[1..5]              seat, playerName, claimToken (Schlüssel zum Wiederverbinden)
-├─ characters[1..5]         id, seat, name, portraitAssetId, hp{cur,max,temp}, stats[], slots[9], counters[], inventory, privateNotes
-├─ npcs[]                   wie characters, ohne Inventar/Notizbuch, mit note
-├─ initiative               entries[{id, kind, refId}], current
+├─ activeSceneId              Szene für alle (Live)
+├─ seatScenes{seat: sceneId}  abweichende Szene einzelner Plätze (getrennte Gruppen)
+├─ settings                   pin, seatCount
+├─ scenes[]                   name, background, mapScale, night, notes,
+│   ├─ grid                   enabled, size, feet, snap, offsetX/Y, color, opacity
+│   ├─ fog                    enabled, shapes[{op: reveal|hide, type: all|rect|circle|stroke, …}]
+│   ├─ drawings[]             type: rect|ellipse|line|image|template, x, y, w, h, rotation, points,
+│   │                         stroke, fill, opacity, hidden, locked, label, shape, sizeFt, ownerSeat
+│   └─ tokens[]               x, y, size, label, name, assetId, color, hidden, visibleTo[seats]|null,
+│                             ownerSeat, kind (player|npc|marker), refId, conditions[]
+├─ assets[]                   id, file, name, width, height
+├─ seats[1..n]                playerName, claimToken (Schlüssel zum Wiederverbinden)
+├─ characters[1..n]           hp, deathSaves, conditions, stats, slots[9], counters, inventory, privateNotes
+├─ npcs[]                     wie characters + dead, note (ohne Inventar/Notizbuch)
+├─ initiative                 entries[{kind: character|npc|group, refId | refIds, name, value, visibility}], currentId
+├─ party                      notes, xp, gold, date
+├─ diceLog[]                  by, expr, detail, total, secret
 └─ dmNotes
 ```
 
-## Rollen und Rechte
+## Sichtbarkeit
 
-- **DM:** alle Aktionen. Ohne `dmPassword` nur von `localhost` aus erreichbar.
-- **Spieler:** dürfen nur
-  - eigene, sichtbare Figuren in der aktiven Szene bewegen,
-  - den eigenen Charakter bearbeiten (inklusive Inventar und Notizbuch),
-  - den eigenen Spielernamen ändern.
+`tokenVisibleToSeat(scene, token, seat)` entscheidet für jede Figur:
+1. `hidden` → für niemanden.
+2. `visibleTo` gesetzt und Platz nicht enthalten → nein.
+3. eigene Figur (`ownerSeat`) → immer ja.
+4. sonst: Liegt der Mittelpunkt im aufgedeckten Nebel? Die Nebelformen werden der Reihe nach angewendet.
 
-Jede Aktion wird in `applyAction` geprüft. Die Sichten bauen `viewForDM` und `viewForPlayer`.
+Porträtleiste: Ein NPC- oder Gruppeneintrag ist bei `visibility: auto` nur sichtbar, wenn der Spieler mindestens eine zugehörige Figur sieht.
 
-## Synchronisation
+Schnelle Bewegungen (`token:moved`) gehen nur an Plätze, die in derselben Szene sind und die Figur sehen dürfen.
 
-- Nach jeder Änderung schickt der Server nach 25 ms Bündelung jedem Raum (`dm`, `seat:1` … `seat:5`) seine Sicht.
-- **Figurenbewegungen** gehen einen schnellen Weg: Während des Ziehens verschickt der Server nur `token:moved` mit der neuen Position. Erst beim Loslassen folgt ein vollständiger Abgleich.
-- Bilder werden per HTTP geladen (`/assets/<datei>`) und lange im Browser zwischengespeichert. Sie wandern also nicht durch den Socket.
+**Grenze:** Das Kartenbild selbst wird vollständig übertragen. Der Nebel wird im Browser darübergelegt. Wer in die Entwicklertools schaut, kann die Karte sehen, aber keine Figuren im Nebel.
 
 ## Speichern
 
-- **Autosave** (`data/state.json`) wird atomar geschrieben: erst eine Temp-Datei, dann umbenennen. Das passiert alle `autosaveMinutes` Minuten, aber nur nach Änderungen, sowie beim Beenden (SIGINT/SIGTERM, unter Windows auch SIGBREAK).
-- **Export** ist eine ZIP-Datei mit `state.json`, `assets/` und `LIESMICH.txt`. Die Platz-Schlüssel werden dabei entfernt.
-- **Import** prüft die ZIP-Datei. Er übernimmt nur Bilder mit sicheren Dateinamen, die im Spielstand vorkommen, und ersetzt dann den Arbeitsordner.
+- **Autosave** schreibt `state.json` atomar: erst eine Temp-Datei, dann umbenennen. Das passiert alle 5 Minuten bei Änderungen und immer beim Beenden.
+- **Datenordner:** Aus dem Quellcode und in der Windows-ZIP ist das `data/` im Programmordner. Im AppImage ist es `~/.local/share/dnd-tabletop`, die config.json liegt dann in `~/.config/dnd-tabletop/`.
+- **Export/Import:** Eine ZIP-Datei mit `state.json` und `assets/`. Der Import übernimmt nur Bilder mit sicheren Namen, die im Spielstand vorkommen.
+
+## Pakete bauen
+
+```bash
+bash scripts/build-appimage.sh   # dist/DnD-Tabletop-<version>-x86_64.AppImage
+bash scripts/build-windows.sh    # dist/DnD-Tabletop-<version>-windows-x64.zip
+```
+
+GitHub Actions (`.github/workflows/release.yml`) baut beide bei jedem Push und testet sie: das AppImage auf Ubuntu, die ZIP auf echtem Windows. Ein Tag `v*` veröffentlicht sie als Release.
+
+## Tests
+
+- `npm test`: Server-Tests mit echten Socket-Verbindungen, vor allem für alles, was Spieler **nicht** sehen dürfen.
+- `python3 test/browser_tour.py`: ein kompletter Goblin-Hinterhalt im echten Browser (DM + 2 Spieler). Er prüft Sicht pro Spieler, Nebel und getrennte Gruppen und erzeugt die README-Bilder.
 
 ## Erweitern
 
-Für eine neue Funktion braucht ihr meist drei Schritte:
-1. eine neue Aktion in `applyAction` (mit Rechteprüfung),
-2. falls nötig ein Feld in `viewForPlayer` freigeben,
-3. einen Knopf im Client, der `conn.act({ type: '…' })` aufruft.
-
-Dazu kommt ein Test in `test/server.test.js`, vor allem für alles, was Spieler *nicht* sehen dürfen.
+1. Eine neue Aktion in `applyAction` (mit Rechteprüfung).
+2. Falls nötig ein Feld in `viewForPlayer` freigeben.
+3. Einen Knopf im Client, der `conn.act({ type: '…' })` aufruft.
+4. Einen Test in `test/server.test.js` schreiben.

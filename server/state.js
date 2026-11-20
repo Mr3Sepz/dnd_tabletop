@@ -763,7 +763,7 @@ function applyAction(state, who, action) {
       if (!refIds.length) throw new ActionError('Keine NPCs gewählt');
       // Wer schon einzeln in der Leiste steht, wandert in die Gruppe.
       state.initiative.entries = state.initiative.entries.filter((e) => !(e.kind === 'npc' && refIds.includes(e.refId)));
-      const entry = { id: newId('i_'), kind: 'group', name: str(action.name, 60) || 'Gruppe', refIds, value: action.value === undefined || action.value === '' ? null : num(action.value), visibility: 'auto' };
+      const entry = { id: newId('i_'), kind: 'group', name: str(action.name, 60) || 'Gruppe', refIds, value: action.value === undefined || action.value === null || action.value === '' ? null : num(action.value), visibility: 'auto' };
       state.initiative.entries.push(entry);
       fixCurrent(state);
       return { id: entry.id };
@@ -907,6 +907,10 @@ function viewForDM(state) {
   delete s.settings.pin; // wird separat über "info" übertragen
   s.settings.pinSet = !!state.settings.pin;
   s.npcs.forEach((n) => { n.condition = roughCondition(n.hp, n.dead); });
+  // Für welche Plätze ist ein Leisteneintrag gerade sichtbar? (DM sieht das in der Leiste)
+  s.initiative.entries.forEach((e) => {
+    e.visibleSeats = state.seats.map((x) => x.seat).filter((seat) => entryVisibleToSeat(state, e, seat));
+  });
   s.seatCount = SEAT_COUNT;
   return s;
 }

@@ -1,11 +1,13 @@
-// Spieleransicht (A2): aktive Szene, eigene Figuren bewegen, eigener
-// Charakterbogen mit Inventar und privatem Notizbuch, Porträtleiste.
+// Spieleransicht (A2): eigene Szene, eigene Figuren bewegen, eigener Bogen mit
+// Inventar, privatem Notizbuch, Zuständen und Todesrettungswürfen; Gruppenwerte,
+// gemeinsame Notizen, Würfel, Messen und eigene Zauberschablonen.
 
-import { $ } from './util.js';
+import { $, $$, h, debounce, dialog } from './util.js';
 import { connect, storedSeat } from './net.js';
-import { Board } from './board.js';
+import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
 import { renderInitiative } from './initiative.js';
+import { DicePanel } from './dice.js';
 
 const params = new URLSearchParams(location.search);
 const seat = Number(params.get('seat')) || storedSeat()?.seat;
@@ -17,29 +19,102 @@ if (join.seat !== seat) join = {};
 
 let state = null;
 let sheet = null;
+let tab = 'sheet';
+
+const sceneId = () => state && state.scenes[0] && state.scenes[0].id;
 
 const board = new Board($('#board'), {
+  isDM: false,
   showHpBars: false,
   canDrag: (t) => t.ownerSeat === seat,
-  onMove: (t, x, y, final) => conn.act({ type: 'token.move', sceneId: state.activeSceneId, id: t.id, x, y, final }),
-  onTokenClick: (t) => { if (t.ownerSeat === seat) document.body.classList.add('panel-open'); },
-  tokenInfo: (t) => (t.kind === 'npc' && t.condition ? { condition: t.condition, defeated: t.condition === 'besiegt' } : {}),
+  onMove: (t, x, y, final) => conn.act({ type: 'token.move', sceneId: sceneId(), id: t.id, x, y, final }),
+  onTokenClick: (t) => { if (t.ownerSeat === seat) openPanel('sheet'); },
+  tokenInfo: (t) => ({
+    health: t.kind === 'npc' ? t.condition : null,
+    conditions: t.conditions || [],
+    down: t.condition === 'am Boden' || t.down,
+    dead: t.condition === 'tot',
+  }),
+  // Eigene Zauberschablonen verschieben, drehen, löschen
+  canEditDrawing: (d) => d.ownerSeat === seat,
+  onDrawingChange: (d, patch) => conn.act({ type: 'drawing.update', sceneId: sceneId(), id: d.id, patch }),
+  onDrawingContext: async (d) => {
+    if (d.ownerSeat !== seat) return;
+    if (await dialog({ title: 'Schablone entfernen?', okText: 'Entfernen', danger: true })) conn.act({ type: 'drawing.delete', sceneId: sceneId(), id: d.id });
+  },
+  onCreateDrawing: (d) => conn.act({ type: 'drawing.create', sceneId: sceneId(), drawing: d }),
+  onToolDone: () => renderToolbar(),
 });
 
 const conn = connect({ mode: 'player', seat, pin: join.pin, playerName: join.playerName }, {
   onJoined: () => { sessionStorage.removeItem('dnd.join'); },
   onJoinError: (err) => gone('Beitritt nicht möglich', err),
   onKicked: (k) => gone('Platz freigegeben', k.reason),
+  onStopping: () => gone('Spiel beendet', 'Der DM hat den Server beendet.'),
   onConnection: (ok) => $('#conn').classList.toggle('on', ok),
-  onState: (s) => { state = s; render(); },
+  onState: (s) => { state = s; dice.setLog(s.diceLog || []); render(); },
   onTokenMoved: (m) => board.moveToken(m.id, m.x, m.y),
+  onDice: (r) => dice.announce(r),
 });
+
+const dice = new DicePanel({ isDM: false, act: (a) => conn.act(a) });
 
 function gone(title, msg) {
   conn.socket.close();
   $('#goneTitle').textContent = title;
   $('#goneMsg').textContent = msg;
   $('#gone').classList.remove('hidden');
+}
+
+function renderToolbar() {
+  const tool = board.tool;
+  const btn = (key, icon) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon);
+  $('#toolbar').replaceChildren(
+    btn('select', '🖐'), btn('measure', '📏'),
+    h('button.tool', { title: 'Zauberschablone legen', onclick: placeTemplate }, '🔥'),
+  );
+}
+
+async function placeTemplate() {
+  const r = await dialog({ title: 'Zauberschablone', fields: [
+    { name: 'shape', label: 'Form', type: 'select', value: 'circle', options: [
+      { value: 'circle', label: 'Kreis/Kugel (Radius)' }, { value: 'cone', label: 'Kegel (Länge)' },
+      { value: 'line', label: 'Linie (Länge, 5 ft breit)' }, { value: 'square', label: 'Würfel (Kantenlänge)' }] },
+    { name: 'sizeFt', label: 'Größe in Fuß', type: 'number', value: 20, step: 5, min: 5 },
+  ], okText: 'Auf die Karte tippen …' });
+  if (!r) return;
+  board.setTool('place-template', { drawing: { type: 'template', shape: r.shape, sizeFt: r.sizeFt || 20, fill: '#3c7dd9', stroke: '#1f4f99' } });
+  renderToolbar();
+}
+
+function openPanel(which) {
+  tab = which;
+  document.body.classList.add('panel-open');
+  renderTabs();
+}
+
+function renderTabs() {
+  $$('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+  $('#sheet').classList.toggle('hidden', tab !== 'sheet');
+  $('#party').classList.toggle('hidden', tab !== 'party');
+}
+$$('#tabs button').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; renderTabs(); }; });
+
+const saveNotes = debounce((v) => conn.act({ type: 'party.update', patch: { notes: v } }), 600);
+function renderParty() {
+  const el = $('#party');
+  if (el.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const p = state.party;
+  el.replaceChildren(
+    h('h3', {}, 'Gruppe'),
+    h('div.party-values', {},
+      h('div', {}, h('small', {}, 'XP'), h('b', {}, String(p.xp))),
+      h('div', {}, h('small', {}, 'Spieldatum'), h('b', {}, p.date || '–'))),
+    h('label.field', {}, h('span', {}, 'Gold / Beute (alle dürfen ändern)'),
+      h('input', { value: p.gold, onchange: (e) => conn.act({ type: 'party.update', patch: { gold: e.target.value } }) })),
+    h('label.field', {}, h('span', {}, 'Gemeinsame Notizen (alle sehen und schreiben)'),
+      h('textarea', { rows: 12, oninput: (e) => saveNotes(e.target.value), placeholder: 'Quests, Namen, Hinweise …' }, p.notes || '')),
+  );
 }
 
 function render() {
@@ -50,7 +125,7 @@ function render() {
   $('#sceneName').textContent = sc ? sc.name : '';
   board.setData(state, sc);
 
-  renderInitiative($('#initiative'), state.initiative.entries, { isDM: false, current: state.initiative.current, state });
+  renderInitiative($('#initiative'), state.initiative.entries, { isDM: false, currentId: state.initiative.currentId, state });
 
   if (me && me.hp) {
     if (!sheet) {
@@ -60,10 +135,12 @@ function render() {
         showPrivateNotes: true,
         canPickPortrait: false,
         onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }),
+        onConditions: (list) => conn.act({ type: 'conditions.set', target: { kind: 'character', id: me.id }, conditions: list }),
       });
     }
     sheet.update(me, state);
   }
+  renderParty();
 }
 
 $('#zoomIn').onclick = () => board.zoomBy(1.25);
@@ -71,6 +148,9 @@ $('#zoomOut').onclick = () => board.zoomBy(0.8);
 $('#zoomFit').onclick = () => board.fit();
 $('#panelToggle').onclick = () => document.body.classList.toggle('panel-open');
 if (window.matchMedia('(min-width: 901px)').matches) document.body.classList.add('panel-open');
-
-// Kleines Detail: Doppeltippen auf leere Fläche passt die Karte ein.
 $('#board').addEventListener('dblclick', () => board.fit());
+renderToolbar();
+renderTabs();
+
+// Für automatische Tests (Koordinaten der Karte): window.dnd.board
+window.dnd = { board };
