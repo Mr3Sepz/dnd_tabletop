@@ -2,7 +2,8 @@
 // Inventar, privatem Notizbuch, Zuständen und Todesrettungswürfen; Gruppenwerte,
 // gemeinsame Notizen, Würfel, Messen und eigene Zauberschablonen.
 
-import { $, $$, h, debounce, dialog } from './util.js';
+import { $, $$, h, debounce, dialog, setupViewToggles } from './util.js';
+import { InventoryEditor } from './inventory.js';
 import { connect, storedSeat } from './net.js';
 import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
@@ -19,6 +20,7 @@ if (join.seat !== seat) join = {};
 
 let state = null;
 let sheet = null;
+let inv = null;
 let tab = 'sheet';
 
 const sceneId = () => state && state.scenes[0] && state.scenes[0].id;
@@ -96,6 +98,7 @@ function openPanel(which) {
 function renderTabs() {
   $$('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $('#sheet').classList.toggle('hidden', tab !== 'sheet');
+  $('#inventory').classList.toggle('hidden', tab !== 'inventory');
   $('#party').classList.toggle('hidden', tab !== 'party');
 }
 $$('#tabs button').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; renderTabs(); }; });
@@ -110,8 +113,6 @@ function renderParty() {
     h('div.party-values', {},
       h('div', {}, h('small', {}, 'XP'), h('b', {}, String(p.xp))),
       h('div', {}, h('small', {}, 'Spieldatum'), h('b', {}, p.date || '–'))),
-    h('label.field', {}, h('span', {}, 'Gold / Beute (alle dürfen ändern)'),
-      h('input', { value: p.gold, onchange: (e) => conn.act({ type: 'party.update', patch: { gold: e.target.value } }) })),
     h('label.field', {}, h('span', {}, 'Gemeinsame Notizen (alle sehen und schreiben)'),
       h('textarea', { rows: 12, oninput: (e) => saveNotes(e.target.value), placeholder: 'Quests, Namen, Hinweise …' }, p.notes || '')),
   );
@@ -131,7 +132,6 @@ function render() {
     if (!sheet) {
       sheet = new Sheet($('#sheet'), {
         kind: 'character',
-        showInventory: true,
         showPrivateNotes: true,
         canPickPortrait: false,
         onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }),
@@ -139,6 +139,8 @@ function render() {
       });
     }
     sheet.update(me, state);
+    if (!inv) inv = new InventoryEditor($('#inventory'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }) });
+    inv.update(me);
   }
   renderParty();
 }
@@ -151,6 +153,7 @@ if (window.matchMedia('(min-width: 901px)').matches) document.body.classList.add
 $('#board').addEventListener('dblclick', () => board.fit());
 renderToolbar();
 renderTabs();
+setupViewToggles('player', board);
 
 // Für automatische Tests (Koordinaten der Karte): window.dnd.board
 window.dnd = { board };

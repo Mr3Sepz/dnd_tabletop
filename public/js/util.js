@@ -95,7 +95,7 @@ export function dialog({ title, body, fields = [], okText = 'OK', cancelText = '
       },
     },
     h('h3', {}, title),
-    body ? h('p', {}, body) : null,
+    Array.isArray(body) ? h('ul.dialog-list', {}, ...body.map((b) => h('li', {}, b))) : body ? h('p', {}, body) : null,
     ...inputs,
     h('div.dialog-buttons', {},
       cancelText ? h('button', { type: 'button', onclick: () => close(null) }, cancelText) : null,
@@ -159,4 +159,32 @@ export function gridDistance(dx, dy, grid) {
   const cells = Math.max(Math.abs(dx), Math.abs(dy)) / (grid.size || 70);
   const rounded = Math.round(cells * 10) / 10;
   return { cells: rounded, feet: Math.round(cells * (grid.feet || 5)) };
+}
+
+/**
+ * Knöpfe "Karte aus/ein" und "Vollbild" in der Kopfzeile.
+ * Ohne Karte nutzt die Verwaltung die volle Breite (Handy, echte Karte auf dem Tisch).
+ */
+export function setupViewToggles(role, board) {
+  const key = `dnd.noMap.${role}`;
+  const btn = document.getElementById('mapToggle');
+  const apply = (off) => {
+    document.body.classList.toggle('no-map', off);
+    btn.classList.toggle('active', off);
+    btn.title = off ? 'Karte wieder einblenden' : 'Karte ausblenden (z. B. am Handy oder mit echter Karte auf dem Tisch)';
+    if (!off) setTimeout(() => board.fit(), 50);
+  };
+  let off = false;
+  try { off = localStorage.getItem(key) === '1'; } catch { /* egal */ }
+  apply(off);
+  btn.onclick = () => {
+    off = !document.body.classList.contains('no-map');
+    try { localStorage.setItem(key, off ? '1' : '0'); } catch { /* egal */ }
+    apply(off);
+  };
+  const fs = document.getElementById('fullscreen');
+  if (!document.fullscreenEnabled) fs.classList.add('hidden');
+  fs.onclick = () => {
+    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {});
+  };
 }

@@ -36,6 +36,7 @@ server/
   config.js       Einstellungen (inkl. Benutzerordner im AppImage)
 shared/
   conditions.json Zustände und Farben (Server und Browser)
+  rules-help.json Texte der Infopunkte (SRD 5.1, gekürzt und übersetzt, mit Quellenangabe)
 public/
   dm.html, player.html, index.html
   js/board.js     Karte: Ebenen, Werkzeuge, Nebel, Auswahl, Messen
@@ -45,6 +46,9 @@ public/
   js/initiative.js Porträtleiste
   js/dice.js      Würfel-Panel
   js/conditions.js Zustandsdialog
+  js/inventory.js Inventar (Münzen + Gegenstände), für DM und Spieler
+  js/help.js      Infopunkte (ⓘ) und Zustandserklärungen
+  js/util.js      Dialoge, Felder, Karte-aus- und Vollbild-Schalter
 packaging/        AppImage-Startpunkt, Desktop-Datei, Icons
 scripts/          build-appimage.sh, build-windows.sh
 test/             Server-Tests (npm test), Browser-Rundgang, Testgrafiken
@@ -66,10 +70,11 @@ state
 │                             ownerSeat, kind (player|npc|marker), refId, conditions[]
 ├─ assets[]                   id, file, name, width, height
 ├─ seats[1..n]                playerName, claimToken (Schlüssel zum Wiederverbinden)
-├─ characters[1..n]           hp, deathSaves, conditions, stats, slots[9], counters, inventory, privateNotes
-├─ npcs[]                     wie characters + dead, note (ohne Inventar/Notizbuch)
+├─ characters[1..n]           hp, deathSaves, conditions, stats, slots[9], counters, coins{pp,gp,sp,cp},
+│                             inventory (Text), sheetPrefs{slots,counters}, privateNotes
+├─ npcs[]                     wie characters + dead, note (ohne Münzen/Inventar/Notizbuch)
 ├─ initiative                 entries[{kind: character|npc|group, refId | refIds, name, value, visibility}], currentId
-├─ party                      notes, xp, gold, date
+├─ party                      notes, xp, date
 ├─ diceLog[]                  by, expr, detail, total, secret
 └─ dmNotes
 ```
@@ -86,6 +91,10 @@ Porträtleiste: Ein NPC- oder Gruppeneintrag ist bei `visibility: auto` nur sich
 
 Schnelle Bewegungen (`token:moved`) gehen nur an Plätze, die in derselben Szene sind und die Figur sehen dürfen.
 
+Münzen, Inventar und Werte anderer Charaktere bekommt ein Spieler nicht: Von fremden Charakteren gehen nur Name, Platz, Porträt und Zustände raus.
+
+Ob die Karte ein- oder ausgeblendet ist (`body.no-map`), ist reine Anzeige und wird pro Gerät im `localStorage` gemerkt.
+
 **Grenze:** Das Kartenbild selbst wird vollständig übertragen. Der Nebel wird im Browser darübergelegt. Wer in die Entwicklertools schaut, kann die Karte sehen, aber keine Figuren im Nebel.
 
 ## Speichern
@@ -101,7 +110,7 @@ bash scripts/build-appimage.sh   # dist/DnD-Tabletop-<version>-x86_64.AppImage
 bash scripts/build-windows.sh    # dist/DnD-Tabletop-<version>-windows-x64.zip
 ```
 
-GitHub Actions (`.github/workflows/release.yml`) baut beide bei jedem Push und testet sie: das AppImage auf Ubuntu, die ZIP auf echtem Windows. Ein Tag `v*` veröffentlicht sie als Release.
+GitHub Actions (`.github/workflows/release.yml`) baut beide bei jedem Push und testet sie: das AppImage auf Ubuntu, die ZIP auf echtem Windows. Wird auf GitHub ein Release veröffentlicht (*Releases → Draft a new release*), hängt der Workflow beide Dateien an.
 
 ## Tests
 

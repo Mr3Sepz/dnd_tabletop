@@ -10,7 +10,7 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 
 [![Tests](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/ci.yml/badge.svg)](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/ci.yml)
 [![Pakete](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/release.yml/badge.svg)](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/release.yml)
-![Linux](https://img.shields.io/badge/Linux-AppImage-8b2e1f) ![Windows](https://img.shields.io/badge/Windows-portable-8b2e1f) ![Spieler](https://img.shields.io/badge/Spieler-1–20-8b2e1f)
+![Linux](https://img.shields.io/badge/Linux-AppImage-8b2e1f) ![Windows](https://img.shields.io/badge/Windows-portable-8b2e1f) ![Spieler](https://img.shields.io/badge/Spieler-1–20-8b2e1f) ![Regeln](https://img.shields.io/badge/Regeln-5e%20(2014)-8b2e1f)
 
 <img src="docs/img/01-dm-ueberblick.webp" alt="DM-Ansicht: Karte mit Goblins, Wagen und Helden, Porträtleiste oben, Charakterbogen rechts">
 
@@ -21,13 +21,14 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 ## Inhalt
 
 - [Loslegen](#loslegen)
-- [Die DM-Ansicht im Überblick](#die-dm-ansicht-im-überblick)
+- [Die DM-Ansicht im Überblick](#die-dm-ansicht-im-überblick) · [Ohne Karte spielen](#ohne-karte-spielen)
 - [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Figuren und NPCs](#3-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
-- [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Fog of War](#9-fog-of-war) · [Getrennte Gruppen](#10-getrennte-gruppen) · [Sicht pro Spieler](#11-sicht-pro-spieler) · [Messen](#12-entfernungen-messen) · [Würfel](#13-würfeln) · [Vorschau](#14-als-spieler-ansehen)
+- [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Charakterbogen](#9-der-charakterbogen) · [Inventar](#10-inventar) · [Fog of War](#11-fog-of-war) · [Getrennte Gruppen](#12-getrennte-gruppen) · [Sicht pro Spieler](#13-sicht-pro-spieler) · [Messen](#14-entfernungen-messen) · [Würfel](#15-würfeln) · [Vorschau](#16-als-spieler-ansehen)
+- [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
 - [Notizen, Speichern, Beenden](#notizen-speichern-beenden)
 - [Was deine Spieler sehen](#was-deine-spieler-sehen)
 - [Spickzettel](#spickzettel)
-- [Einstellungen](#einstellungen) · [Probleme lösen](#probleme-lösen) · [Für Entwickler](#für-entwickler)
+- [Einstellungen](#einstellungen) · [Probleme lösen](#probleme-lösen) · [Für Entwickler](#für-entwickler) · [Lizenzen](#lizenzen)
 
 ---
 
@@ -57,7 +58,16 @@ cd dnd_tabletop
 
 ### 2. Starten
 
-Nach dem Start öffnet sich die **DM-Ansicht** im Browser. Das Fenster mit den Adressen (Terminal) bleibt offen, solange gespielt wird.
+Beim Start passieren zwei Dinge:
+
+1. **Ein schwarzes Fenster** geht auf. Das ist der eigentliche Spieltisch-Server, der im Hintergrund läuft. Darin stehen die Adressen, unter denen du und deine Spieler das Spiel erreicht:
+
+   <img src="docs/img/00-startfenster.webp" alt="Startfenster mit DM-Adresse, Spieler-Adresse und Spielstand-Ordner" width="620">
+
+   **Lass dieses Fenster offen, solange gespielt wird.** Du kannst es verkleinern, aber wenn du es schließt, ist das Spiel aus. Gespeichert wird trotzdem.
+2. **Dein Browser** öffnet die **DM-Ansicht**. Dort spielst du.
+
+**Vollbild:** **F11** drücken oder oben auf **⛶** klicken (praktisch am Tablet).
 
 > **Windows:** Beim ersten Start fragt die Firewall, ob Node.js ins Netzwerk darf. Erlaube das für **private Netzwerke**, sonst kommen die Spieler nicht rein.
 
@@ -73,14 +83,26 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🗺 Karte aus/ein** · **⛶ Vollbild** · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
-| **Seitenleiste** (rechts) | Reiter *Szenen · Figuren · Spieler · NPCs · Notizen · Spiel* |
+| **Seitenleiste** (rechts) | Reiter *Szenen · Figuren · Spieler · NPCs · Inventar · Notizen · Spiel* |
 | **🎲** (unten links) | Würfel mit Protokoll |
 
 Auf dem Tablet oder Handy klappt die Seitenleiste mit **☰** auf und zu.
+
+### Ohne Karte spielen
+
+Es gibt viele Momente ohne Karte: Gespräche, Reisen, Einkaufen. Oder es liegt ohnehin eine echte Karte auf dem Tisch. Dann blendest du sie mit **🗺** oben aus. Die Verwaltung nutzt danach die ganze Breite. Das geht beim DM und bei jedem Spieler einzeln, die App merkt es sich pro Gerät.
+
+<table>
+<tr>
+<td width="70%"><img src="docs/img/26-dm-ohne-karte.webp" alt="DM-Ansicht ohne Karte"></td>
+<td width="30%"><img src="docs/img/21-ohne-karte-handy.webp" alt="Spieler am Handy ohne Karte, mit Zauberplätzen als Rauten"></td>
+</tr>
+<tr><td>DM ohne Karte: Leiste, Plätze, Gruppe, Bögen</td><td>Spieler am Handy ohne Karte</td></tr>
+</table>
 
 ---
 
@@ -115,7 +137,8 @@ Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. 
 Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und eigenem Nebel, zum Beispiel *Waldweg* oder *Cragmaw-Höhle*.
 
 - **+ Neue Szene**, dann **Bild hochladen**. Große Bilder werden automatisch verkleinert, damit sie bei allen schnell laden.
-- **Raster:** Es ist sofort da. Stell die **Feldgröße** so ein, dass ein Feld einem Kästchen deiner Karte entspricht, oder ändere stattdessen die **Kartengröße**. *Fuß pro Feld* (Standard 5) braucht das Lineal.
+- **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
+- **Fuß pro Feld** (Standard 5) braucht das Lineal.
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
 - **Notiz zur Szene:** Raumbeschreibung, Fallen, Schätze. Nur du siehst sie.
@@ -126,11 +149,15 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 
 ### 3. Figuren und NPCs
 
-**Bildersammlung** (Reiter *Figuren*): Lade Porträts, Monster und Objekte über **+ Bilder** hoch oder ziehe sie direkt ins Fenster. Danach ziehst du ein Bild auf die Karte oder tippst es an und dann auf die Karte.
+<img src="docs/img/19-figuren-reiter.webp" width="300" align="right" alt="Reiter Figuren mit Knopf + Bilder und Bildersammlung">
+
+**Bildersammlung:** Reiter **Figuren** → oben rechts der rote Knopf **+ Bilder**. Lade Porträts, Monster und Objekte hoch oder ziehe Bilddateien einfach ins Browserfenster. Danach ziehst du ein Bild auf die Karte oder tippst es an und dann auf die Karte.
 
 **Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
 
 **NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …**
+
+<br clear="right">
 
 <img src="docs/img/06-mehrfach-setzen.webp" alt="Dialog: Goblin 4× versteckt setzen">
 
@@ -144,10 +171,12 @@ Beim Setzen eines NPCs wählst du:
 | Werkzeug | Wofür |
 | --- | --- |
 | ▭ ◯ ✎ | Rechteck, Ellipse, Freihand, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Leiste ein |
-| 🧱 **Objekt** | Ein Bild aus der Sammlung als **eckiges, drehbares** Objekt: Wagen, Tür, Tisch |
+| 🧱 **Objekt** | Jedes **eigene Bild** aus deiner Bildersammlung als **eckiges, drehbares** Ding auf der Karte: Wagen, Tür, Tisch, Kiste, Lagerfeuer. Der Unterschied zur Figur: Figuren sind rund und für Lebewesen gedacht (mit HP, Zuständen, Initiative). Objekte sind Gegenstände, die du frei drehen und strecken kannst |
 | 🔥 **Schablone** | Kreis, Kegel, Linie oder Würfel in Fuß, z. B. „Feuerball, 20 ft“ |
 
-Ein Klick mit 🖐 auf eine Zeichnung zeigt Griffe zum **Verschieben, Drehen und Skalieren**. Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
+Ein Klick mit 🖐 auf eine Zeichnung oder ein Objekt zeigt Griffe zum **Verschieben, Drehen und Skalieren**. Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
+
+> **Spieler haben auch 📏 Messen und 🔥 Schablonen.** So planen sie ihre Angriffe selbst: Kegel anlegen, drehen, prüfen, wen es trifft. Eigene Schablonen können sie verschieben und löschen, fremde nicht.
 
 ---
 
@@ -162,9 +191,9 @@ Ein Klick mit 🖐 auf eine Zeichnung zeigt Griffe zum **Verschieben, Drehen und
 | Eintrag | Was passiert |
 | --- | --- |
 | Schaden / Heilung … | Betrag eingeben → *Schaden*, *Heilung* oder *Temporäre HP*. Schaden zieht zuerst temporäre HP ab |
-| Zustände … | Liegend, vergiftet, gepackt, bewusstlos, Segen, Konzentration … oder ein eigener Zustand |
+| Zustände … | Liegend, vergiftet, blutend, gepackt, bewusstlos, Segen, Konzentration … oder ein eigener Zustand |
 | Verstecken / Aufdecken | Versteckte Figuren kommen bei den Spielern gar nicht erst an |
-| Sichtbar für … | Nur bestimmte Spieler sehen die Figur ([mehr dazu](#11-sicht-pro-spieler)) |
+| Sichtbar für … | Nur bestimmte Spieler sehen die Figur ([mehr dazu](#13-sicht-pro-spieler)) |
 | Bearbeiten … | Name, Kennung, Bild, Größe, verknüpfter Charakter/NPC, wer sie bewegen darf, Farbe |
 | Werte öffnen | Öffnet den Bogen rechts. Das geht auch per normalem Klick auf die Figur |
 | In Porträtleiste · Größer · Kleiner · Kopieren · Nach vorne · Löschen | |
@@ -173,25 +202,39 @@ Ein Klick mit 🖐 auf eine Zeichnung zeigt Griffe zum **Verschieben, Drehen und
 
 <img src="docs/img/03b-auswahl-menue.webp" alt="Vier markierte Goblins mit Aktionsmenü">
 
-**Markieren:** Umschalt + Klick auf Figuren, **Umschalt + Rahmen ziehen** auf freier Fläche oder ☐ in der Figurenliste. Unten erscheint *„4 markiert · Aktionen …“*:
+**Markieren**, drei Wege:
+- **Umschalt gedrückt halten und Figuren einzeln anklicken.** Noch einmal klicken hebt die Markierung wieder auf.
+- **Umschalt + Rahmen ziehen** auf freier Fläche.
+- **☐** in der Figurenliste (praktisch am Tablet).
+
+Unten erscheint *„4 markiert · Aktionen …“*:
 
 - **Schaden / Heilung für alle:** Feuerball, Wasserflut, Falle.
 - **Zustand für alle**, **alle aufdecken / verstecken**, **Sichtbar für …**
-- **Als Gruppe in die Porträtleiste:** ein Eintrag „Goblins ×4“ statt vier einzelner.
+- **Einzeln in die Porträtleiste:** Jeder Goblin bekommt einen eigenen Eintrag.
 - Markierte Figuren **ziehst du gemeinsam**.
 
 ### 7. Porträtleiste und Initiative
 
-<img src="docs/img/02-portraetleiste.webp" alt="Porträtleiste mit Initiativwerten">
+<img src="docs/img/02-portraetleiste.webp" alt="Porträtleiste mit einzelnen Goblins und Initiativwerten">
 
-- **In die Leiste:** im Bogen „In Leiste“, im Figurenmenü „In Porträtleiste“ oder im Reiter *Spieler* „Alle in Leiste“ (nimmt nur Charaktere, die mitspielen).
+- **In die Leiste:** im Bogen „In Leiste“, im Figurenmenü „In Porträtleiste“, für mehrere Figuren *Aktionen → Einzeln in die Porträtleiste* oder im Reiter *Spieler* „Alle in Leiste“ (nimmt nur Charaktere, die mitspielen).
+- **Gleiche Gegner stehen einzeln** (Goblin A, Goblin B …) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
 - **Initiativwert** ins kleine Feld unter dem Porträt tippen, dann **Sortieren**. Der Höchste beginnt.
 - **Reihenfolge ändern:** Porträt ziehen (Maus) oder **‹ ›** (Touch). **Weiter ▶** schaltet zum Nächsten. Ein Klick auf ein Porträt macht es zum aktuellen.
-- **👁 Sichtbarkeit** pro NPC-Eintrag:
-  - *automatisch:* erscheint bei den Spielern erst, wenn eine Figur davon für sie sichtbar ist. **Ein versteckter Hinterhalt verrät sich also nicht durch die Leiste.**
-  - *immer* / *nie* (🚫).
-  - Einträge, die gerade kein Spieler sieht, haben bei dir einen gestrichelten Rahmen.
 - Bei Gegnern sehen die Spieler **nie die HP**, nur einen farbigen Ring: unverletzt · angeschlagen · schwer verletzt · am Boden · tot.
+
+**Wer sieht welchen Eintrag?** Unter jedem Gegner steht ein Knopf, z. B. **👁 automatisch**. Antippen öffnet diese Auswahl:
+
+<img src="docs/img/24-sichtbarkeit.webp" alt="Auswahl: automatisch, immer zeigen, verbergen">
+
+| Einstellung | Bedeutung |
+| --- | --- |
+| **👁 automatisch** (Standard) | Der Gegner erscheint bei einem Spieler erst, wenn dieser eine Figur davon auf der Karte sieht. **Ein versteckter Hinterhalt verrät sich also nicht durch die Leiste.** |
+| **👁 immer zeigen** | Der Eintrag ist immer sichtbar, auch ohne Figur auf der Karte, z. B. für eine Stimme aus dem Dunkeln |
+| **🚫 verborgen** | Nur du siehst den Eintrag |
+
+Einträge, die gerade kein Spieler sieht, haben bei dir einen gestrichelten Rahmen.
 
 ### 8. Schaden, Zustände und 0 HP
 
@@ -202,28 +245,53 @@ Ein Klick mit 🖐 auf eine Zeichnung zeigt Griffe zum **Verschieben, Drehen und
 </tr>
 <tr>
 <td><b>Schaden / Heilung</b>: über das Figurenmenü, den Knopf „± HP“ im Bogen oder für mehrere markierte Figuren.</td>
-<td><b>Zustände</b>: farbige Ringe um Figur und Porträt, für alle sichtbar. Spieler dürfen Zustände ihres eigenen Charakters selbst setzen.</td>
+<td><b>Zustände</b>: farbige Ringe um Figur und Porträt, für alle sichtbar. Spieler dürfen Zustände ihres eigenen Charakters selbst setzen. Ein Klick auf einen Zustand im Bogen erklärt, was er bewirkt.</td>
 </tr>
 </table>
 
+Verfügbar sind alle 5e-Zustände (blind, bezaubert, taub, verängstigt, gepackt, kampfunfähig, unsichtbar, gelähmt, versteinert, vergiftet, liegend, festgesetzt, betäubt, bewusstlos, erschöpft), dazu **Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt** und beliebige eigene Zustände.
+
 <img src="docs/img/04b-tot-oder-am-boden.webp" alt="Frage: Goblin A ist auf 0 HP – tot oder am Boden?">
 
-**Fällt ein NPC auf 0 HP**, fragt die App: **tot oder am Boden?** Der niedergeschlagene Goblin für das Verhör bleibt so „am Boden“ (grau). Erst „tot“ bekommt ein Kreuz. Wird er geheilt, steht er wieder.
+**Fällt ein NPC auf 0 HP**, fragt die App: **tot oder am Boden?** Der niedergeschlagene Goblin für das Verhör bleibt so „am Boden“ (grau). Erst „tot“ bekommt ein Kreuz. Wird er geheilt, steht er wieder. Bei 0 HP zeigt der Bogen außerdem die **Todesrettungswürfe** (3 Erfolge, 3 Fehlschläge).
+
+### 9. Der Charakterbogen
 
 <img src="docs/img/11-npc-bogen.webp" width="300" align="right" alt="NPC-Bogen bei 0 HP mit Todesrettungswürfen">
 
-Bei 0 HP zeigt der Bogen **Todesrettungswürfe** (3 Erfolge, 3 Fehlschläge). Das gilt für Spieler wie für NPCs.
-
-Der **Bogen** (Spieler wie NPC) enthält außerdem:
-- **HP:** aktuell, maximal, temporär; Schaden- und Heilen-Knöpfe.
-- **Werte** wie die RK, frei benennbar.
-- **Zauberplätze:** „Anzahl ändern“ legt pro Grad fest, wie viele es gibt. Kästchen abhaken = verbraucht. „Alle frei“ setzt zurück.
+Spieler und NPCs haben denselben Bogen:
+- **Trefferpunkte:** aktuell, maximal, temporär; Knöpfe für Schaden und Heilung.
+- **Zustände** mit Erklärung per Klick.
+- **Werte** wie die RK (Rüstungsklasse), frei benennbar. Spieler sehen und ändern ihre eigene RK. Die RK von Gegnern sehen sie nie.
+- **Zauberplätze als blaue Rauten** mit dem Grad (I, II, III …). Antippen = verbraucht, die Raute wird grau. „Anzahl ändern“ legt fest, wie viele es pro Grad gibt. „Alle frei“ setzt nach einer langen Rast zurück.
 - **Zähler:** Ki, Kampfrausch, Heiltränke …
-- **Inventar** (Spieler) bzw. **Notiz** (NPC).
+- **Notiz** (NPC) bzw. **privates Notizbuch** (Spieler, das siehst auch du nicht).
 
 <br clear="right">
 
-### 9. Fog of War
+**⚙ Bogen anpassen:** Ein Krieger braucht keine Zauberplätze. Hier blendest du sie aus oder ein. Außerdem hakst du **fertige Zähler** an oder ab: Inspiration, Heiltränke, Kampfrausch, Ki-Punkte, Zweiter Wind, Tatendrang, Bardische Inspiration, Göttliche Macht, Handauflegen, Zaubereipunkte, Tiergestalt, Erschöpfung, Munition. Alles kann an sein, nichts muss. Das geht auch für die Spieler am eigenen Bogen.
+
+<table>
+<tr>
+<td width="62%"><img src="docs/img/22-bogen-anpassen.webp" alt="Bogen anpassen: Zauberplätze aus, Zweiter Wind und Tatendrang an"></td>
+<td width="38%"><img src="docs/img/21-ohne-karte-handy.webp" alt="Zauberplätze als blaue Rauten, verbrauchte grau"></td>
+</tr>
+<tr><td>Borin, der Krieger: keine Zauberplätze, dafür Zweiter Wind und Tatendrang</td><td>Aria, die Zauberin: Grad I hat 2 von 4 Plätzen verbraucht (grau)</td></tr>
+</table>
+
+### 10. Inventar
+
+<img src="docs/img/20-inventar-dm.webp" width="300" align="right" alt="Reiter Inventar beim DM mit Münzen und Gegenständen">
+
+**Jeder Charakter hat sein eigenes Inventar:**
+- **Münzen:** Platin, Gold, Silber, Kupfer, mit **+ / −** oder direkt eintippen.
+- **Gegenstände:** ein Textfeld wie ein Notizblock, ein Gegenstand pro Zeile.
+
+Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spieler sehen es nicht. **Du** siehst im Reiter **Inventar** alle Charaktere und kannst etwas eintragen, z. B. gefundene Beute oder etwas, das du für später planst.
+
+<br clear="right">
+
+### 11. Fog of War
 
 <table>
 <tr>
@@ -242,7 +310,7 @@ Der **Bogen** (Spieler wie NPC) enthält außerdem:
 
 Eigene Figuren sieht jeder Spieler immer, auch im Nebel.
 
-### 10. Getrennte Gruppen
+### 12. Getrennte Gruppen
 
 <img src="docs/img/09-getrennte-gruppen.webp" width="300" align="right" alt="Plätze mit Ort-Auswahl">
 
@@ -254,17 +322,17 @@ Die Gruppe teilt sich auf? Im Reiter **Spieler** wählst du bei jedem Platz den 
 
 <br clear="right">
 
-### 11. Sicht pro Spieler
+### 13. Sicht pro Spieler
 
 Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenmenü → **Sichtbar für …** → Platz 1 anhaken. Nur Mia sieht ihn, die anderen nicht. Bei dir trägt die Figur ein kleines blaues 👁 mit den Platznummern. Kein Haken = wieder für alle sichtbar.
 
-### 12. Entfernungen messen
+### 14. Entfernungen messen
 
 <img src="docs/img/10-messen.webp" alt="Lineal zeigt 30 ft (6 Felder)">
 
-📏 auswählen und ziehen: Die App zeigt **Fuß und Felder** (5e-Regel: Diagonalen zählen wie gerade Felder). Beim **Ziehen einer Figur** siehst du die Strecke automatisch. Spieler haben das Lineal auch.
+📏 auswählen und ziehen: Die App zeigt **Fuß und Felder** (5e-Regel: Diagonalen zählen wie gerade Felder). Beim **Ziehen einer Figur** siehst du die Strecke automatisch. **Die Spieler haben das Lineal auch.**
 
-### 13. Würfeln
+### 15. Würfeln
 
 <img src="docs/img/13-wuerfel.webp" alt="Würfel-Panel mit verdecktem DM-Wurf">
 
@@ -272,11 +340,21 @@ Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenm
 
 **Verdeckt würfeln** (Haken): Das Ergebnis siehst nur du. Echte Würfel am Tisch bleiben natürlich gleichwertig.
 
-### 14. Als Spieler ansehen
+### 16. Als Spieler ansehen
 
 <img src="docs/img/17-vorschau.webp" alt="Vorschau der Sicht von Platz 2">
 
 Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dieser Spieler sieht, mit Nebel, ohne Verstecktes und mit seiner Porträtleiste. Zum Beispiel, um zu prüfen, ob der Hinterhalt wirklich verborgen ist. „aus“ bringt dich zurück.
+
+---
+
+## Infopunkte für Einsteiger
+
+<img src="docs/img/23-infopunkt.webp" alt="Infopunkt: Erklärung zu temporären Trefferpunkten">
+
+Überall, wo ein Regelbegriff steht, gibt es ein kleines blaues **ⓘ**: Trefferpunkte, temporäre HP, Todesrettungswürfe, RK, Zauberplätze, Zähler, Initiative, Vorteil/Nachteil, Münzen. Ein Klick auf einen **Zustand** im Bogen erklärt, was er bewirkt.
+
+Die Texte sind kurze deutsche Zusammenfassungen der **5e-Regeln von 2014 (SRD 5.1)**, nicht der Regeln von 2024. Mehr dazu unter [Lizenzen](#lizenzen).
 
 ---
 
@@ -285,16 +363,18 @@ Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dies
 <img src="docs/img/16-notizen.webp" width="300" align="right" alt="Reiter Notizen mit Gruppenwerten">
 
 **Reiter Notizen**
-- **Gruppe (sehen alle):** XP, Gold/Beute, Spieldatum/Uhrzeit. Dazu gemeinsame Notizen, die alle Spieler mitschreiben dürfen.
+- **Gruppe (sehen alle):** XP und Spieldatum/Uhrzeit. Dazu gemeinsame Notizen, die alle Spieler mitschreiben dürfen.
 - **Mein Notizblock:** nur für dich.
 - Private Notizbücher der Spieler siehst du nicht. Die gehören den Spielern.
 
+Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
+
 **Speichern** (Reiter *Spiel*)
 - **Automatisch** alle 5 Minuten und beim Beenden. Beim nächsten Start geht es genau dort weiter.
-- **Spielstand herunterladen:** eine ZIP-Datei mit *allem* (Szenen, Bilder, Figuren, Nebel, Zeichnungen, Werte, Notizen). Du kannst so oft speichern, wie du willst.
+- **Spielstand herunterladen:** eine ZIP-Datei mit *allem* (Szenen, Bilder, Figuren, Nebel, Zeichnungen, Werte, Inventare, Notizen). Du kannst so oft speichern, wie du willst.
 - **Spielstand laden:** stellt den Stand exakt wieder her, auch auf einem anderen Rechner.
 
-**Beenden:** *Spiel → Server beenden* speichert und trennt alle. Alternativ Strg+C im Terminal. Ein zweiter Doppelklick auf die App öffnet die laufende Runde, statt eine neue zu starten.
+**Beenden:** *Spiel → Server beenden* speichert und trennt alle. Alternativ schließt du das schwarze Startfenster oder drückst darin Strg+C. Ein zweiter Doppelklick auf die App öffnet die laufende Runde, statt eine neue zu starten.
 
 <br clear="right">
 
@@ -311,9 +391,12 @@ Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dies
 
 - **Ihre Szene**, ohne Verstecktes, mit Nebel. Gegner nur mit grobem Zustand.
 - **Ihre eigenen Figuren** bewegen sie selbst. Andere Figuren können sie nicht bewegen.
-- **Mein Charakter:** HP, Werte, Zauberplätze, Zähler, Zustände, Inventar und ein **privates Notizbuch**, das auch du nicht siehst.
-- **Gruppe:** XP, Gold, Spieldatum, gemeinsame Notizen.
-- **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln.
+- **Charakter:** HP, Werte, Zauberplätze, Zähler, Zustände, ein **privates Notizbuch**, das auch du nicht siehst, und ⚙ *Bogen anpassen*.
+- **Inventar:** ihre Münzen und Gegenstände.
+- **Gruppe:** XP, Spieldatum, gemeinsame Notizen.
+- **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln, **🗺 Karte aus** fürs Handy, ⛶ Vollbild.
+
+<img src="docs/img/25-inventar-handy.webp" width="260" alt="Inventar am Handy: Münzen und Gegenstände">
 
 ---
 
@@ -322,16 +405,22 @@ Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dies
 | Ich will … | So geht's |
 | --- | --- |
 | Karte zoomen / verschieben | Mausrad oder zwei Finger / freie Fläche ziehen · ⤢ = ganze Karte |
+| Karte ausblenden | 🗺 oben (merkt sich das Gerät) |
+| Vollbild | F11 oder ⛶ |
+| Raster an die Karte anpassen | *Szenen* → Raster → Schieberegler *Feldgröße* (oder *Kartengröße*) |
+| Bilder hochladen | *Figuren* → **+ Bilder** oben rechts, oder Datei ins Fenster ziehen |
 | Menü einer Figur | Rechtsklick oder lange drücken |
-| Mehrere Figuren markieren | Umschalt + Klick · Umschalt + Rahmen ziehen · ☐ in der Liste |
+| Mehrere Figuren markieren | **Umschalt + einzelne Figuren anklicken** · Umschalt + Rahmen ziehen · ☐ in der Liste |
 | Auswahl / Werkzeug abbrechen | `Esc` |
 | Hinterhalt vorbereiten | NPC → *Auf Karte setzen …* → Anzahl + „versteckt“ |
 | Goblins auftauchen lassen | markieren → *Aktionen* → *Alle aufdecken* |
 | Feuerball auf mehrere | markieren → *Schaden / Heilung für alle* |
-| Kampf starten | *Alle in Leiste* · Goblins als Gruppe · Werte eintippen · *Sortieren* · *Weiter ▶* |
+| Kampf starten | *Alle in Leiste* · Goblins markieren → *Einzeln in die Porträtleiste* · Werte eintippen · *Sortieren* · *Weiter ▶* |
 | Höhle erkunden | Szene → *Alles verdecken* → ☀▭ / ☀✎ Stück für Stück aufdecken |
 | Gruppe teilt sich | Reiter *Spieler* → *Ort* pro Platz |
 | Nur einer bemerkt etwas | Figurenmenü → *Sichtbar für …* |
+| Krieger ohne Zauberplätze | Bogen → *⚙ Bogen anpassen* → Zauberplätze aus |
+| Beute verteilen | Reiter *Inventar* → Charakter wählen → Münzen / Gegenstände |
 | Geheim würfeln | 🎲 → *Verdeckt würfeln* |
 | Szene vorbereiten, ohne dass es jemand sieht | oben *Bearbeite:* andere Szene → später *Live schalten* |
 
@@ -363,6 +452,7 @@ Umgebungsvariablen gehen auch: `PORT`, `DND_DM_PASSWORD`, `DND_PIN`, `DND_SEATS`
 - Ist das Handy im **selben WLAN** (nicht im Gäste-WLAN)?
 - Windows: Hat die Firewall Node.js für **private Netzwerke** erlaubt? Sonst: *Windows-Sicherheit → Firewall → App durch die Firewall zulassen → Node.js*.
 - Stimmt die **PIN**? Im Reiter *Spiel* kannst du sie ändern oder leeren.
+- Läuft das schwarze Startfenster noch?
 </details>
 
 <details>
@@ -406,4 +496,10 @@ bash scripts/build-windows.sh     # portable Windows-ZIP
 - [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md): wie es funktioniert und wo was liegt
 - [docs/FEATURES.md](docs/FEATURES.md): Status aller Funktionen
 
-Lizenz: MIT · Die Testgrafiken in `test/art` sind für dieses Projekt erstellt.
+---
+
+## Lizenzen
+
+- **Programm:** MIT (siehe [LICENSE](LICENSE)). Die Testgrafiken in `test/art` sind für dieses Projekt erstellt.
+- **Regeltexte in den Infopunkten** (`shared/rules-help.json`): gekürzte deutsche Bearbeitungen. *This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.* Die Texte wurden übersetzt, gekürzt und um Hinweise zur Bedienung der App ergänzt. Die Zustände „Brennt“ und „Blutend“ stammen nicht aus dem SRD.
+- Kompatibel mit der fünften Edition („5E compatible“).

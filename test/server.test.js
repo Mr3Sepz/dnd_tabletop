@@ -417,3 +417,51 @@ test('Würfel: offene Würfe sehen alle, verdeckte DM-Würfe nur der DM (X1, X2)
   assert.ok(seen.some((r) => r.id === open.result.roll.id) && !seen.some((r) => r.id === hidden.result.roll.id));
   p.c.close();
 });
+
+// ---------------------------------------------------------------- Feedback des DM (21.11.)
+
+test('Inventar pro Charakter: Münzen und Gegenstände ändern Spieler selbst und der DM, sonst niemand', async () => {
+  const dm = await joinDM();
+  const p1 = await joinPlayer(1);
+  const p2 = await joinPlayer(2);
+  const mine = inst.getState().characters.find((c) => c.seat === 1);
+  assert.equal((await act(p1.c, { type: 'character.update', id: mine.id, patch: { coins: { gp: 23, sp: 4 }, inventory: 'Seil' } })).ok, true);
+  assert.equal((await act(dm.c, { type: 'character.update', id: mine.id, patch: { coins: { pp: 1 } } })).ok, true, 'DM darf etwas eintragen');
+  assert.equal((await act(p2.c, { type: 'character.update', id: mine.id, patch: { coins: { gp: 0 } } })).ok, false, 'fremdes Inventar ist tabu');
+  const c = inst.getState().characters.find((x) => x.seat === 1);
+  assert.deepEqual(c.coins, { pp: 1, gp: 23, sp: 4, cp: 0 });
+  assert.equal(c.inventory, 'Seil');
+  // Fremde Spieler sehen weder Münzen noch Gegenstände
+  const { viewForPlayer } = require('../server/state');
+  const seenBy2 = viewForPlayer(inst.getState(), 2).characters.find((x) => x.seat === 1);
+  assert.equal(seenBy2.coins, undefined);
+  assert.equal(seenBy2.inventory, undefined);
+  // Negative oder kaputte Werte werden abgefangen
+  await act(p1.c, { type: 'character.update', id: mine.id, patch: { coins: { cp: -5, gp: 'viel' } } });
+  assert.deepEqual(inst.getState().characters.find((x) => x.seat === 1).coins, { pp: 1, gp: 0, sp: 4, cp: 0 });
+  p1.c.close(); p2.c.close();
+});
+
+test('Bogen anpassen: Zauberplätze und Zähler ausblendbar, Spieler dürfen das am eigenen Bogen', async () => {
+  const p3 = await joinPlayer(3);
+  const me = inst.getState().characters.find((c) => c.seat === 3);
+  assert.deepEqual(me.sheetPrefs, { slots: true, counters: true });
+  assert.equal((await act(p3.c, { type: 'character.update', id: me.id, patch: { sheetPrefs: { slots: false } } })).ok, true);
+  assert.deepEqual(inst.getState().characters.find((c) => c.seat === 3).sheetPrefs, { slots: false, counters: true });
+  p3.c.close();
+});
+
+test('Zustand „Blutend“ gibt es', async () => {
+  const dm = await joinDM();
+  const n = (await act(dm.c, { type: 'npc.create', name: 'Ork' })).result.id;
+  await act(dm.c, { type: 'conditions.set', target: { kind: 'npc', id: n }, conditions: [{ key: 'bleeding' }] });
+  assert.equal(inst.getState().npcs.find((x) => x.id === n).conditions[0].label, 'Blutend');
+});
+
+test('Infotexte: jeder Zustand aus dem Katalog hat eine Erklärung, Quelle ist SRD 5.1', () => {
+  const help = require('../shared/rules-help.json');
+  const cat = require('../shared/conditions.json');
+  for (const c of cat.conditions) assert.ok(help.conditions[c.key], `Erklärung fehlt: ${c.key}`);
+  assert.match(help.attribution, /System Reference Document 5\.1/);
+  assert.match(help.attribution, /creativecommons\.org\/licenses\/by\/4\.0/);
+});

@@ -77,6 +77,8 @@ function newCharacter(seat) {
     slots: emptySlots(),
     counters: [],
     inventory: '',
+    coins: { pp: 0, gp: 0, sp: 0, cp: 0 },
+    sheetPrefs: { slots: true, counters: true },
     privateNotes: '',
   };
 }
@@ -94,6 +96,7 @@ function newNpc(name = 'Neuer NPC') {
     stats: [{ id: newId('s_'), label: 'RK', value: '10' }],
     slots: emptySlots(),
     counters: [],
+    sheetPrefs: { slots: true, counters: true },
   };
 }
 
@@ -157,11 +160,15 @@ function normalizeState(raw) {
   s.seats = base.seats.map((b) => ({ ...b, ...((raw.seats || []).find((x) => x.seat === b.seat) || {}) }));
   s.characters = base.characters.map((b) => {
     const c = (raw.characters || []).find((x) => x.seat === b.seat);
-    return c ? { ...b, ...c, slots: normalizeSlots(c.slots), deathSaves: { ...b.deathSaves, ...(c.deathSaves || {}) }, conditions: sanitizeConditions(c.conditions) } : b;
+    return c ? {
+      ...b, ...c, slots: normalizeSlots(c.slots), deathSaves: { ...b.deathSaves, ...(c.deathSaves || {}) }, conditions: sanitizeConditions(c.conditions),
+      coins: { ...b.coins, ...(c.coins || {}) }, sheetPrefs: { ...b.sheetPrefs, ...(c.sheetPrefs || {}) },
+    } : b;
   });
   s.npcs = (Array.isArray(raw.npcs) ? raw.npcs : []).map((n) => {
     const d = newNpc();
-    return { ...d, ...n, slots: normalizeSlots(n.slots), deathSaves: { ...d.deathSaves, ...(n.deathSaves || {}) }, conditions: sanitizeConditions(n.conditions) };
+    return { ...d, ...n, slots: normalizeSlots(n.slots), deathSaves: { ...d.deathSaves, ...(n.deathSaves || {}) }, conditions: sanitizeConditions(n.conditions),
+      sheetPrefs: { ...d.sheetPrefs, ...(n.sheetPrefs || {}) } };
   });
   // Initiative: ältere Stände hatten einen Index statt einer Id.
   const ini = raw.initiative || {};
@@ -304,6 +311,16 @@ function applySheetPatch(target, patch, { allowPrivateNotes, allowInventory = tr
     });
   }
   if (allowInventory && 'inventory' in patch) target.inventory = str(patch.inventory, LONG_TEXT);
+  if (allowInventory && patch.coins && typeof patch.coins === 'object') {
+    const c = { ...(target.coins || { pp: 0, gp: 0, sp: 0, cp: 0 }) };
+    for (const k of ['pp', 'gp', 'sp', 'cp']) if (k in patch.coins) c[k] = clampInt(patch.coins[k], 0, 99_999_999);
+    target.coins = c;
+  }
+  if (patch.sheetPrefs && typeof patch.sheetPrefs === 'object') {
+    const pr = { ...(target.sheetPrefs || { slots: true, counters: true }) };
+    for (const k of ['slots', 'counters']) if (k in patch.sheetPrefs) pr[k] = bool(patch.sheetPrefs[k]);
+    target.sheetPrefs = pr;
+  }
   if (allowPrivateNotes && 'privateNotes' in patch) target.privateNotes = str(patch.privateNotes, LONG_TEXT);
   if (allowNote && 'note' in patch) target.note = str(patch.note, LONG_TEXT);
 }

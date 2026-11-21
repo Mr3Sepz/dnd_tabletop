@@ -1,6 +1,7 @@
 // Zustände auswählen (Vorschlag 3): feste 5e-Liste plus freie Einträge wie "Segen".
 
 import { h, dialog, CATALOG } from './util.js';
+import { showConditionHelp } from './help.js';
 
 /** Öffnet den Auswahldialog. Gibt die neue Liste zurück oder null bei Abbruch. */
 export async function editConditions(current = [], title = 'Zustände') {
@@ -27,6 +28,7 @@ export async function editConditions(current = [], title = 'Zustände') {
 /** Kleine farbige Chips zur Anzeige. */
 export function conditionChips(list = [], onRemove) {
   return h('div.chips', {}, ...list.map((c) => h('span.chip', { style: { borderColor: c.color } },
-    h('span.swatch', { style: { background: c.color } }), c.label,
+    h('button.chip-label', { type: 'button', title: 'Was bewirkt das?', onclick: () => showConditionHelp(c) },
+      h('span.swatch', { style: { background: c.color } }), c.label, h('span.info.inline', {}, 'i')),
     onRemove ? h('button.icon.chip-x', { title: 'Entfernen', onclick: () => onRemove(c) }, '×') : null)));
 }

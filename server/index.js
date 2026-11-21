@@ -364,11 +364,10 @@ async function main() {
   }
   const line = '─'.repeat(60);
   console.log(`\n${line}\n  DnD-Tabletop läuft\n${line}`);
-  console.log(`  DM-Ansicht (hier am Rechner):  http://localhost:${port}/dm`);
-  for (const a of inst.networkAddresses()) {
-    console.log(`  Spieler (${a.kind === 'tailscale' ? 'Tailscale' : 'LAN'}):${' '.repeat(a.kind === 'tailscale' ? 9 : 15)}${a.url}`);
-  }
-  console.log(`  Spielstand-Ordner:             ${inst.config.dataDir}`);
+  const row = (label, value) => console.log(`  ${label.padEnd(30)}${value}`);
+  row('DM-Ansicht (hier am Rechner):', `http://localhost:${port}/dm`);
+  for (const a of inst.networkAddresses()) row(a.kind === 'tailscale' ? 'Spieler (Tailscale):' : 'Spieler (WLAN/LAN):', a.url);
+  row('Spielstand-Ordner:', inst.config.dataDir);
   console.log(`${line}\n  Beenden: Strg+C oder in der DM-Ansicht „Spiel > Server beenden“\n`);
   if (inst.config.openBrowser) openBrowser(`http://localhost:${port}/dm`);
 

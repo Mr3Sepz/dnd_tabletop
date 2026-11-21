@@ -48,8 +48,11 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Inventar, Werte | ✅ | |
-| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Segen, Konzentration, Verlangsamt + eigene. Farbige Ringe an Figur und Porträt |
+| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ | Zauberplätze als blaue Rauten mit Grad (I, II, III …), verbrauchte grau |
+| — | Bogen anpassen | ✅ | Zauberplätze und Zähler pro Charakter/NPC ein- und ausblendbar, fertige Zähler-Vorlagen (Ki, Kampfrausch, Zweiter Wind …) |
+| C5 | Inventar pro Charakter | ✅ | Platin, Gold, Silber, Kupfer + Gegenstände (Text). Spieler bearbeiten das eigene, der DM alle (Reiter *Inventar*). Andere Spieler sehen es nicht |
+| — | RK | ✅ | Spieler sehen und ändern ihre eigene RK, NPC-Werte nie |
+| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt + eigene. Farbige Ringe an Figur und Porträt |
 | P4 | Todesrettungswürfe | ✅ | erscheinen im Bogen bei 0 HP |
 | P5 | Am Boden statt besiegt | ✅ | Bei 0 HP fragt die App „tot oder am Boden?“. Spieler sehen das entsprechend |
 | P7 | Schaden/Heilung für mehrere | ✅ | temporäre HP zuerst |
@@ -61,15 +64,15 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
 | N7 / X3 | Porträtleiste = Initiative | ✅ | |
-| P1 | Kein Leck mehr | ✅ | NPC-Einträge erscheinen erst, wenn eine Figur für den Spieler sichtbar ist (oder fest: immer/nie) |
-| P6 | Initiativwert, Sortieren, Gruppen | ✅ | |
+| P1 | Kein Leck mehr | ✅ | NPC-Einträge erscheinen erst, wenn eine Figur für den Spieler sichtbar ist (oder fest: „immer zeigen“ / „verborgen“, mit erklärendem Dialog) |
+| P6 | Initiativwert, Sortieren, Gruppen | ✅ | Gleiche Gegner standardmäßig als Einzeleinträge (einzeln sortierbar), Sammeleintrag optional |
 
 ## 7. Notizen, Gruppe, Würfel
 
 | Nr. | Funktion | Status |
 | --- | --- | --- |
 | T1–T3 | DM-Notizblock, Szenen-Notizen, private Spielernotizen | ✅ |
-| T4 / P12 | Gemeinsame Notizen, XP, Gold, Spieldatum | ✅ |
+| T4 / P12 | Gemeinsame Notizen, XP, Spieldatum | ✅ (Gold ist ins Inventar gewandert) |
 | X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (`1d20+5`, `2d20kh1`, `4d6kh3`) |
 
 ## 8. Zeichnen und Messen
@@ -81,14 +84,22 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | X8 | Zauberschablonen | ✅ | Kreis, Kegel, Linie, Würfel in Fuß; auch Spieler dürfen eigene legen |
 | X5 / P10 | Entfernung messen | ✅ | Lineal in Fuß und Feldern, Anzeige beim Ziehen von Figuren |
 
-## 9. Speichern und Laden
+## 9. Bedienung und Einsteiger
+
+| Nr. | Funktion | Status | Umsetzung |
+| --- | --- | --- | --- |
+| — | Karte aus/ein | ✅ | 🗺 bei DM und Spielern, pro Gerät gemerkt; Verwaltung nutzt dann die ganze Breite |
+| — | Vollbild | ✅ | ⛶ oder F11 |
+| — | Infopunkte (ⓘ) | ✅ | Kurze deutsche Regeltexte nach SRD 5.1 (2014, CC BY 4.0) zu HP, temporären HP, Todesrettungswürfen, RK, Zauberplätzen, Zählern, Initiative, Vorteil, Münzen und allen Zuständen |
+
+## 10. Speichern und Laden
 
 | Nr. | Funktion | Status |
 | --- | --- | --- |
 | L1–L5 | Autosave (5 Min.), weitermachen, herunterladen, laden, umziehen | ✅ |
 | L6 | Spielstände in der App verwalten | ⏳ |
 
-## 10. Noch offen
+## 11. Noch offen
 
 | Nr. | Funktion |
 | --- | --- |

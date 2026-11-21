@@ -1,6 +1,7 @@
 // DM-Ansicht (A1): Karte mit Werkzeugleiste in der Mitte, alle Verwaltung in der Seitenleiste.
 
-import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS } from './util.js';
+import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
+import { InventoryEditor } from './inventory.js';
 import { connect } from './net.js';
 import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
@@ -16,7 +17,8 @@ let previewSeat = 0;     // "Als Spieler ansehen" (A4)
 let previewView = null;  // echte Spielersicht vom Server
 let tab = 'scenes';
 let placing = null;      // nächste Figur (F1: von Hand setzen)
-let selected = { players: null, npcs: null }; // geöffneter Bogen
+let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bogen / Inventar
+let invEditor = null;
 let selection = [];      // markierte Figuren (Mehrfachauswahl)
 const sheets = new Map();
 let panelDirty = false;
@@ -309,7 +311,13 @@ function selectionMenu(x, y) {
     ['Alle aufdecken', () => act({ type: 'token.updateMany', sceneId: sc.id, ids: selection, patch: { hidden: false } })],
     ['Alle verstecken', () => act({ type: 'token.updateMany', sceneId: sc.id, ids: selection, patch: { hidden: true } })],
     ['Sichtbar für …', () => visibilityDialog(toks)],
-    npcIds.length > 1 ? ['Als Gruppe in die Porträtleiste', () => groupDialog(npcIds)] : null,
+    targets.length ? ['Einzeln in die Porträtleiste', async () => {
+      for (const t of toks) {
+        const tgt = targetOf(t);
+        if (tgt && !state.initiative.entries.some((e) => e.refId === tgt.id || (e.refIds || []).includes(tgt.id))) await act({ type: 'initiative.add', kind: tgt.kind, refId: tgt.id });
+      }
+    }] : null,
+    npcIds.length > 1 ? ['Als Gruppe in die Porträtleiste (ein Eintrag)', () => groupDialog(npcIds)] : null,
     ['Auswahl aufheben', () => board.clearSelection()],
     ['Alle löschen', async () => {
       if (await dialog({ title: `${toks.length} Figuren löschen?`, okText: 'Löschen', danger: true })) { await act({ type: 'token.delete', sceneId: sc.id, ids: selection }); board.clearSelection(); }
@@ -549,12 +557,13 @@ function renderPanel(force = false) {
     const src = npc(id) || character(id);
     if (src) entry.sheet.update(src, state);
   }
+  if (invEditor && selected.inventory && character(selected.inventory)) invEditor.update(character(selected.inventory));
   if (!force && panelFocused()) { panelDirty = true; return; }
   panelDirty = false;
   const body = $('#tabBody');
   const scroll = body.scrollTop;
   body.replaceChildren(...({
-    scenes: tabScenes, tokens: tabTokens, players: tabPlayers, npcs: tabNpcs, notes: tabNotes, game: tabGame,
+    scenes: tabScenes, tokens: tabTokens, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, notes: tabNotes, game: tabGame,
   }[tab])());
   body.scrollTop = scroll;
 }
@@ -781,7 +790,6 @@ function sheetFor(kind, src) {
     const el = h('div.sheet-wrap');
     const sheet = new Sheet(el, {
       kind: isNpc ? 'npc' : 'character',
-      showInventory: !isNpc,
       showPrivateNotes: false,
       showNote: isNpc,
       canPickPortrait: true,
@@ -860,6 +868,35 @@ async function pickPortrait(kind, id) {
   act({ type: kind === 'npc' ? 'npc.update' : 'character.update', id, patch: { portraitAssetId: assetId } });
 }
 
+// ================================================================ Tab: Inventar (pro Charakter, C5)
+
+function tabInventory() {
+  if (!selected.inventory || !character(selected.inventory)) selected.inventory = state.characters[0]?.id;
+  const c = character(selected.inventory);
+  const coinsShort = (x) => {
+    const k = x.coins || {};
+    return ['pp', 'gp', 'sp', 'cp'].filter((key) => k[key]).map((key) => `${k[key]} ${{ pp: 'PM', gp: 'GM', sp: 'SM', cp: 'KM' }[key]}`).join(' · ') || 'keine Münzen';
+  };
+  const picker = h('div.inv-picker', {}, ...state.characters.map((x) => h(`button.inv-pick${x.id === selected.inventory ? '.selected' : ''}`, {
+    onclick: () => { selected.inventory = x.id; renderPanel(true); },
+  },
+  x.portraitAssetId ? h('img', { src: assetUrl(state, x.portraitAssetId), alt: '' }) : h('span.ph', {}, initials(x.name)),
+  h('span.pname', {}, x.name), h('span.hptext', {}, coinsShort(x)))));
+  if (!invEditor) {
+    invEditor = new InventoryEditor(h('div.inv-wrap'), {
+      onPatch: (patch) => act({ type: 'character.update', id: selected.inventory, patch }),
+    });
+  }
+  if (c) invEditor.update(c);
+  return [
+    h('h3', {}, 'Inventar der Charaktere'),
+    h('p.hint', {}, 'Jeder Charakter hat sein eigenes Inventar. Die Spieler pflegen es selbst, du kannst hier mitlesen und etwas eintragen, z. B. gefundene Beute.'),
+    picker,
+    c ? h('h3', {}, c.name) : null,
+    c ? invEditor.container : null,
+  ];
+}
+
 // ================================================================ Tab: Notizen (T1, T4, Gruppenwerte)
 
 function tabNotes() {
@@ -870,7 +907,6 @@ function tabNotes() {
     h('h3', {}, 'Gruppe (sehen alle)'),
     h('div.row', {},
       h('label.num', {}, h('span', {}, 'XP'), h('input', { type: 'number', min: 0, value: p.xp, onchange: (e) => act({ type: 'party.update', patch: { xp: Number(e.target.value) } }) })),
-      h('label.num', {}, h('span', {}, 'Gold / Beute'), h('input', { value: p.gold, onchange: (e) => act({ type: 'party.update', patch: { gold: e.target.value } }) })),
       h('label.num.grow', {}, h('span', {}, 'Spieldatum / Uhrzeit'), h('input', { value: p.date, placeholder: 'z. B. Tag 11, 14 Uhr', onchange: (e) => act({ type: 'party.update', patch: { date: e.target.value } }) }))),
     h('label.field', {}, h('span', {}, 'Gemeinsame Notizen (alle dürfen schreiben)'),
       h('textarea', { rows: 6, oninput: (e) => party({ notes: e.target.value }), placeholder: 'Quests, wichtige Namen, offene Fragen …' }, p.notes || '')),
@@ -958,6 +994,7 @@ document.addEventListener('drop', async (e) => {
 });
 
 renderToolbar();
+setupViewToggles('dm', board);
 start();
 
 // Für automatische Tests (Koordinaten der Karte): window.dnd.board

@@ -17,6 +17,7 @@
     { "key": "exhaustion",    "label": "Erschöpft",      "color": "#a0522d" },
     { "key": "surprised",     "label": "Überrascht",     "color": "#f08c2e" },
     { "key": "burning",       "label": "Brennt",         "color": "#f26b1d" },
+    { "key": "bleeding",      "label": "Blutend",        "color": "#b0172b" },
     { "key": "blessed",       "label": "Segen",          "color": "#f2d16b" },
     { "key": "concentration", "label": "Konzentration",  "color": "#3c7dd9" },
     { "key": "slowed",        "label": "Verlangsamt",    "color": "#5fa8a8" }

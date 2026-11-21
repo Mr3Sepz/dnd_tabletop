@@ -77,6 +77,12 @@ def shot(page, name, clip=None):
     page.screenshot(path=os.path.join(OUT, name), clip=clip)
 
 
+def panel_shot(page, name, height=750):
+    """Seitenleiste ab ihrer tatsächlichen Position (die Porträtleiste ändert ihre Höhe)."""
+    box = page.locator('#panel').bounding_box()
+    shot(page, name, clip={'x': box['x'], 'y': box['y'], 'width': box['width'], 'height': min(height, box['height'])})
+
+
 def upload(page, button_text, files):
     with page.expect_file_chooser() as fc:
         page.get_by_role('button', name=button_text).click()
@@ -102,6 +108,8 @@ try:
         dm.click('#tabs button[data-tab=tokens]')
         upload(dm, '+ Bilder', [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wagen.png']])
         dm.wait_for_selector('.gallery .asset >> nth=4')
+        dm.evaluate("window.scrollTo(0, 0); document.scrollingElement.scrollTop = 0; document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.3)
+        panel_shot(dm, '19-figuren-reiter.png', 520)
 
         step('Spielercharaktere einrichten')
         dm.click('#tabs button[data-tab=players]')
@@ -141,7 +149,7 @@ try:
         drag_world(dm, (G * 12.5, G * 10.2), (G * 18.5, G * 13))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
 
-        step('Porträtleiste: alle Spieler + Goblins als Gruppe, Werte, sortieren')
+        step('Porträtleiste: alle Spieler und Goblins einzeln, Werte, sortieren')
         dm.click('#tabs button[data-tab=players]')
         dm.get_by_role('button', name='Alle in Leiste').click(); time.sleep(0.6)
         dm.click('#tabs button[data-tab=tokens]')
@@ -149,12 +157,18 @@ try:
             dm.locator('#tabBody li', has=dm.locator('.token-dot', has_text=label)).locator('button[title^="Markieren"]').click(); time.sleep(0.15)
         dm.click('#selbar button.primary'); time.sleep(0.2)
         shot(dm, '03b-auswahl-menue.png')
-        dm.get_by_role('button', name='Als Gruppe in die Porträtleiste').click()
-        dm.fill('.dialog input[name=value]', '15'); dialog_ok(dm); time.sleep(0.4)
-        vals = ['18', '9', '12']
+        dm.get_by_role('button', name='Einzeln in die Porträtleiste').click(); time.sleep(0.8)
+        vals = ['18', '9', '12', '15', '14', '11', '7']
         for i, v in enumerate(vals):
-            dm.fill(f'.ini-value >> nth={i}', v); dm.press(f'.ini-value >> nth={i}', 'Enter'); time.sleep(0.25)
+            dm.fill(f'.ini-value >> nth={i}', v); dm.press(f'.ini-value >> nth={i}', 'Enter'); time.sleep(0.2)
         dm.get_by_role('button', name='Sortieren').click(); time.sleep(0.4)
+        assert dm.locator('.ini-item').count() == 7, 'jeder Goblin hat einen eigenen Eintrag'
+        step('Goblins stehen einzeln in der Leiste und sind sortiert')
+
+        step('Sichtbarkeit eines Leisteneintrags (verständlicher Dialog)')
+        dm.click('.ini-vis >> nth=0'); time.sleep(0.3)
+        shot(dm, '24-sichtbarkeit.png')
+        dialog_ok(dm)
 
         step('Hinterhalt: Goblins aufdecken, A nur für Platz 1 und 3')
         dm.locator('#selbar button', has_text='Aktionen').click(); time.sleep(0.2)
@@ -199,6 +213,33 @@ try:
         shot(dm, '13-wuerfel.png')
         dm.click('.dice-toggle'); time.sleep(0.3)
 
+        step('Zauberplätze für Aria (Rauten), Borin als Krieger ohne Zauberplätze')
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
+        dm.click('.party-card >> nth=0'); time.sleep(0.3)
+        dm.get_by_role('button', name='Anzahl ändern').click()
+        for lvl, n in [(1, '4'), (2, '3'), (3, '2')]:
+            dm.fill(f'.sheet input[data-bind="slotmax:{lvl}"]', n); dm.press(f'.sheet input[data-bind="slotmax:{lvl}"]', 'Tab'); time.sleep(0.2)
+        dm.get_by_role('button', name='Fertig').click(); time.sleep(0.3)
+        dm.click('.diamond >> nth=1'); time.sleep(0.3)
+        dm.click('.party-card >> nth=1'); time.sleep(0.3)
+        dm.get_by_role('button', name='⚙ Bogen anpassen').click()
+        dm.uncheck('.dialog input[name=slots]')
+        dm.check('.dialog input[value="Zweiter Wind"]'); dm.check('.dialog input[value="Tatendrang"]')
+        shot(dm, '22-bogen-anpassen.png')
+        dialog_ok(dm); time.sleep(0.4)
+        assert dm.locator('.sheet .diamond').count() == 0, 'Krieger ohne Zauberplätze'
+        dm.click('.sheet .with-info button.info'); time.sleep(0.3)
+        shot(dm, '23-infopunkt.png')
+        dm.click('.dialog.help button.primary'); time.sleep(0.2)
+
+        step('Inventar: Münzen und Gegenstände für Aria')
+        dm.click('#tabs button[data-tab=inventory]'); time.sleep(0.3)
+        for key, v in [('gp', '23'), ('sp', '14'), ('cp', '30')]:
+            dm.fill(f'#tabBody input[data-coin={key}]', v); dm.press(f'#tabBody input[data-coin={key}]', 'Tab'); time.sleep(0.2)
+        dm.fill('#tabBody .inventory textarea', 'Seil (15 m)\nHeiltrank ×2\nKarte von Phandalin\nGundrens Brief'); dm.press('#tabBody .inventory textarea', 'Tab'); time.sleep(0.8)
+        dm.evaluate("window.scrollTo(0, 0); document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.3)
+        panel_shot(dm, '20-inventar-dm.png', 750)
+
         step('Spieler treten bei: Mia (Handy) und Tom (Laptop)')
         mia = b.new_page(viewport={'width': 390, 'height': 820}, is_mobile=True, has_touch=True, device_scale_factor=2)
         watch(mia, 'mia')
@@ -214,6 +255,14 @@ try:
         assert not any(n.endswith(' A') for n in tom_names), tom_names
         step('Sicht pro Spieler stimmt: Mia sieht Goblin A, Tom nicht')
         shot(mia, '14-spieler-handy.png')
+        step('Mia blendet die Karte aus (Handy ohne Karte)')
+        mia.click('#mapToggle'); time.sleep(0.4)
+        shot(mia, '21-ohne-karte-handy.png')
+        assert mia.locator('.diamond').count() == 9, 'Arias Rauten (4+3+2)'
+        mia.click('#tabs button[data-tab=inventory]'); time.sleep(0.4)
+        assert mia.input_value('input[data-coin=gp]') == '23'
+        shot(mia, '25-inventar-handy.png')
+        mia.click('#tabs button[data-tab=sheet]'); mia.click('#mapToggle'); time.sleep(0.4)
         tom.click('#tabs button[data-tab=sheet]'); time.sleep(0.3)
         shot(tom, '15-spieler-laptop.png')
 
@@ -226,7 +275,7 @@ try:
         step('NPC-Bogen am Boden')
         dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
         dm.locator('#tabBody li button.link', has_text='Goblin A').click(); time.sleep(0.4)
-        shot(dm, '11-npc-bogen.png', clip={'x': 1060, 'y': 150, 'width': 380, 'height': 750})
+        panel_shot(dm, '11-npc-bogen.png', 750)
 
         step('Spielersicht-Vorschau (Platz 2)')
         dm.select_option('#preview', '2'); time.sleep(0.8)
@@ -267,7 +316,7 @@ try:
         step('Tom sieht nur die Höhle ohne den Gegner im Nebel, Mia bleibt am Waldweg')
         shot(tom, '08-nebel-spieler.png')
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
-        shot(dm, '09-getrennte-gruppen.png', clip={'x': 1060, 'y': 150, 'width': 380, 'height': 520})
+        panel_shot(dm, '09-getrennte-gruppen.png', 520)
 
         step('Messen')
         dm.select_option('#editScene', label='Waldweg (live)'); time.sleep(0.5)
@@ -283,21 +332,46 @@ try:
         step('Notizen und Gruppenwerte')
         dm.click('#tabs button[data-tab=notes]'); time.sleep(0.2)
         dm.fill('#tabBody input[type=number] >> nth=0', '450'); dm.press('#tabBody input[type=number] >> nth=0', 'Tab')
-        dm.fill('#tabBody input >> nth=2', 'Tag 11, 14 Uhr'); dm.press('#tabBody input >> nth=2', 'Tab'); time.sleep(0.3)
+        dm.fill('#tabBody input >> nth=1', 'Tag 11, 14 Uhr'); dm.press('#tabBody input >> nth=1', 'Tab'); time.sleep(0.3)
         dm.fill('#tabBody textarea >> nth=1', 'Gundren wurde verschleppt. Der Goblin A weiß, wo die Höhle ist.'); time.sleep(0.8)
-        shot(dm, '16-notizen.png', clip={'x': 1060, 'y': 150, 'width': 380, 'height': 750})
+        panel_shot(dm, '16-notizen.png', 750)
 
         step('Spiel: Einladen, Plätze, Speichern')
         dm.click('#tabs button[data-tab=game]'); time.sleep(0.8)
-        shot(dm, '12-spiel.png', clip={'x': 1060, 'y': 150, 'width': 380, 'height': 750})
+        panel_shot(dm, '12-spiel.png', 750)
+
+        step('DM ohne Karte')
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
+        dm.click('.party-card >> nth=0'); time.sleep(0.3)
+        dm.click('#mapToggle'); time.sleep(0.5)
+        shot(dm, '26-dm-ohne-karte.png')
+        dm.click('#mapToggle'); time.sleep(0.5)
 
         step('Szenen-Reiter')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
-        shot(dm, '18-szenen.png', clip={'x': 1060, 'y': 150, 'width': 380, 'height': 750})
+        panel_shot(dm, '18-szenen.png', 750)
         b.close()
 finally:
     srv.terminate()
     out = srv.communicate(timeout=5)[0].decode()
+
+# Bild vom Startfenster (Terminal) für die README: echte Ausgabe dieses Laufs
+try:
+    banner = out[:out.index('Beenden:')].strip() + '\n  Beenden: Strg+C oder in der DM-Ansicht „Spiel > Server beenden“'
+    banner = banner.replace(TMP, '~/DnD-Tabletop')
+    import html as _html
+    page_html = '<html><body style="margin:0;background:#2b2b2b;font-family:sans-serif"><div style="margin:16px;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4)">' \
+        '<div style="background:#3c3c3c;color:#ddd;padding:8px 12px;font-size:13px">● ● ●&nbsp;&nbsp; DnD-Tabletop</div>' \
+        f'<pre style="margin:0;background:#1e1e1e;color:#e8e8e8;padding:16px 18px;font:14px/1.5 DejaVu Sans Mono,monospace">{_html.escape(banner)}</pre></div></body></html>'
+    with sync_playwright() as p:
+        chrome = os.environ.get('CHROME')
+        b = p.chromium.launch(executable_path=chrome, args=['--no-sandbox']) if chrome else p.chromium.launch()
+        pg = b.new_page(viewport={'width': 820, 'height': 400})
+        pg.set_content(page_html)
+        pg.locator('body > div').screenshot(path=os.path.join(OUT, '00-startfenster.png'))
+        b.close()
+except Exception as e:
+    errors.append(f'Startfenster-Bild: {e}')
 
 print('\nSchritte:', len(steps))
 print('Konsolenfehler:', json.dumps(errors, indent=1, ensure_ascii=False))

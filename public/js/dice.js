@@ -2,6 +2,7 @@
 // Gewürfelt wird auf dem Server. Echte Würfel am Tisch bleiben gleichwertig.
 
 import { h, toast } from './util.js';
+import { info } from './help.js';
 
 const QUICK = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
 
@@ -48,7 +49,7 @@ export class DicePanel {
       h('div.dice-head', {}, h('b', {}, 'Würfeln'), h('button.icon', { onclick: () => this.toggle(false), title: 'Schließen' }, '×')),
       h('div.dice-quick', {}, ...QUICK.map((d) => h('button.small', { onclick: () => this.roll(`1${d}`) }, d))),
       h('div.row', {}, expr, h('button.small.primary', { onclick: () => this.roll(expr.value.trim()) }, 'Wurf')),
-      h('p.hint', {}, '„kh1“ = höchster zählt (Vorteil), „kl1“ = niedrigster (Nachteil).'),
+      h('p.hint', {}, '„2d20kh1“ = Vorteil, „2d20kl1“ = Nachteil ', info('advantage')),
       this.opts.isDM ? h('label.check', {}, h('input', { type: 'checkbox', onchange: (e) => { this.secret = e.target.checked; } }), 'Verdeckt würfeln (nur ich sehe es)') : null,
       this.logEl,
     );

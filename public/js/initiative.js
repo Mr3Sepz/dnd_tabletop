@@ -3,10 +3,23 @@
 // Sichtbarkeit pro Eintrag (automatisch / immer / nie). Spieler sehen nur, was sie sehen
 // dürfen (der Server filtert), bei Gegnern nur den groben Zustand (N8).
 
-import { h, assetUrl, initials, HEALTH_COLORS } from './util.js';
+import { h, assetUrl, initials, HEALTH_COLORS, dialog } from './util.js';
+import { info, HELP } from './help.js';
 
-const VIS = { auto: ['👁', 'Automatisch: sichtbar, sobald eine Figur aufgedeckt ist'], show: ['👁‍🗨', 'Immer sichtbar'], hide: ['🚫', 'Für Spieler verborgen'] };
-const NEXT_VIS = { auto: 'show', show: 'hide', hide: 'auto' };
+const VIS = { auto: '👁 automatisch', show: '👁 immer zeigen', hide: '🚫 verborgen' };
+
+async function chooseVisibility(e, onVisibility) {
+  const r = await dialog({
+    title: `Wer sieht „${e.name}“ in der Leiste?`,
+    body: HELP.terms.visibility.text,
+    fields: [{ name: 'v', label: 'Sichtbarkeit für Spieler', type: 'select', value: e.visibility || 'auto', options: [
+      { value: 'auto', label: 'Automatisch – sobald eine Figur davon sichtbar ist' },
+      { value: 'show', label: 'Immer zeigen – auch ohne Figur auf der Karte' },
+      { value: 'hide', label: 'Verbergen – nur ich sehe den Eintrag' }] }],
+    okText: 'Übernehmen',
+  });
+  if (r) onVisibility(e.id, r.v);
+}
 
 /**
  * entries: [{ id, kind, name, portraitAssetId, value, visibility?, condition?, conditions?, count?, hiddenNow? }]
@@ -57,11 +70,13 @@ export function renderInitiative(container, entries, opts) {
           onclick: (ev) => ev.stopPropagation(),
           onchange: (ev) => opts.onValue(e.id, ev.target.value === '' ? null : Number(ev.target.value)),
           onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } }),
-        e.kind !== 'character' ? h('button.icon', { title: VIS[e.visibility || 'auto'][1], onclick: (ev) => { ev.stopPropagation(); opts.onVisibility(e.id, NEXT_VIS[e.visibility || 'auto']); } }, VIS[e.visibility || 'auto'][0]) : null,
         h('button.icon', { title: 'Nach links', onclick: (ev) => { ev.stopPropagation(); move(i, -1); } }, '‹'),
         h('button.icon', { title: 'Nach rechts', onclick: (ev) => { ev.stopPropagation(); move(i, 1); } }, '›'),
         h('button.icon', { title: 'Aus Leiste entfernen', onclick: (ev) => { ev.stopPropagation(); opts.onRemove(e.id); } }, '×'))
-      : (e.value !== null && e.value !== undefined ? h('div.ini-val', {}, String(e.value)) : null));
+      : (e.value !== null && e.value !== undefined ? h('div.ini-val', {}, String(e.value)) : null),
+    opts.isDM && e.kind !== 'character'
+      ? h('button.ini-vis', { title: 'Wer sieht diesen Eintrag? (antippen zum Ändern)', onclick: (ev) => { ev.stopPropagation(); chooseVisibility(e, opts.onVisibility); } }, VIS[e.visibility || 'auto'])
+      : null);
     list.append(item);
   });
 
@@ -76,6 +91,7 @@ export function renderInitiative(container, entries, opts) {
   container.append(list);
   if (opts.isDM) {
     container.append(h('div.ini-controls', {},
+      info('initiative'),
       h('button.small', { onclick: opts.onSort, title: 'Nach Initiativwert sortieren, der Höchste beginnt' }, 'Sortieren'),
       h('button.small', { onclick: opts.onPrev, title: 'Zurück' }, '◀'),
       h('button.small.primary', { onclick: opts.onNext, title: 'Nächster ist dran' }, 'Weiter ▶'),
