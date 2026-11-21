@@ -50,13 +50,15 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | --- | --- | --- | --- |
 | C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ | Zauberplätze als blaue Rauten mit Grad (I, II, III …), verbrauchte grau |
 | — | Bogen anpassen | ✅ | Zauberplätze und Zähler pro Charakter/NPC ein- und ausblendbar, fertige Zähler-Vorlagen (Ki, Kampfrausch, Zweiter Wind …) |
-| C5 | Inventar pro Charakter | ✅ | Platin, Gold, Silber, Kupfer + Gegenstände (Text). Spieler bearbeiten das eigene, der DM alle (Reiter *Inventar*). Andere Spieler sehen es nicht |
+| C5 | Inventar pro Charakter | ✅ | Waffen (Name, Angr. Bonus, Schaden/Art, Munitionszähler), vorbereitete Zauber (mit Reichweite), Platin, Gold, Silber, Kupfer + Gegenstände (Text). Spieler bearbeiten das eigene, der DM alle (Reiter *Inventar*). Andere Spieler sehen es nicht. Münznamen für alle änderbar (DM) |
+| — | Attribute und Fertigkeiten (optional, Reiter *Attribute*) | ✅ | Stufe, 6 Attribute mit Modifikator, Übungsbonus, Rettungswürfe, 18 Fertigkeiten mit Übung/Expertise, Initiative, passive Wahrnehmung, Angaben (Alter, Glaube, Größe, Kategorie, Gewicht, Geschlecht, Gesinnung). Regeln 2014 |
+| — | Schutz gegen versehentliches Bearbeiten | ✅ | Felder im Bogen erst nach „✎ Bearbeiten“ änderbar (keine Tastatur beim Antippen am Handy). Notizen, Gegenstände, Tagebuch bleiben frei |
 | — | RK | ✅ | Spieler sehen und ändern ihre eigene RK, NPC-Werte nie |
-| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt + eigene. Farbige Ringe an Figur und Porträt |
+| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt + eigene. Ein farbiger Ring je Zustand an der Figur |
 | P4 | Todesrettungswürfe | ✅ | erscheinen im Bogen bei 0 HP |
 | P5 | Am Boden statt besiegt | ✅ | Bei 0 HP fragt die App „tot oder am Boden?“. Spieler sehen das entsprechend |
 | P7 | Schaden/Heilung für mehrere | ✅ | temporäre HP zuerst |
-| N1–N5, N7, N8 | NPCs, Porträtleiste, grober Zustand | ✅ | |
+| N1–N5, N7, N8 | NPCs, Porträtleiste, grober Zustand | ✅ | unverletzt ohne Ring, angeschlagen blassrot, schwer verletzt knallrot, am Boden braun, tot ausgegraut |
 | N6 | NPC-Vorlagen über Kampagnen hinweg | ⏳ | Mehrfach setzen und Kopieren decken den häufigsten Fall ab |
 
 ## 6. Porträtleiste / Initiative
@@ -66,14 +68,19 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | N7 / X3 | Porträtleiste = Initiative | ✅ | |
 | P1 | Kein Leck mehr | ✅ | NPC-Einträge erscheinen erst, wenn eine Figur für den Spieler sichtbar ist (oder fest: „immer zeigen“ / „verborgen“, mit erklärendem Dialog) |
 | P6 | Initiativwert, Sortieren, Gruppen | ✅ | Gleiche Gegner standardmäßig als Einzeleinträge (einzeln sortierbar), Sammeleintrag optional |
+| — | Rundenzähler | ✅ | links in der Leiste, zählt beim Weiterschalten über das Ende automatisch, DM kann ihn ändern |
+| — | Effekttimer | ✅ | zählen pro Runde herunter, „vorbei“ in Rot; DM-Effekte auch verdeckt; Spieler dürfen eigene starten |
 
 ## 7. Notizen, Gruppe, Würfel
 
 | Nr. | Funktion | Status |
 | --- | --- | --- |
 | T1–T3 | DM-Notizblock, Szenen-Notizen, private Spielernotizen | ✅ |
-| T4 / P12 | Gemeinsame Notizen, XP, Spieldatum | ✅ (Gold ist ins Inventar gewandert) |
+| T4 / P12 | Gemeinsame Notizen | ✅ (XP und Spieldatum entfernt, Gold ist ins Inventar gewandert) |
+| — | Tagebuch / Questlog | ✅ (alle dürfen alles; „Erledigt“ graut aus und sortiert nach hinten) |
+| X10 | Direktchat | ✅ (an alle oder einzelne; nur Absender und Empfänger bekommen die Nachricht; wird nicht gespeichert) |
 | X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (`1d20+5`, `2d20kh1`, `4d6kh3`) |
+| — | Fuß ↔ Meter | ✅ (im Würfel-Fenster, genau und nach Regelbuch) |
 
 ## 8. Zeichnen und Messen
 
@@ -90,7 +97,10 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | --- | --- | --- | --- |
 | — | Karte aus/ein | ✅ | 🗺 bei DM und Spielern, pro Gerät gemerkt; Verwaltung nutzt dann die ganze Breite |
 | — | Vollbild | ✅ | ⛶ oder F11 |
-| — | Infopunkte (ⓘ) | ✅ | Kurze deutsche Regeltexte nach SRD 5.1 (2014, CC BY 4.0) zu HP, temporären HP, Todesrettungswürfen, RK, Zauberplätzen, Zählern, Initiative, Vorteil, Münzen und allen Zuständen |
+| — | Infopunkte (ⓘ) | ✅ | Kurze deutsche Regeltexte nach SRD 5.1 (2014, CC BY 4.0) zu HP, Todesrettungswürfen, RK, Zauberplätzen, Attributen, Übung, Fertigkeiten, Rettungswürfen, Angriffsbonus, Gesinnung, Größe, Runden, Effekten u. a. und allen Zuständen. Der DM kann jeden Text ändern |
+| — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
+| — | Zuschauer-Bildschirm | ✅ | `/spectator`: Live-Szene wie bei Spielern, nur Karte und Leiste, belegt keinen Platz |
+| — | Bildersammlung: „Verwenden als“ | ✅ | Figur, NPC, Objekt, Szenenkarte, Weltkarte |
 
 ## 10. Speichern und Laden
 
@@ -104,7 +114,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | Nr. | Funktion |
 | --- | --- |
 | X9 | Ping auf der Karte |
-| X10 | Private Nachrichten |
 | X11 | Handouts (privat und öffentlich) |
 | X12 | Rast-Knöpfe |
 | — | Fog of War wasserdicht: Bisher kommt das Kartenbild komplett beim Spieler an, nur Figuren und Zeichnungen im Nebel werden auf dem Server herausgefiltert |
+| — | Wettereffekte (Nebel, Regen …), laut DM nicht nötig |

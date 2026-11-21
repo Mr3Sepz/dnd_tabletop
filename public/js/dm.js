@@ -1,13 +1,18 @@
 // DM-Ansicht (A1): Karte mit Werkzeugleiste in der Mitte, alle Verwaltung in der Seitenleiste.
 
 import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
-import { InventoryEditor } from './inventory.js';
+import { InventoryEditor, COINS, coinLabel } from './inventory.js';
 import { connect } from './net.js';
 import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
 import { renderInitiative } from './initiative.js';
 import { editConditions } from './conditions.js';
 import { DicePanel } from './dice.js';
+import { AbilitySheet } from './charsheet.js';
+import { QuestLog } from './quests.js';
+import { ChatPanel } from './chat.js';
+import { WorldMap } from './worldmap.js';
+import { setHelpContext, setHelpOverrides } from './help.js';
 
 let conn;
 let state = null;        // DM-Sicht vom Server
@@ -21,6 +26,7 @@ let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bo
 let invEditor = null;
 let selection = [];      // markierte Figuren (Mehrfachauswahl)
 const sheets = new Map();
+const abilitySheets = new Map();
 let panelDirty = false;
 let prevNpcHp = new Map(); // für die Frage "tot oder am Boden?"
 const downQueue = [];
@@ -56,7 +62,9 @@ function open(payload) {
       else { $('#login').classList.remove('hidden'); $('#loginForm').replaceChildren(h('h1', {}, 'Kein Zugriff'), h('p', {}, err)); }
     },
     onConnection: (ok) => { $('#conn').classList.toggle('on', ok); },
-    onState: (s) => { detectDowned(s); state = s; dice.setLog(s.diceLog || []); render(); },
+    onState: (s) => { detectDowned(s); state = s; setHelpOverrides(s.helpTexts); dice.setLog(s.diceLog || []); world.update(s); render(); },
+    onChat: (m) => chat.receive(m),
+    onChatHistory: (list) => chat.setHistory(list),
     onInfo: (i) => { info = i; if (tab === 'game') renderPanel(true); },
     onSaved: (i) => { if (info) info.lastSaved = i.lastSaved; if (tab === 'game') renderPanel(); },
     onDice: (r) => dice.announce(r),
@@ -74,6 +82,22 @@ function open(payload) {
 }
 
 const dice = new DicePanel({ isDM: true, act: (a) => conn.act(a) });
+setHelpContext({ isDM: true, act: (a) => conn.act(a) });
+const seatName = (n) => {
+  const c = state && state.characters.find((x) => x.seat === n);
+  const st = state && state.seats.find((x) => x.seat === n);
+  return c ? `${c.name}${st && st.playerName ? ` (${st.playerName})` : ''}` : `Platz ${n}`;
+};
+const chat = new ChatPanel({
+  me: 'dm', get conn() { return conn; },
+  people: () => (state ? state.seats.filter((x) => x.taken).map((x) => ({ id: x.seat, label: seatName(x.seat) })) : []),
+});
+const world = new WorldMap({
+  isDM: true, act: (a) => conn.act(a), seatName,
+  onGoScene: (id) => { if (state.scenes.some((x) => x.id === id)) { editSceneId = id; tab = 'scenes'; render(); } },
+});
+$('#worldBtn').onclick = () => { world.update(state); world.open(); };
+const questLog = new QuestLog(h('div.quest-wrap'), { act: (a) => conn.act(a), who: (by) => (by === 'dm' ? 'dir' : seatName(by)) });
 
 // ================================================================ Hilfen
 
@@ -216,10 +240,10 @@ function renderToolbar() {
   ].filter(Boolean));
 }
 
-async function placeObject() {
+async function placeObject(assetId) {
   if (!state.assets.length) return toast('Erst Bilder in die Sammlung laden (Reiter Figuren).', 'error');
   const r = await dialog({ title: 'Objekt setzen', body: 'Ein Bild als eckiges, drehbares Objekt auf die Karte legen, z. B. Wagen, Tür, Tisch.',
-    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: state.assets[0].id, options: state.assets.map((a) => ({ value: a.id, label: a.name })) },
+    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : state.assets[0].id, options: state.assets.map((a) => ({ value: a.id, label: a.name })) },
       { name: 'cells', label: 'Breite in Feldern', type: 'number', value: 2, step: 0.5, min: 0.5 }], okText: 'Auf die Karte tippen …' });
   if (!r) return;
   const a = state.assets.find((x) => x.id === r.asset);
@@ -518,7 +542,7 @@ async function render() {
 
 function renderInitiativeBar() {
   if (previewSeat && previewView) {
-    renderInitiative($('#initiative'), previewView.initiative.entries, { isDM: false, currentId: previewView.initiative.currentId, state: previewView });
+    renderInitiative($('#initiative'), previewView.initiative.entries, { isDM: false, currentId: previewView.initiative.currentId, state: previewView, round: previewView.initiative.round, effects: previewView.effects });
     return;
   }
   const entries = state.initiative.entries.map((e) => {
@@ -532,7 +556,11 @@ function renderInitiativeBar() {
       hiddenNow: e.kind !== 'character' && !e.visibleSeats.length };
   });
   renderInitiative($('#initiative'), entries, {
-    isDM: true, currentId: state.initiative.currentId, state,
+    isDM: true, currentId: state.initiative.currentId, state, round: state.initiative.round, effects: state.effects,
+    onRound: (round) => act({ type: 'initiative.round', round }),
+    onEffectAdd: (e) => act({ type: 'effect.add', ...e }),
+    onEffectUpdate: (id, patch) => act({ type: 'effect.update', id, patch }),
+    onEffectDelete: (id) => act({ type: 'effect.delete', id }),
     onReorder: (ids) => act({ type: 'initiative.reorder', ids }),
     onSetCurrent: (id) => act({ type: 'initiative.setCurrent', id }),
     onRemove: (id) => act({ type: 'initiative.remove', id }),
@@ -541,7 +569,7 @@ function renderInitiativeBar() {
     onSort: () => act({ type: 'initiative.sort', startTop: true }),
     onValue: (id, value) => act({ type: 'initiative.update', id, patch: { value } }),
     onVisibility: (id, visibility) => act({ type: 'initiative.update', id, patch: { visibility } }),
-    onClear: async () => { if (await dialog({ title: 'Porträtleiste leeren?', okText: 'Leeren', danger: true })) act({ type: 'initiative.clear' }); },
+    onClear: async () => { if (await dialog({ title: 'Porträtleiste leeren?', body: 'Der Kampf ist vorbei: Runde wieder 1, alle Effekttimer werden entfernt.', okText: 'Leeren', danger: true })) act({ type: 'initiative.clear' }); },
   });
 }
 
@@ -558,6 +586,8 @@ function renderPanel(force = false) {
     if (src) entry.sheet.update(src, state);
   }
   if (invEditor && selected.inventory && character(selected.inventory)) invEditor.update(character(selected.inventory));
+  for (const [id, ab] of abilitySheets) { const c = character(id); if (c) ab.update(c); }
+  questLog.update(state.quests || []);
   if (!force && panelFocused()) { panelDirty = true; return; }
   panelDirty = false;
   const body = $('#tabBody');
@@ -656,13 +686,7 @@ function tabTokens() {
     h('img', { src: assetUrl(state, a.id), alt: a.name, loading: 'lazy' })),
   h('div.asset-name', {}, a.name),
   h('div.asset-tools', {},
-    h('button.icon', { title: 'Umbenennen', onclick: async () => {
-      const r = await dialog({ title: 'Bild umbenennen', fields: [{ name: 'name', label: 'Name', value: a.name }] });
-      if (r) act({ type: 'asset.rename', id: a.id, name: r.name });
-    } }, '✎'),
-    h('button.icon', { title: 'Löschen', onclick: async () => {
-      if (await dialog({ title: 'Bild löschen?', body: a.name, okText: 'Löschen', danger: true })) act({ type: 'asset.delete', id: a.id });
-    } }, '🗑')))));
+    h('button.small.asset-more', { title: 'Was soll das Bild werden? Figur, NPC, Objekt, Karte …', onclick: (e) => assetMenu(a, e.clientX, e.clientY) }, '⋯ Verwenden')))));
 
   const tokens = h('ul.list', {}, ...sc.tokens.map((t) => h(`li${selection.includes(t.id) ? '.selected' : ''}`, {},
     h('span.token-dot', { style: { background: t.color || '#8a6d3b' } }, t.label || ''),
@@ -679,7 +703,7 @@ function tabTokens() {
       h('button.small.primary', { onclick: async () => {
         try { const list = await pickAndUploadImages(conn.session); if (list.length) toast(`${list.length} Bild(er) hochgeladen`); } catch (e) { toast(e.message, 'error'); }
       } }, '+ Bilder')),
-    h('p.hint', {}, 'Bild auf die Karte ziehen oder antippen und dann auf die Karte tippen. Dateien kannst du auch direkt ins Fenster ziehen.'),
+    h('p.hint', {}, 'Bild antippen oder auf die Karte ziehen = Figur. Mit „⋯ Verwenden“ machst du daraus einen NPC, ein Objekt, die Karte der Szene oder die Weltkarte. Dateien kannst du auch direkt ins Fenster ziehen.'),
     state.assets.length ? gallery : h('p.hint', {}, 'Noch keine Bilder.'),
     h('div.row', {},
       h('button.small', { onclick: () => startPlacing({ kind: 'token', token: { kind: 'marker', name: '', label: '' } }, 'eine Markierung') }, 'Figur ohne Bild setzen'),
@@ -696,6 +720,28 @@ function tabTokens() {
       h('button.icon', { title: d.hidden ? 'Zeigen' : 'Verstecken', onclick: () => act({ type: 'drawing.update', sceneId: sc.id, id: d.id, patch: { hidden: !d.hidden } }) }, d.hidden ? '🙈' : '👁'),
       h('button.icon', { title: 'Löschen', onclick: () => act({ type: 'drawing.delete', sceneId: sc.id, id: d.id }) }, '🗑')))) : h('p.hint', {}, 'Mit den Werkzeugen links auf der Karte zeichnen.'),
   ];
+}
+
+/** Menü an einem Bild der Sammlung: Wofür soll es benutzt werden? */
+function assetMenu(a, x, y) {
+  const sc = editScene();
+  showMenu(a.name, [
+    ['🙂 Als Figur setzen (rund)', () => startPlacing({ kind: 'token', token: { assetId: a.id, name: a.name, kind: 'marker' } }, `„${a.name}“`)],
+    ['👹 Als NPC anlegen (mit Werten)', async () => {
+      const r = await act({ type: 'npc.create', name: a.name });
+      if (r && r.id) { await act({ type: 'npc.update', id: r.id, patch: { portraitAssetId: a.id } }); openSheet('npcs', r.id); toast(`NPC „${a.name}“ angelegt. Mit „Auf Karte setzen …“ kommt er auf die Karte.`); }
+    }],
+    ['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)],
+    [`🗺 Als Karte von „${sc.name}“`, async () => { await act({ type: 'scene.update', id: sc.id, patch: { background: { assetId: a.id }, mapScale: 1 } }); board.fittedSceneId = null; }],
+    ['🌍 Als Weltkarte', async () => { await act({ type: 'world.setMap', assetId: a.id }); world.update(state); world.open(); }],
+    ['✎ Umbenennen', async () => {
+      const r = await dialog({ title: 'Bild umbenennen', fields: [{ name: 'name', label: 'Name', value: a.name }] });
+      if (r) act({ type: 'asset.rename', id: a.id, name: r.name });
+    }],
+    ['🗑 Löschen', async () => {
+      if (await dialog({ title: 'Bild löschen?', body: a.name, okText: 'Löschen', danger: true })) act({ type: 'asset.delete', id: a.id });
+    }, 'danger'],
+  ], x, y);
 }
 
 // ================================================================ Tab: Spieler (V8, V10, C1–C7, A5, Szene pro Spieler)
@@ -742,7 +788,14 @@ function tabPlayers() {
     party,
   ];
   const c = selected.players && character(selected.players);
-  if (c) out.push(sheetFor('players', c));
+  if (c) {
+    out.push(sheetFor('players', c));
+    let ab = abilitySheets.get(c.id);
+    if (!ab) { ab = new AbilitySheet(h('div.ability-wrap'), { onPatch: (patch) => act({ type: 'character.update', id: c.id, patch }) }); abilitySheets.set(c.id, ab); }
+    ab.update(c);
+    out.push(h('details.dm-abilities', { open: !!ab.open, ontoggle: (e) => { ab.open = e.target.open; } },
+      h('summary', {}, 'Attribute und Fertigkeiten (Reiter „Attribute“ beim Spieler)'), ab.container));
+  }
   return out;
 }
 
@@ -875,7 +928,7 @@ function tabInventory() {
   const c = character(selected.inventory);
   const coinsShort = (x) => {
     const k = x.coins || {};
-    return ['pp', 'gp', 'sp', 'cp'].filter((key) => k[key]).map((key) => `${k[key]} ${{ pp: 'PM', gp: 'GM', sp: 'SM', cp: 'KM' }[key]}`).join(' · ') || 'keine Münzen';
+    return COINS.filter((cn) => k[cn.key]).map((cn) => `${k[cn.key]} ${coinLabel(cn, state.settings.coinNames).short}`).join(' · ') || 'keine Münzen';
   };
   const picker = h('div.inv-picker', {}, ...state.characters.map((x) => h(`button.inv-pick${x.id === selected.inventory ? '.selected' : ''}`, {
     onclick: () => { selected.inventory = x.id; renderPanel(true); },
@@ -884,13 +937,16 @@ function tabInventory() {
   h('span.pname', {}, x.name), h('span.hptext', {}, coinsShort(x)))));
   if (!invEditor) {
     invEditor = new InventoryEditor(h('div.inv-wrap'), {
+      isDM: true,
       onPatch: (patch) => act({ type: 'character.update', id: selected.inventory, patch }),
+      coinNames: () => state.settings.coinNames || {},
+      onCoinNames: (names) => act({ type: 'settings.update', patch: { coinNames: names } }),
     });
   }
   if (c) invEditor.update(c);
   return [
     h('h3', {}, 'Inventar der Charaktere'),
-    h('p.hint', {}, 'Jeder Charakter hat sein eigenes Inventar. Die Spieler pflegen es selbst, du kannst hier mitlesen und etwas eintragen, z. B. gefundene Beute.'),
+    h('p.hint', {}, 'Jeder Charakter hat sein eigenes Inventar mit Waffen, Zaubern, Münzen und Gegenständen. Die Spieler pflegen es selbst, du kannst hier mitlesen und etwas eintragen, z. B. gefundene Beute. ⚙ bei „Münzen“ gibt den Münzen eigene Namen.'),
     picker,
     c ? h('h3', {}, c.name) : null,
     c ? invEditor.container : null,
@@ -903,13 +959,11 @@ function tabNotes() {
   const save = debounce((v) => act({ type: 'dm.notes', text: v }), 600);
   const party = debounce((patch) => act({ type: 'party.update', patch }), 600);
   const p = state.party;
+  questLog.update(state.quests || []);
   return [
-    h('h3', {}, 'Gruppe (sehen alle)'),
-    h('div.row', {},
-      h('label.num', {}, h('span', {}, 'XP'), h('input', { type: 'number', min: 0, value: p.xp, onchange: (e) => act({ type: 'party.update', patch: { xp: Number(e.target.value) } }) })),
-      h('label.num.grow', {}, h('span', {}, 'Spieldatum / Uhrzeit'), h('input', { value: p.date, placeholder: 'z. B. Tag 11, 14 Uhr', onchange: (e) => act({ type: 'party.update', patch: { date: e.target.value } }) }))),
-    h('label.field', {}, h('span', {}, 'Gemeinsame Notizen (alle dürfen schreiben)'),
-      h('textarea', { rows: 6, oninput: (e) => party({ notes: e.target.value }), placeholder: 'Quests, wichtige Namen, offene Fragen …' }, p.notes || '')),
+    questLog.container,
+    h('h3', {}, 'Gemeinsame Notizen (sehen alle, alle dürfen schreiben)'),
+    h('textarea', { rows: 6, oninput: (e) => party({ notes: e.target.value }), placeholder: 'Wichtige Namen, offene Fragen …' }, p.notes || ''),
     h('h3', {}, 'Mein Notizblock (nur für dich)'),
     h('p.hint', {}, 'Notizen zu einzelnen Szenen findest du unter „Szenen“.'),
     h('textarea.big', { rows: 16, oninput: (e) => save(e.target.value), onblur: (e) => act({ type: 'dm.notes', text: e.target.value }) }, state.dmNotes || ''),
@@ -941,6 +995,12 @@ function tabGame() {
       } })),
       h('p.hint', {}, `Die PIN brauchen nur neue Spieler. Plätze: 1 bis ${info.maxSeats || 20}; belegte Plätze werden beim Verkleinern nicht entfernt.`)));
   }
+
+  out.push(h('h3', {}, 'Zuschauer-Bildschirm'),
+    h('p.hint', {}, 'Nur die Karte und die Porträtleiste, so wie die Spieler sie sehen: z. B. für einen Fernseher oder zweiten Bildschirm am Tisch. Belegt keinen Spielerplatz.'),
+    h('div.row.wrap', {},
+      h('a.button.small.primary', { href: '/spectator', target: '_blank', rel: 'noopener' }, 'Zuschauer-Ansicht öffnen'),
+      info && info.addresses[0] ? h('code', {}, `${info.addresses[0].url.replace(/\/$/, '')}/spectator`) : null));
 
   const lastSaved = info && info.lastSaved ? new Date(info.lastSaved).toLocaleTimeString('de-DE') : 'noch nicht';
   out.push(

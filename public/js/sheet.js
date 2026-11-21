@@ -11,6 +11,7 @@
 import { h, debounce, assetUrl, initials, dialog } from './util.js';
 import { editConditions, conditionChips } from './conditions.js';
 import { info } from './help.js';
+import { lockButton, applyLocks } from './lock.js';
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 10);
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
@@ -120,14 +121,15 @@ export class Sheet {
         disabled: !o.canPickPortrait,
         onclick: () => o.onPickPortrait?.(),
       }, portraitUrl ? h('img', { src: portraitUrl, alt: '' }) : h('span', {}, initials(d.name))),
-      h('input.name', { 'data-bind': 'name', value: d.name, 'aria-label': 'Name', onchange: (e) => this.patch({ name: e.target.value }) }),
+      h('input.name', { 'data-bind': 'name', 'data-lock': '', value: d.name, 'aria-label': 'Name', onchange: (e) => this.patch({ name: e.target.value }) }),
       ...(o.actions || []).map((a) => h('button.small', { onclick: a.onClick, title: a.title || '' }, a.label)),
+      lockButton(),
       h('button.small', { title: 'Zauberplätze und Zähler ein- oder ausblenden, Zähler-Vorlagen', onclick: () => this.customize() }, '⚙ Bogen anpassen')));
     const prefs = d.sheetPrefs || { slots: true, counters: true };
 
     // HP
     const hpNum = (key, label) => h('label.num', {}, h('span', {}, label),
-      h('input', { type: 'number', min: 0, 'data-bind': `hp:${key}`, value: d.hp[key], inputmode: 'numeric',
+      h('input', { type: 'number', min: 0, 'data-bind': `hp:${key}`, 'data-lock': '', value: d.hp[key], inputmode: 'numeric',
         onchange: (e) => this.patch({ hp: { ...this.data.hp, [key]: Number(e.target.value) || 0 } }) }));
     const amount = h('input.amount', { type: 'number', min: 0, placeholder: 'Betrag', inputmode: 'numeric' });
     const apply = (sign) => {
@@ -184,12 +186,12 @@ export class Sheet {
     const stats = h('div.stats');
     for (const s of d.stats) {
       stats.append(h('div.stat', {},
-        h('input.label', { value: s.label, 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }),
-        h('input.value', { value: s.value, 'data-bind': `stat:${s.id}:value`, placeholder: '–', onchange: (e) => this.editStat(s.id, { value: e.target.value }) }),
-        h('button.icon', { title: 'Entfernen', onclick: () => this.patch({ stats: this.data.stats.filter((x) => x.id !== s.id) }) }, '×')));
+        h('input.label', { value: s.label, 'data-lock': '', 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }),
+        h('input.value', { value: s.value, 'data-lock': '', 'data-bind': `stat:${s.id}:value`, placeholder: '–', onchange: (e) => this.editStat(s.id, { value: e.target.value }) }),
+        h('button.icon', { title: 'Entfernen', 'data-lock': '', onclick: () => this.patch({ stats: this.data.stats.filter((x) => x.id !== s.id) }) }, '×')));
     }
     c.append(h('section', {},
-      h('h4', {}, 'Werte ', info('ac'), h('button.small', { onclick: () => this.patch({ stats: [...this.data.stats, { id: uid('s_'), label: '', value: '' }] }) }, '+ Wert')),
+      h('h4', {}, 'Werte ', info('ac'), h('button.small', { 'data-lock': '', onclick: () => this.patch({ stats: [...this.data.stats, { id: uid('s_'), label: '', value: '' }] }) }, '+ Wert')),
       stats));
 
     // Zauberplätze (C3) als blaue Rauten mit Grad I–IX; verbraucht = stark ausgegraut.
@@ -222,16 +224,16 @@ export class Sheet {
       const counters = h('div.counters');
       for (const k of d.counters) {
         counters.append(h('div.counter', {},
-          h('input.label', { value: k.name, placeholder: 'z. B. Ki-Punkte', 'data-bind': `counter:${k.id}:name`, onchange: (e) => this.editCounter(k.id, { name: e.target.value }) }),
+          h('input.label', { value: k.name, 'data-lock': '', placeholder: 'z. B. Ki-Punkte', 'data-bind': `counter:${k.id}:name`, onchange: (e) => this.editCounter(k.id, { name: e.target.value }) }),
           h('button.small', { onclick: () => this.editCounter(k.id, { cur: Math.max(0, this.read(`counter:${k.id}:cur`) - 1) }) }, '−'),
-          h('input.cur', { type: 'number', min: 0, value: k.cur, 'data-bind': `counter:${k.id}:cur`, onchange: (e) => this.editCounter(k.id, { cur: Number(e.target.value) || 0 }) }),
+          h('input.cur', { type: 'number', min: 0, 'data-lock': '', value: k.cur, 'data-bind': `counter:${k.id}:cur`, onchange: (e) => this.editCounter(k.id, { cur: Number(e.target.value) || 0 }) }),
           h('span', {}, '/'),
-          h('input.cur', { type: 'number', min: 0, value: k.max, 'data-bind': `counter:${k.id}:max`, title: 'Höchstwert', onchange: (e) => this.editCounter(k.id, { max: Number(e.target.value) || 0 }) }),
+          h('input.cur', { type: 'number', min: 0, 'data-lock': '', value: k.max, 'data-bind': `counter:${k.id}:max`, title: 'Höchstwert', onchange: (e) => this.editCounter(k.id, { max: Number(e.target.value) || 0 }) }),
           h('button.small', { onclick: () => this.editCounter(k.id, { cur: Math.min(this.read(`counter:${k.id}:max`), this.read(`counter:${k.id}:cur`) + 1) }) }, '+'),
-          h('button.icon', { title: 'Entfernen', onclick: () => this.patch({ counters: this.data.counters.filter((x) => x.id !== k.id) }) }, '×')));
+          h('button.icon', { title: 'Entfernen', 'data-lock': '', onclick: () => this.patch({ counters: this.data.counters.filter((x) => x.id !== k.id) }) }, '×')));
       }
       c.append(h('section', {},
-        h('h4', {}, 'Zähler ', info('counters'), h('button.small', { onclick: () => this.patch({ counters: [...this.data.counters, { id: uid('k_'), name: '', cur: 0, max: 1 }] }) }, '+ Zähler')),
+        h('h4', {}, 'Zähler ', info('counters'), h('button.small', { 'data-lock': '', onclick: () => this.patch({ counters: [...this.data.counters, { id: uid('k_'), name: '', cur: 0, max: 1 }] }) }, '+ Zähler')),
         d.counters.length ? counters : h('p.hint', {}, 'Keine. Fertige Vorlagen gibt es unter „Bogen anpassen“.')));
     }
 
@@ -243,6 +245,7 @@ export class Sheet {
     };
     if (o.showPrivateNotes) c.append(textArea('privateNotes', 'Mein Notizbuch (nur für mich, auch der DM sieht es nicht)', 'Notizen …'));
     if (o.showNote) c.append(textArea('note', 'Notiz zu diesem NPC', 'Wer ist das? Was will er?'));
+    applyLocks(c);
   }
 
   renderSlotBoxes(el, level) {

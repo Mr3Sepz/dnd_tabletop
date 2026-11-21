@@ -388,15 +388,196 @@ test('Zeichnungen: Spieler dürfen nur Schablonen legen, versteckte Zeichnungen 
 
 // ---------------------------------------------------------------- Stufe 3
 
-test('Gruppenwerte: alle sehen sie, XP und Datum ändert nur der DM (P12)', async () => {
+test('Gemeinsame Notizen: alle dürfen schreiben, XP und Spieldatum gibt es nicht mehr', async () => {
   const dm = await joinDM();
   const p = await joinPlayer(4);
-  assert.equal((await act(dm.c, { type: 'party.update', patch: { xp: 450, date: 'Tag 11, 14 Uhr' } })).ok, true);
-  assert.equal((await act(p.c, { type: 'party.update', patch: { notes: 'Quest: Gundren finden', gold: '23 GM' } })).ok, true);
-  assert.equal((await act(p.c, { type: 'party.update', patch: { xp: 99999 } })).ok, false);
+  assert.equal((await act(p.c, { type: 'party.update', patch: { notes: 'Quest: Gundren finden', xp: 5 } })).ok, true);
   const { viewForPlayer } = require('../server/state');
-  assert.deepEqual(viewForPlayer(inst.getState(), 4).party, { notes: 'Quest: Gundren finden', xp: 450, gold: '23 GM', date: 'Tag 11, 14 Uhr' });
-  p.c.close();
+  assert.deepEqual(viewForPlayer(inst.getState(), 4).party, { notes: 'Quest: Gundren finden' });
+  dm.c.close(); p.c.close();
+});
+
+test('Questlog: Spieler und DM legen an, ändern, haken ab und löschen', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const a = await act(p.c, { type: 'quest.add', title: 'Gundren finden' });
+  const b = await act(dm.c, { type: 'quest.add', title: 'Höhle erkunden' });
+  assert.equal((await act(dm.c, { type: 'quest.update', id: a.result.id, patch: { done: true, text: 'Er ist in Cragmaw' } })).ok, true);
+  assert.equal((await act(p.c, { type: 'quest.delete', id: b.result.id })).ok, true);
+  const { viewForPlayer } = require('../server/state');
+  const qs = viewForPlayer(inst.getState(), 4).quests;
+  assert.equal(qs.length, 1);
+  assert.equal(qs[0].done, true);
+  assert.equal(qs[0].text, 'Er ist in Cragmaw');
+  await act(p.c, { type: 'quest.delete', id: a.result.id });
+  dm.c.close(); p.c.close();
+});
+
+test('Weltkarte: alle sehen sie, Spieler setzen eigene Pins, Szenen-Verknüpfung bleibt beim DM', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const p5 = await joinPlayer(5);
+  const st = inst.getState();
+  const asset = { id: 'a_world', file: 'a_world.png', name: 'Welt', width: 100, height: 80 };
+  st.assets.push(asset);
+  assert.equal((await act(p.c, { type: 'world.setMap', assetId: asset.id })).ok, false);
+  assert.equal((await act(dm.c, { type: 'world.setMap', assetId: asset.id })).ok, true);
+  const dmPin = await act(dm.c, { type: 'world.pin.add', x: 0.2, y: 0.3, name: 'Phandalin', sceneId: st.scenes[0].id });
+  const myPin = await act(p.c, { type: 'world.pin.add', x: 0.5, y: 0.5, name: 'Lager', sceneId: st.scenes[0].id });
+  assert.equal((await act(p.c, { type: 'world.pin.update', id: myPin.result.id, patch: { name: 'Unser Lager' } })).ok, true);
+  assert.equal((await act(p5.c, { type: 'world.pin.delete', id: myPin.result.id })).ok, false, 'fremde Pins sind tabu');
+  assert.equal((await act(p.c, { type: 'world.pin.delete', id: dmPin.result.id })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  const v = viewForPlayer(st, 4);
+  assert.equal(v.world.assetId, asset.id);
+  assert.ok(v.assets.some((x) => x.id === asset.id), 'Kartenbild wird mitgeschickt');
+  const pins = v.world.pins;
+  assert.equal(pins.length, 2);
+  assert.ok(pins.every((x) => !('sceneId' in x)), 'Spieler sehen keine Szenen-Verknüpfung');
+  assert.equal(pins.find((x) => x.id === myPin.result.id).by, 4);
+  assert.equal(st.world.pins.find((x) => x.id === myPin.result.id).sceneId, null, 'Spieler können keine Szene verknüpfen');
+  assert.equal(st.world.pins.find((x) => x.id === dmPin.result.id).sceneId, st.scenes[0].id);
+  st.world = { assetId: null, pins: [] };
+  st.assets = st.assets.filter((x) => x.id !== asset.id);
+  dm.c.close(); p.c.close(); p5.c.close();
+});
+
+test('Rundenzähler und Effekttimer: neue Runde beim Weiterschalten über das Ende, Effekte zählen herunter', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const st = inst.getState();
+  await act(dm.c, { type: 'initiative.clear' });
+  for (const c of st.characters.slice(0, 2)) await act(dm.c, { type: 'initiative.add', kind: 'character', refId: c.id });
+  const segen = await act(dm.c, { type: 'effect.add', name: 'Segen', rounds: 2 });
+  const geheim = await act(dm.c, { type: 'effect.add', name: 'Falle scharf', rounds: 5, hidden: true });
+  const eigen = await act(p.c, { type: 'effect.add', name: 'Schild', rounds: 1, hidden: true });
+  assert.equal(st.initiative.round, 1);
+  await act(dm.c, { type: 'initiative.next' });
+  assert.equal(st.initiative.round, 1);
+  const r = await act(dm.c, { type: 'initiative.next' });
+  assert.equal(r.result.round, 2, 'vom Letzten zum Ersten = Runde 2');
+  const { viewForPlayer } = require('../server/state');
+  const eff = viewForPlayer(st, 4).effects;
+  assert.deepEqual(eff.map((e) => e.name).sort(), ['Schild', 'Segen'], 'verdeckte DM-Effekte sehen Spieler nicht, eigene schon');
+  const rem = (id) => { const e = st.effects.find((x) => x.id === id); return e.endRound - st.initiative.round + 1; };
+  assert.equal(rem(segen.result.id), 1);
+  assert.equal(rem(eigen.result.id), 0, 'abgelaufen');
+  assert.equal((await act(p.c, { type: 'effect.delete', id: geheim.result.id })).ok, false);
+  assert.equal((await act(p.c, { type: 'effect.update', id: eigen.result.id, patch: { remaining: 3 } })).ok, true);
+  assert.equal(rem(eigen.result.id), 3);
+  await act(dm.c, { type: 'initiative.prev' });
+  assert.equal(st.initiative.round, 1, 'zurück über den Anfang = Runde zurück');
+  assert.equal((await act(p.c, { type: 'initiative.round', round: 7 })).ok, false);
+  await act(dm.c, { type: 'initiative.round', round: 7 });
+  assert.equal(st.initiative.round, 7);
+  await act(dm.c, { type: 'initiative.clear' });
+  assert.equal(st.initiative.round, 1);
+  assert.equal(st.effects.length, 0);
+  dm.c.close(); p.c.close();
+});
+
+test('Charakterbogen: Attribute, Fertigkeiten, Waffen; nur eigener Charakter, andere sehen nichts', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const st = inst.getState();
+  const mine = st.characters.find((c) => c.seat === 4);
+  const other = st.characters.find((c) => c.seat === 5);
+  const res = await act(p.c, { type: 'character.update', id: mine.id, patch: {
+    level: 5, abilities: { str: 16, dex: 99 }, saveProf: { str: true }, skills: { athletics: 2, perception: 1, bogus: 2 },
+    personal: { age: '27', alignment: 'Neutral gut' },
+    weapons: [{ name: 'Langbogen', attack: '+7', damage: '1W8+3 Stich', ammo: { cur: 25, max: 20 } }],
+    spells: [{ name: 'Feuerpfeil', attack: '+5', damage: '1W10 Feuer', range: '36 m' }],
+  } });
+  assert.equal(res.ok, true);
+  assert.equal(mine.level, 5);
+  assert.equal(mine.abilities.str, 16);
+  assert.equal(mine.abilities.dex, 30, 'Attribute höchstens 30');
+  assert.equal(mine.skills.athletics, 2);
+  assert.ok(!('bogus' in mine.skills));
+  assert.equal(mine.weapons[0].ammo.cur, 20, 'Munition nicht über Maximum');
+  assert.equal(mine.spells[0].range, '36 m');
+  assert.equal((await act(p.c, { type: 'character.update', id: other.id, patch: { level: 3 } })).ok, false);
+  assert.equal((await act(dm.c, { type: 'character.update', id: mine.id, patch: { level: 6 } })).ok, true);
+  const { viewForPlayer } = require('../server/state');
+  const seen = viewForPlayer(st, 5).characters.find((c) => c.seat === 4);
+  assert.equal(seen.abilities, undefined);
+  assert.equal(seen.weapons, undefined);
+  dm.c.close(); p.c.close();
+});
+
+test('Münznamen und Infotexte: nur der DM ändert sie, Spieler bekommen sie', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  assert.equal((await act(p.c, { type: 'settings.update', patch: { coinNames: { gp: 'Kronen' } } })).ok, false);
+  assert.equal((await act(dm.c, { type: 'settings.update', patch: { coinNames: { gp: 'Kronen' } } })).ok, true);
+  assert.equal((await act(p.c, { type: 'help.set', key: 'hp', lines: ['x'] })).ok, false);
+  assert.equal((await act(dm.c, { type: 'help.set', key: 'hp', title: 'Lebenspunkte', lines: ['Erste Zeile', ' ', 'Zweite'] })).ok, true);
+  assert.equal((await act(dm.c, { type: 'help.set', group: 'conditions', key: 'prone', lines: ['Hinlegen'] })).ok, true);
+  const { viewForPlayer } = require('../server/state');
+  const v = viewForPlayer(inst.getState(), 4);
+  assert.equal(v.coinNames.gp, 'Kronen');
+  assert.deepEqual(v.helpTexts.terms.hp, { lines: ['Erste Zeile', 'Zweite'], title: 'Lebenspunkte' });
+  assert.deepEqual(v.helpTexts.conditions.prone.lines, ['Hinlegen']);
+  await act(dm.c, { type: 'help.set', key: 'hp', lines: null });
+  await act(dm.c, { type: 'help.set', group: 'conditions', key: 'prone', lines: null });
+  await act(dm.c, { type: 'settings.update', patch: { coinNames: { gp: '' } } });
+  assert.deepEqual(inst.getState().helpTexts, { terms: {}, conditions: {} });
+  dm.c.close(); p.c.close();
+});
+
+test('Zuschauer: sieht die Live-Szene wie ein Spieler, aber keine Bögen, Notizen oder Verstecktes', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const hidden = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Hinterhalt', hidden: true } });
+  const onlyMia = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Nur Mia', visibleTo: [1] } });
+  const open = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Offen' } });
+  const c = connect();
+  const first = nextState(c);
+  const res = await emit(c, 'join', { mode: 'spectator' });
+  assert.equal(res.ok, true, res.error);
+  const v = await first;
+  assert.equal(v.spectator, true);
+  const ids = v.scenes[0].tokens.map((t) => t.id);
+  assert.ok(ids.includes(open.result.id));
+  assert.ok(!ids.includes(hidden.result.id));
+  assert.ok(!ids.includes(onlyMia.result.id));
+  assert.deepEqual(v.characters, []);
+  assert.equal(v.party, undefined);
+  assert.equal(v.quests, undefined);
+  assert.equal(typeof v.initiative.round, 'number');
+  assert.equal((await act(c, { type: 'quest.add', title: 'x' })).ok, false, 'Zuschauer dürfen nichts ändern');
+  const chat = await emit(c, 'chat.send', { to: 'all', text: 'hallo' });
+  assert.equal(chat.ok, false);
+  await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [hidden.result.id, onlyMia.result.id, open.result.id] });
+  c.close(); dm.c.close();
+});
+
+test('Chat: an alle, an einzelne; was nicht an den DM geht, sieht der DM nicht', async () => {
+  const dm = await joinDM();
+  const p4 = await joinPlayer(4);
+  const p5 = await joinPlayer(5);
+  const got = { dm: [], 4: [], 5: [] };
+  dm.c.on('chat', (m) => got.dm.push(m.text));
+  p4.c.on('chat', (m) => got[4].push(m.text));
+  p5.c.on('chat', (m) => got[5].push(m.text));
+  assert.equal((await emit(p4.c, 'chat.send', { to: 'all', text: 'Hallo alle' })).ok, true);
+  assert.equal((await emit(p4.c, 'chat.send', { to: [5], text: 'Psst, nur du' })).ok, true);
+  assert.equal((await emit(dm.c, 'chat.send', { to: [4], text: 'Du hörst ein Geräusch' })).ok, true);
+  assert.equal((await emit(p5.c, 'chat.send', { to: ['dm'], text: 'Ich klaue den Ring' })).ok, true);
+  assert.equal((await emit(p5.c, 'chat.send', { to: [], text: 'an niemanden' })).ok, false);
+  await settle();
+  assert.deepEqual(got.dm, ['Hallo alle', 'Du hörst ein Geräusch', 'Ich klaue den Ring']);
+  assert.deepEqual(got[4], ['Hallo alle', 'Psst, nur du', 'Du hörst ein Geräusch']);
+  assert.deepEqual(got[5], ['Hallo alle', 'Psst, nur du', 'Ich klaue den Ring']);
+  // Verlauf beim Wiederverbinden: ebenfalls gefiltert
+  const c = connect();
+  const hist = new Promise((r) => c.once('chat:history', r));
+  await emit(c, 'join', { mode: 'dm' });
+  const h = (await hist).map((m) => m.text);
+  assert.ok(!h.includes('Psst, nur du'));
+  assert.ok(!JSON.stringify(inst.getState()).includes('Psst'), 'Chat landet nicht im Spielstand');
+  c.close(); dm.c.close(); p4.c.close(); p5.c.close();
 });
 
 test('Würfel: offene Würfe sehen alle, verdeckte DM-Würfe nur der DM (X1, X2)', async () => {

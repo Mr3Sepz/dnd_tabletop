@@ -5,6 +5,24 @@ import { h, toast } from './util.js';
 import { info } from './help.js';
 
 const QUICK = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
+const FT = 0.3048;
+
+/** Kleiner Rechner Fuß ↔ Meter (genau: 1 ft = 0,3048 m; deutsche Regelbücher: 5 ft = 1,5 m). */
+export function unitConverter() {
+  const fmt = (n) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100).replace('.', ',') : '');
+  const parse = (v) => Number(String(v).replace(',', '.'));
+  const book = h('span.hint');
+  const ft = h('input', { inputmode: 'decimal', placeholder: 'Fuß', 'aria-label': 'Fuß', oninput: () => { m.value = ft.value === '' ? '' : fmt(parse(ft.value) * FT); hint(); } });
+  const m = h('input', { inputmode: 'decimal', placeholder: 'Meter', 'aria-label': 'Meter', oninput: () => { ft.value = m.value === '' ? '' : fmt(parse(m.value) / FT); hint(); } });
+  const hint = () => {
+    const f = parse(ft.value);
+    book.textContent = ft.value !== '' && Number.isFinite(f) ? `Regelbuch: ${fmt(f * 0.3)} m (5 ft = 1,5 m)` : '';
+  };
+  return h('div.units', {},
+    h('b', {}, 'Fuß ↔ Meter '), info('units'),
+    h('div.row', {}, ft, h('span', {}, 'ft ='), m, h('span', {}, 'm')),
+    book);
+}
 
 export class DicePanel {
   /** opts: { isDM, act(action) } */
@@ -51,6 +69,7 @@ export class DicePanel {
       h('div.row', {}, expr, h('button.small.primary', { onclick: () => this.roll(expr.value.trim()) }, 'Wurf')),
       h('p.hint', {}, '„2d20kh1“ = Vorteil, „2d20kl1“ = Nachteil ', info('advantage')),
       this.opts.isDM ? h('label.check', {}, h('input', { type: 'checkbox', onchange: (e) => { this.secret = e.target.checked; } }), 'Verdeckt würfeln (nur ich sehe es)') : null,
+      unitConverter(),
       this.logEl,
     );
     this.renderLog();

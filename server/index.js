@@ -153,6 +153,36 @@ function createApp(overrides = {}) {
     for (let seat = 1; seat <= S.seatCount(); seat++) {
       if (seatOnline(seat)) io.to(`seat:${seat}`).emit('state', withOnline(S.viewForPlayer(state, seat)));
     }
+    if (spectators.size) io.to('spectators').emit('state', withOnline(S.viewForSpectator(state)));
+  }
+
+  // ---------- Chat ----------
+  // Nachrichten werden nur an Absender und Empfänger geschickt und nicht gespeichert
+  // (auch nicht im Spielstand): Was nicht an den DM geht, kann der DM nicht lesen.
+  const chatLog = [];
+  const spectators = new Set();
+  const chatRoom = (r) => (r === 'dm' ? 'dm' : `seat:${r}`);
+  function chatVisibleTo(m, who) {
+    const me = who.role === 'dm' ? 'dm' : who.seat;
+    return m.to === 'all' || m.from === me || m.to.includes(me);
+  }
+  function sendChat(who, req) {
+    const text = String((req && req.text) || '').trim().slice(0, 2000);
+    if (!text) throw new S.ActionError('Leere Nachricht');
+    const from = who.role === 'dm' ? 'dm' : who.seat;
+    let to = 'all';
+    if (req.to !== 'all') {
+      const valid = new Set(['dm', ...state.seats.map((x) => x.seat)]);
+      to = [...new Set((Array.isArray(req.to) ? req.to : []).map((r) => (r === 'dm' ? 'dm' : Number(r))).filter((r) => valid.has(r) && r !== from))];
+      if (!to.length) throw new S.ActionError('Bitte mindestens einen Empfänger wählen');
+    }
+    const name = from === 'dm' ? 'DM' : (state.characters.find((c) => c.seat === from)?.name || `Platz ${from}`);
+    const m = { id: S.newId('m_'), ts: Date.now(), from, name, to, text };
+    chatLog.push(m);
+    if (chatLog.length > S.CHAT_MAX) chatLog.splice(0, chatLog.length - S.CHAT_MAX);
+    if (to === 'all') { io.to('dm').emit('chat', m); for (const x of state.seats) io.to(`seat:${x.seat}`).emit('chat', m); }
+    else { let rooms = io.to(chatRoom(from)); for (const r of to) rooms = rooms.to(chatRoom(r)); rooms.emit('chat', m); }
+    return m;
   }
 
   async function infoForDM() {
@@ -188,6 +218,22 @@ function createApp(overrides = {}) {
           ack({ ok: true, role: 'dm', session });
           socket.emit('state', withOnline(S.viewForDM(state)));
           socket.emit('info', await infoForDM());
+          socket.emit('chat:history', chatLog.filter((m) => chatVisibleTo(m, who)));
+          return;
+        }
+
+        if (req.mode === 'spectator') {
+          // Zuschauer-Bildschirm: am Host-Rechner, mit DM-Sitzung oder mit Raum-PIN.
+          const known = req.session && sessions.get(req.session);
+          const okDM = known && known.role === 'dm';
+          if (!okDM && !isLocal(socket.handshake.address) && state.settings.pin && !safeEqual(String(req.pin || '').trim(), state.settings.pin)) {
+            return ack({ ok: false, error: 'Falsche PIN', pinRequired: true });
+          }
+          who = { role: 'spectator' };
+          socket.join('spectators');
+          spectators.add(socket.id);
+          ack({ ok: true, role: 'spectator' });
+          socket.emit('state', withOnline(S.viewForSpectator(state)));
           return;
         }
 
@@ -208,14 +254,20 @@ function createApp(overrides = {}) {
         if (!seatSockets.has(seatNo)) seatSockets.set(seatNo, new Set());
         seatSockets.get(seatNo).add(socket.id);
         ack({ ok: true, role: 'player', seat: seatNo, claimToken: seat.claimToken });
+        socket.emit('chat:history', chatLog.filter((m) => chatVisibleTo(m, who)));
         changed();
       } catch (e) {
         ack({ ok: false, error: e.message });
       }
     });
 
+    socket.on('chat.send', (req, ack = () => {}) => {
+      if (!who || who.role === 'spectator') return ack({ ok: false, error: 'Nicht angemeldet' });
+      try { ack({ ok: true, message: sendChat(who, req || {}) }); } catch (e) { ack({ ok: false, error: e.message }); }
+    });
+
     socket.on('action', (action, ack = () => {}) => {
-      if (!who) return ack({ ok: false, error: 'Nicht angemeldet' });
+      if (!who || who.role === 'spectator') return ack({ ok: false, error: 'Nicht angemeldet' });
       try {
         const assetBefore = action && action.type === 'asset.delete' ? state.assets.find((a) => a.id === action.id) : null;
         const result = S.applyAction(state, who, action);
@@ -233,6 +285,7 @@ function createApp(overrides = {}) {
           for (let seat = 1; seat <= S.seatCount(); seat++) {
             if (S.sceneIdForSeat(state, seat) === sc.id && S.tokenVisibleToSeat(sc, t, seat)) socket.to(`seat:${seat}`).emit('token:moved', msg);
           }
+          if (state.activeSceneId === sc.id && S.tokenVisibleToSeat(sc, t, S.SPECTATOR)) socket.to('spectators').emit('token:moved', msg);
           if (action.final) changed();
         } else {
           changed();
@@ -276,6 +329,7 @@ function createApp(overrides = {}) {
     });
 
     socket.on('disconnect', () => {
+      spectators.delete(socket.id);
       if (who && who.role === 'player') {
         seatSockets.get(who.seat)?.delete(socket.id);
         changed();

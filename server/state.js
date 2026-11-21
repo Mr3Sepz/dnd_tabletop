@@ -12,6 +12,12 @@ const CATALOG = require('../shared/conditions.json');
 const { rollDice } = require('./dice');
 
 const SLOT_LEVELS = 9;
+const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+const SKILLS = ['acrobatics', 'arcana', 'athletics', 'performance', 'intimidation', 'sleightOfHand', 'history', 'medicine',
+  'stealth', 'animalHandling', 'insight', 'investigation', 'nature', 'religion', 'deception', 'survival', 'persuasion', 'perception'];
+const PERSONAL = ['age', 'faith', 'height', 'size', 'weight', 'gender', 'alignment'];
+const COIN_KEYS = ['pp', 'gp', 'sp', 'cp'];
+const CHAT_MAX = 300;
 const STATE_VERSION = 2;
 const MAX_SEATS = 20;
 const DICE_LOG = 100;
@@ -80,6 +86,20 @@ function newCharacter(seat) {
     coins: { pp: 0, gp: 0, sp: 0, cp: 0 },
     sheetPrefs: { slots: true, counters: true },
     privateNotes: '',
+    ...newAbilitySheet(),
+  };
+}
+
+/** Digitaler Charakterbogen (optional): Attribute, Stufe, Fertigkeiten, Rettungswürfe, Angaben, Waffen, Zauber. */
+function newAbilitySheet() {
+  return {
+    level: 1,
+    abilities: Object.fromEntries(ABILITIES.map((k) => [k, 10])),
+    saveProf: Object.fromEntries(ABILITIES.map((k) => [k, false])),
+    skills: Object.fromEntries(SKILLS.map((k) => [k, 0])), // 0 = keine Übung, 1 = Übung, 2 = Expertise
+    personal: Object.fromEntries(PERSONAL.map((k) => [k, ''])),
+    weapons: [],
+    spells: [],
   };
 }
 
@@ -121,14 +141,18 @@ function createInitialState() {
     version: STATE_VERSION,
     activeSceneId: first.id,
     seatScenes: {},
-    settings: { pin: '', seatCount: SEAT_COUNT },
+    settings: { pin: '', seatCount: SEAT_COUNT, coinNames: { pp: '', gp: '', sp: '', cp: '' } },
     scenes: [first],
     assets: [],
     seats: Array.from({ length: SEAT_COUNT }, (_, i) => ({ seat: i + 1, playerName: '', claimToken: null })),
     characters: Array.from({ length: SEAT_COUNT }, (_, i) => newCharacter(i + 1)),
     npcs: [],
-    initiative: { entries: [], currentId: null },
-    party: { notes: '', xp: 0, gold: '', date: '' },
+    initiative: { entries: [], currentId: null, round: 1 },
+    effects: [],
+    party: { notes: '' },
+    quests: [],
+    world: { assetId: null, pins: [] },
+    helpTexts: { terms: {}, conditions: {} },
     diceLog: [],
     dmNotes: '',
   };
@@ -142,6 +166,7 @@ function normalizeState(raw) {
   const base = createInitialState();
   const s = { ...base, ...raw };
   s.settings = { ...base.settings, ...(raw.settings || {}) };
+  s.settings.coinNames = { ...base.settings.coinNames, ...((raw.settings || {}).coinNames || {}) };
   const sceneDefaults = newScene();
   s.scenes = (Array.isArray(raw.scenes) && raw.scenes.length ? raw.scenes : base.scenes).map((sc) => ({
     ...sceneDefaults, ...sc,
@@ -163,6 +188,9 @@ function normalizeState(raw) {
     return c ? {
       ...b, ...c, slots: normalizeSlots(c.slots), deathSaves: { ...b.deathSaves, ...(c.deathSaves || {}) }, conditions: sanitizeConditions(c.conditions),
       coins: { ...b.coins, ...(c.coins || {}) }, sheetPrefs: { ...b.sheetPrefs, ...(c.sheetPrefs || {}) },
+      abilities: { ...b.abilities, ...(c.abilities || {}) }, saveProf: { ...b.saveProf, ...(c.saveProf || {}) },
+      skills: { ...b.skills, ...(c.skills || {}) }, personal: { ...b.personal, ...(c.personal || {}) },
+      weapons: Array.isArray(c.weapons) ? c.weapons : [], spells: Array.isArray(c.spells) ? c.spells : [],
     } : b;
   });
   s.npcs = (Array.isArray(raw.npcs) ? raw.npcs : []).map((n) => {
@@ -175,8 +203,12 @@ function normalizeState(raw) {
   const entries = (Array.isArray(ini.entries) ? ini.entries : []).map((e) => ({ value: null, visibility: 'auto', ...e }));
   let currentId = ini.currentId || null;
   if (!currentId && typeof ini.current === 'number' && entries[ini.current]) currentId = entries[ini.current].id;
-  s.initiative = { entries, currentId };
-  s.party = { ...base.party, ...(raw.party || {}) };
+  s.initiative = { entries, currentId, round: clampInt(ini.round, 1, 99999, 1) };
+  s.effects = Array.isArray(raw.effects) ? raw.effects : [];
+  s.party = { notes: str((raw.party || {}).notes, LONG_TEXT) }; // XP, Spieldatum und Gold gibt es nicht mehr
+  s.quests = Array.isArray(raw.quests) ? raw.quests : [];
+  s.world = { assetId: (raw.world && raw.world.assetId) || null, pins: Array.isArray(raw.world && raw.world.pins) ? raw.world.pins : [] };
+  s.helpTexts = { terms: { ...((raw.helpTexts || {}).terms || {}) }, conditions: { ...((raw.helpTexts || {}).conditions || {}) } };
   s.diceLog = Array.isArray(raw.diceLog) ? raw.diceLog.slice(-DICE_LOG) : [];
   s.settings.seatCount = SEAT_COUNT;
   s.version = STATE_VERSION;
@@ -221,6 +253,9 @@ function normalizeSlots(slots) {
 
 // ---------- Sichtbarkeit ----------
 
+/** Der Zuschauer-Bildschirm (Battle Map am Tisch) ist "Platz 0": Live-Szene, Nebel wie bei Spielern. */
+const SPECTATOR = 0;
+
 /** Welche Szene sieht ein Platz? (Vorschlag 8: eine Szene pro Spieler) */
 function sceneIdForSeat(state, seat) {
   return state.seatScenes[seat] || state.activeSceneId;
@@ -260,12 +295,13 @@ function tokenVisibleToSeat(scene, t, seat) {
   if (t.hidden) return false;
   if (Array.isArray(t.visibleTo) && !t.visibleTo.includes(seat)) return false;
   if (t.ownerSeat === seat) return true; // eigene Figuren sieht man immer
+  if (seat === SPECTATOR && t.ownerSeat) return true; // Zuschauer: alle Spielerfiguren
   return pointRevealed(scene.fog, t.x, t.y);
 }
 
 function drawingVisibleToSeat(scene, d, seat) {
   if (d.hidden) return false;
-  if (d.ownerSeat === seat) return true;
+  if (d.ownerSeat === seat || (seat === SPECTATOR && d.ownerSeat)) return true;
   return pointRevealed(scene.fog, d.x, d.y);
 }
 
@@ -281,7 +317,46 @@ function entryVisibleToSeat(state, e, seat) {
 
 // ---------- Patches für Charakterwerte (HP, Slots, Zähler, Werte) ----------
 
-function applySheetPatch(target, patch, { allowPrivateNotes, allowInventory = true, allowNote = false }) {
+const shortText = (v, n = 60) => str(v, n);
+
+function applyAbilityPatch(target, patch) {
+  if ('level' in patch) target.level = clampInt(patch.level, 1, 20, target.level || 1);
+  if (patch.abilities && typeof patch.abilities === 'object') {
+    const a = { ...target.abilities };
+    for (const k of ABILITIES) if (k in patch.abilities) a[k] = clampInt(patch.abilities[k], 1, 30, a[k] ?? 10);
+    target.abilities = a;
+  }
+  if (patch.saveProf && typeof patch.saveProf === 'object') {
+    const a = { ...target.saveProf };
+    for (const k of ABILITIES) if (k in patch.saveProf) a[k] = bool(patch.saveProf[k]);
+    target.saveProf = a;
+  }
+  if (patch.skills && typeof patch.skills === 'object') {
+    const a = { ...target.skills };
+    for (const k of SKILLS) if (k in patch.skills) a[k] = clampInt(patch.skills[k], 0, 2, 0);
+    target.skills = a;
+  }
+  if (patch.personal && typeof patch.personal === 'object') {
+    const a = { ...target.personal };
+    for (const k of PERSONAL) if (k in patch.personal) a[k] = shortText(patch.personal[k], 60);
+    target.personal = a;
+  }
+  if (Array.isArray(patch.weapons)) {
+    target.weapons = patch.weapons.slice(0, 20).map((w) => {
+      const ammo = w.ammo && typeof w.ammo === 'object' ? { max: clampInt(w.ammo.max, 0, 9999), cur: 0, name: shortText(w.ammo.name, 30) } : null;
+      if (ammo) ammo.cur = clampInt(w.ammo.cur, 0, ammo.max);
+      return { id: str(w.id, 40) || newId('wa_'), name: shortText(w.name), attack: shortText(w.attack, 20), damage: shortText(w.damage), ammo };
+    });
+  }
+  if (Array.isArray(patch.spells)) {
+    target.spells = patch.spells.slice(0, 60).map((w) => ({
+      id: str(w.id, 40) || newId('sp_'), name: shortText(w.name), attack: shortText(w.attack, 20), damage: shortText(w.damage), range: shortText(w.range, 30),
+    }));
+  }
+}
+
+function applySheetPatch(target, patch, { allowPrivateNotes, allowInventory = true, allowNote = false, allowAbilities = false }) {
+  if (allowAbilities) applyAbilityPatch(target, patch);
   if ('name' in patch) target.name = str(patch.name, 80) || target.name;
   if ('portraitAssetId' in patch) target.portraitAssetId = patch.portraitAssetId ? str(patch.portraitAssetId, 60) : null;
   if (patch.hp && typeof patch.hp === 'object') {
@@ -694,7 +769,7 @@ function applyAction(state, who, action) {
       const c = state.characters.find((x) => x.id === action.id); must(c);
       const own = who.role === 'player' && who.seat === c.seat;
       if (!isDM && !own) deny();
-      applySheetPatch(c, action.patch || {}, { allowPrivateNotes: own, allowInventory: true });
+      applySheetPatch(c, action.patch || {}, { allowPrivateNotes: own, allowInventory: true, allowAbilities: true });
       return {};
     }
 
@@ -841,13 +916,121 @@ function applyAction(state, who, action) {
       if (list.length) {
         const i = Math.max(0, list.findIndex((e) => e.id === state.initiative.currentId));
         const n = list.length;
-        state.initiative.currentId = list[(i + (action.type === 'initiative.next' ? 1 : n - 1)) % n].id;
+        const forward = action.type === 'initiative.next';
+        // Rundenzähler: vom Letzten zurück zum Ersten = neue Runde (und umgekehrt).
+        if (forward && i === n - 1) state.initiative.round += 1;
+        if (!forward && i === 0 && state.initiative.round > 1) state.initiative.round -= 1;
+        state.initiative.currentId = list[(i + (forward ? 1 : n - 1)) % n].id;
       }
+      return { round: state.initiative.round };
+    }
+    case 'initiative.round': {
+      if (!isDM) deny();
+      state.initiative.round = clampInt(action.round, 1, 99999, state.initiative.round);
       return {};
     }
     case 'initiative.clear': {
+      // Kampf vorbei: Leiste leer, Runde 1, Effekttimer weg.
       if (!isDM) deny();
-      state.initiative = { entries: [], currentId: null };
+      state.initiative = { entries: [], currentId: null, round: 1 };
+      state.effects = [];
+      return {};
+    }
+
+    // ---------- Effekttimer: zählen pro Runde herunter ----------
+    case 'effect.add': {
+      if (state.effects.length >= 50) throw new ActionError('Zu viele Effekte');
+      const rounds = clampInt(action.rounds, 1, 9999, 1);
+      const e = {
+        id: newId('e_'), name: str(action.name, 60).trim() || 'Effekt',
+        endRound: state.initiative.round + rounds - 1, // läuft in dieser und den nächsten Runden
+        hidden: isDM ? bool(action.hidden) : false,
+        ownerSeat: isDM ? null : who.seat,
+        color: color(action.color, '#3c7dd9'),
+      };
+      state.effects.push(e);
+      return { id: e.id };
+    }
+    case 'effect.update': {
+      const e = state.effects.find((x) => x.id === action.id); must(e);
+      if (!isDM && e.ownerSeat !== who.seat) deny();
+      const p = action.patch || {};
+      if ('name' in p) e.name = str(p.name, 60).trim() || e.name;
+      if ('remaining' in p) e.endRound = state.initiative.round + clampInt(p.remaining, 0, 9999, 1) - 1;
+      if (isDM && 'hidden' in p) e.hidden = bool(p.hidden);
+      return {};
+    }
+    case 'effect.delete': {
+      const e = state.effects.find((x) => x.id === action.id); must(e);
+      if (!isDM && e.ownerSeat !== who.seat) deny();
+      state.effects = state.effects.filter((x) => x !== e);
+      return {};
+    }
+
+    // ---------- Tagebuch / Questlog: alle dürfen alles ----------
+    case 'quest.add': {
+      if (state.quests.length >= 300) throw new ActionError('Zu viele Einträge');
+      const q = { id: newId('q_'), title: str(action.title, 120), text: '', done: false, by: isDM ? 'dm' : who.seat, created: Date.now() };
+      state.quests.push(q);
+      return { id: q.id };
+    }
+    case 'quest.update': {
+      const q = state.quests.find((x) => x.id === action.id); must(q);
+      const p = action.patch || {};
+      if ('title' in p) q.title = str(p.title, 120);
+      if ('text' in p) q.text = str(p.text, LONG_TEXT);
+      if ('done' in p) q.done = bool(p.done);
+      return {};
+    }
+    case 'quest.delete': {
+      state.quests = state.quests.filter((x) => x.id !== action.id);
+      return {};
+    }
+
+    // ---------- Weltkarte mit Pins ----------
+    case 'world.setMap': {
+      if (!isDM) deny();
+      if (action.assetId) must(state.assets.some((a) => a.id === action.assetId), 'Bild nicht gefunden');
+      state.world.assetId = action.assetId ? str(action.assetId, 60) : null;
+      return {};
+    }
+    case 'world.pin.add': {
+      if (state.world.pins.length >= 500) throw new ActionError('Zu viele Pins');
+      const pin = {
+        id: newId('p_'), x: Math.min(1, Math.max(0, num(action.x))), y: Math.min(1, Math.max(0, num(action.y))),
+        name: str(action.name, 80).trim() || 'Ort', by: isDM ? 'dm' : who.seat, sceneId: null,
+      };
+      if (isDM && action.sceneId && findScene(action.sceneId)) pin.sceneId = action.sceneId;
+      state.world.pins.push(pin);
+      return { id: pin.id };
+    }
+    case 'world.pin.update': {
+      const pin = state.world.pins.find((x) => x.id === action.id); must(pin);
+      if (!isDM && pin.by !== who.seat) deny('Nur eigene Pins');
+      const p = action.patch || {};
+      if ('name' in p) pin.name = str(p.name, 80).trim() || pin.name;
+      if ('x' in p) pin.x = Math.min(1, Math.max(0, num(p.x)));
+      if ('y' in p) pin.y = Math.min(1, Math.max(0, num(p.y)));
+      if (isDM && 'sceneId' in p) pin.sceneId = p.sceneId && findScene(p.sceneId) ? p.sceneId : null;
+      return {};
+    }
+    case 'world.pin.delete': {
+      const pin = state.world.pins.find((x) => x.id === action.id); must(pin);
+      if (!isDM && pin.by !== who.seat) deny('Nur eigene Pins');
+      state.world.pins = state.world.pins.filter((x) => x !== pin);
+      return {};
+    }
+
+    // ---------- Infotexte: der DM kann sie anpassen ----------
+    case 'help.set': {
+      if (!isDM) deny();
+      const group = action.group === 'conditions' ? 'conditions' : 'terms';
+      const key = str(action.key, 40);
+      must(key, 'Begriff fehlt');
+      if (action.lines === null) { delete state.helpTexts[group][key]; return {}; }
+      const lines = (Array.isArray(action.lines) ? action.lines : []).map((l) => str(l, 1000).trim()).filter(Boolean).slice(0, 20);
+      if (!lines.length) delete state.helpTexts[group][key];
+      else state.helpTexts[group][key] = { lines, title: group === 'terms' ? str(action.title, 80).trim() : '' };
       return {};
     }
 
@@ -855,11 +1038,6 @@ function applyAction(state, who, action) {
     case 'party.update': {
       const p = action.patch || {};
       if ('notes' in p) state.party.notes = str(p.notes, LONG_TEXT);
-      if ('gold' in p) state.party.gold = str(p.gold, 60);
-      if (isDM) {
-        if ('xp' in p) state.party.xp = clampInt(p.xp, 0, 10_000_000);
-        if ('date' in p) state.party.date = str(p.date, 80);
-      } else if ('xp' in p || 'date' in p) deny('XP und Spieldatum ändert der DM');
       return {};
     }
 
@@ -901,6 +1079,9 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const p = action.patch || {};
       if ('pin' in p) state.settings.pin = str(p.pin, 20).trim();
+      if (p.coinNames && typeof p.coinNames === 'object') {
+        for (const k of COIN_KEYS) if (k in p.coinNames) state.settings.coinNames[k] = str(p.coinNames[k], 20).trim();
+      }
       if ('seatCount' in p) return { seatCount: changeSeatCount(state, p.seatCount) };
       return {};
     }
@@ -930,6 +1111,18 @@ function viewForDM(state) {
   });
   s.seatCount = SEAT_COUNT;
   return s;
+}
+
+/** Was alle Spieler gemeinsam sehen: Questlog, Weltkarte, Effekte, Münznamen, angepasste Infotexte. */
+function sharedForPlayers(state, usedAssets) {
+  if (state.world.assetId) usedAssets.add(state.world.assetId);
+  return {
+    quests: state.quests,
+    world: { assetId: state.world.assetId, pins: state.world.pins.map(({ sceneId, ...p }) => p) },
+    effects: state.effects.filter((e) => !e.hidden),
+    coinNames: state.settings.coinNames,
+    helpTexts: state.helpTexts,
+  };
 }
 
 /** Sicht eines Spielers: nur seine Szene, nichts Verstecktes, keine NPC-Werte. */
@@ -985,7 +1178,7 @@ function viewForPlayer(state, seatNo) {
     return { id: c.id, seat: c.seat, name: c.name, portraitAssetId: c.portraitAssetId, conditions: c.conditions };
   });
 
-  return {
+  const out = {
     version: state.version,
     activeSceneId: scene.id,
     scenes: [{
@@ -993,15 +1186,26 @@ function viewForPlayer(state, seatNo) {
       grid: scene.grid, night: scene.night, tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
-    assets: state.assets.filter((a) => usedAssets.has(a.id)),
     seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken })),
     characters,
-    initiative: { entries, currentId: currentVisible ? state.initiative.currentId : null },
+    initiative: { entries, currentId: currentVisible ? state.initiative.currentId : null, round: state.initiative.round },
     party: state.party,
+    ...sharedForPlayers(state, usedAssets),
     diceLog: state.diceLog.filter((d) => !d.secret),
     me: { seat: seatNo },
     seatCount: SEAT_COUNT,
   };
+  out.assets = state.assets.filter((a) => usedAssets.has(a.id));
+  if (seatNo === SPECTATOR) { delete out.characters; out.characters = []; delete out.quests; out.diceLog = []; }
+  return out;
+}
+
+/** Zuschauer-Bildschirm: die Live-Szene wie bei den Spielern, ohne Bögen und Notizen. */
+function viewForSpectator(state) {
+  const v = viewForPlayer(state, SPECTATOR);
+  v.spectator = true;
+  delete v.party; delete v.world; delete v.coinNames; delete v.helpTexts;
+  return v;
 }
 
 /** Kopie für den Export: ohne Platz-Schlüssel (die gehören zu dieser Sitzung). */
@@ -1013,6 +1217,6 @@ function exportableState(state) {
 
 module.exports = {
   MAX_SEATS, configureSeats, seatCount, createInitialState, normalizeState, applyAction, ActionError,
-  viewForDM, viewForPlayer, exportableState, roughCondition, newId,
+  viewForDM, viewForPlayer, viewForSpectator, exportableState, SPECTATOR, CHAT_MAX, ABILITIES, SKILLS, roughCondition, newId,
   sceneIdForSeat, tokenVisibleToSeat, pointRevealed,
 };

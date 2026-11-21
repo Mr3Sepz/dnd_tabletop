@@ -23,7 +23,7 @@ function storeDmSession(v) {
 
 /**
  * Baut die Verbindung auf.
- * joinPayload: { mode: 'dm', password? } oder { mode: 'player', seat, pin, playerName, claimToken? }
+ * joinPayload: { mode: 'dm', password? }, { mode: 'player', seat, pin, playerName, claimToken? } oder { mode: 'spectator', pin?, session? }
  */
 export function connect(joinPayload, handlers) {
   const socket = io({ transports: ['websocket', 'polling'] });
@@ -32,6 +32,7 @@ export function connect(joinPayload, handlers) {
   const doJoin = () => new Promise((resolve) => {
     const payload = { ...joinPayload };
     if (payload.mode === 'dm') payload.session = storedDmSession();
+    else if (payload.mode === 'spectator') payload.session = storedDmSession();
     else {
       const s = storedSeat();
       if (s && s.seat === payload.seat && s.claimToken) payload.claimToken = s.claimToken;
@@ -40,11 +41,12 @@ export function connect(joinPayload, handlers) {
       if (!res || !res.ok) {
         // Gemerkter Schlüssel ungültig? Einmal ohne versuchen.
         if (payload.mode === 'dm' && payload.session) { storeDmSession(null); return resolve(doJoin()); }
-        handlers.onJoinError?.(res ? res.error : 'Keine Antwort');
+        handlers.onJoinError?.(res ? res.error : 'Keine Antwort', res);
         return resolve(false);
       }
       conn.joined = true;
       if (res.role === 'dm') { conn.session = res.session; storeDmSession(res.session); }
+      else if (res.role === 'spectator') { /* nichts zu merken */ }
       else { conn.seat = res.seat; storeSeat({ seat: res.seat, claimToken: res.claimToken }); }
       handlers.onJoined?.(res);
       resolve(true);
@@ -58,6 +60,8 @@ export function connect(joinPayload, handlers) {
   socket.on('info', (i) => handlers.onInfo?.(i));
   socket.on('saved', (i) => handlers.onSaved?.(i));
   socket.on('dice', (r) => handlers.onDice?.(r));
+  socket.on('chat', (m) => handlers.onChat?.(m));
+  socket.on('chat:history', (list) => handlers.onChatHistory?.(list));
   socket.on('server:stopping', () => handlers.onStopping?.());
   socket.on('kicked', (k) => {
     storeSeat(null);

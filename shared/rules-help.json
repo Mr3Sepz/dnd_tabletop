@@ -63,7 +63,8 @@
       "text": [
         "Vorteil: zwei W20 würfeln, der höhere zählt. Nachteil: zwei W20, der niedrigere zählt.",
         "Hat man beides gleichzeitig, heben sie sich auf: Man würfelt normal.",
-        "Im Würfelfeld: 2d20kh1 = Vorteil, 2d20kl1 = Nachteil."
+        "Im Würfelfeld: 2d20kh1 = Vorteil, 2d20kl1 = Nachteil.",
+        "In der Würfelzeile: „kh“ heißt „keep highest“ (die höchsten behalten), „kl“ heißt „keep lowest“ (die niedrigsten behalten). 2d20kh1 = zwei W20 werfen, den höheren nehmen."
       ]
     },
     "coins": {
@@ -80,29 +81,190 @@
         "Immer zeigen: Der Eintrag ist immer für alle sichtbar, auch ohne Figur auf der Karte (z. B. eine Stimme aus dem Dunkeln).",
         "Verbergen: Der Eintrag ist für Spieler nie sichtbar, nur für dich."
       ]
+    },
+    "abilities": {
+      "title": "Attributswerte und Modifikatoren",
+      "text": [
+        "Jeder Charakter hat sechs Attribute: Stärke, Geschicklichkeit, Konstitution, Intelligenz, Weisheit und Charisma. Ein Wert von 10–11 ist durchschnittlich.",
+        "Aus jedem Wert ergibt sich ein Modifikator: (Wert − 10) ÷ 2, abgerundet. 8–9 ergibt −1, 12–13 ergibt +2, 16–17 ergibt +3, 20 ergibt +5.",
+        "Der Modifikator kommt auf fast jeden Wurf mit diesem Attribut: Attributswürfe, Fertigkeiten, Rettungswürfe, Angriffe.",
+        "Die App rechnet den Modifikator automatisch aus."
+      ]
+    },
+    "proficiency": {
+      "title": "Übungsbonus",
+      "text": [
+        "Ein Bonus für alles, worin der Charakter geübt ist: bestimmte Fertigkeiten, Rettungswürfe, Waffen, Werkzeuge und Zauberangriffe.",
+        "Er hängt nur von der Stufe ab: Stufe 1–4 +2, 5–8 +3, 9–12 +4, 13–16 +5, 17–20 +6.",
+        "Er wird pro Wurf höchstens einmal addiert (bei Expertise verdoppelt)."
+      ]
+    },
+    "skills": {
+      "title": "Fertigkeiten, Übung und Expertise",
+      "text": [
+        "Jede Fertigkeit gehört zu einem Attribut, z. B. Heimlichkeit zu Geschicklichkeit. Bonus = Modifikator dieses Attributs.",
+        "Erster Punkt (Ü) = geübt: der Übungsbonus kommt dazu.",
+        "Zweiter Punkt (E) = Expertise (z. B. Schurke, Barde): der Übungsbonus kommt doppelt dazu.",
+        "Die Punkte lassen sich erst nach „✎ Bearbeiten“ ändern, damit nichts aus Versehen umspringt."
+      ]
+    },
+    "saves": {
+      "title": "Rettungswürfe",
+      "text": [
+        "Ein Rettungswurf wehrt eine Gefahr ab, z. B. Gift (Konstitution) oder einen Feuerball (Geschicklichkeit).",
+        "Wurf: W20 + Modifikator des Attributs, plus Übungsbonus, wenn der Charakter in diesem Rettungswurf geübt ist (meist zwei durch die Klasse).",
+        "Erreicht oder übertrifft das Ergebnis den Schwierigkeitsgrad (SG), ist der Wurf gelungen."
+      ]
+    },
+    "passivePerception": {
+      "title": "Passive Wahrnehmung",
+      "text": [
+        "Wie aufmerksam ein Charakter ist, ohne aktiv zu suchen. Wert: 10 + Bonus auf Wahrnehmung.",
+        "Der DM vergleicht sie z. B. mit dem Heimlichkeitswurf eines lauernden Gegners. Vorteil gibt +5, Nachteil −5."
+      ]
+    },
+    "level": {
+      "title": "Stufe",
+      "text": [
+        "Die Erfahrungsstufe des Charakters (1–20). Sie bestimmt den Übungsbonus.",
+        "Trägt der Spieler selbst ein."
+      ]
+    },
+    "alignment": {
+      "title": "Gesinnung",
+      "text": [
+        "Grobe moralische Haltung aus zwei Teilen: rechtschaffen – neutral – chaotisch (Ordnung) und gut – neutral – böse (Moral).",
+        "Beispiele: rechtschaffen gut (hilft, hält sich an Regeln), chaotisch neutral (folgt seinen Launen).",
+        "Sie beschreibt den Charakter, sie zwingt ihn zu nichts."
+      ]
+    },
+    "size": {
+      "title": "Größenkategorie",
+      "text": [
+        "Winzig, Klein, Mittelgroß, Groß, Riesig, Gigantisch. Die meisten Völker sind mittelgroß, Halblinge und Gnome klein.",
+        "Auf der Karte belegt eine mittelgroße Kreatur ein Feld (5 × 5 ft), eine große 2 × 2 Felder, eine riesige 3 × 3."
+      ]
+    },
+    "attackBonus": {
+      "title": "Angriffsbonus (Angr. Bonus)",
+      "text": [
+        "Was zum W20 beim Angriffswurf dazukommt. Trifft, wenn das Ergebnis mindestens die RK des Ziels erreicht.",
+        "Nahkampfwaffe: Stärke-Modifikator + Übungsbonus (falls geübt). Fernkampfwaffe: Geschicklichkeit + Übungsbonus. Finesse-Waffen dürfen Geschicklichkeit nehmen.",
+        "Zauberangriff: Modifikator des Zauberattributs (z. B. Intelligenz beim Magier) + Übungsbonus.",
+        "Schaden: Würfel der Waffe + derselbe Attributsmodifikator (ohne Übungsbonus)."
+      ]
+    },
+    "effects": {
+      "title": "Effekttimer",
+      "text": [
+        "Zählt mit, wie viele Runden ein Effekt noch dauert, z. B. Segen (bis zu 10 Runden = 1 Minute) oder ein Netz.",
+        "Bei jeder neuen Kampfrunde zählt der Timer eins herunter. Bei 0 wird er rot: Der Effekt ist vorbei.",
+        "1 Runde dauert etwa 6 Sekunden, 1 Minute sind 10 Runden."
+      ]
+    },
+    "round": {
+      "title": "Kampfrunde",
+      "text": [
+        "In einer Runde ist jeder Kampfteilnehmer einmal am Zug (etwa 6 Sekunden Spielzeit).",
+        "Die App zählt automatisch: Wer nach dem Letzten auf „Weiter ▶“ drückt, startet die nächste Runde. Der DM kann die Zahl mit − und + ändern."
+      ]
+    },
+    "units": {
+      "title": "Fuß und Meter",
+      "text": [
+        "Die Regeln rechnen in Fuß (ft). 1 Fuß = 0,3048 m.",
+        "Die deutschen Regelbücher runden: 5 Fuß (ein Feld) = 1,5 m, 30 Fuß = 9 m."
+      ]
     }
   },
   "conditions": {
-    "blinded": ["Kann nichts sehen und scheitert automatisch an allen Proben, die Sicht erfordern.", "Angriffe gegen die Kreatur haben Vorteil, ihre eigenen Angriffe Nachteil."],
-    "charmed": ["Kann den Bezauberer nicht angreifen und nicht mit schädlichen Fähigkeiten oder Zaubern belegen.", "Der Bezauberer hat Vorteil auf soziale Proben gegen die Kreatur."],
-    "deafened": ["Kann nichts hören und scheitert automatisch an allen Proben, die Hören erfordern."],
-    "frightened": ["Nachteil auf Attributsproben und Angriffswürfe, solange die Quelle der Angst in Sichtweite ist.", "Kann sich nicht freiwillig auf die Quelle der Angst zubewegen."],
-    "grappled": ["Bewegungsrate 0, Boni auf Bewegung zählen nicht.", "Endet, wenn der Packende kampfunfähig wird oder die Kreatur aus seiner Reichweite gebracht wird."],
-    "incapacitated": ["Kann keine Aktionen und keine Reaktionen ausführen."],
-    "invisible": ["Ohne Magie oder besondere Sinne nicht zu sehen; gilt beim Verstecken als stark verdeckt. Geräusche oder Spuren können sie verraten.", "Angriffe gegen die Kreatur haben Nachteil, ihre eigenen Angriffe Vorteil."],
-    "paralyzed": ["Kampfunfähig, kann sich nicht bewegen und nicht sprechen.", "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.", "Angriffe gegen sie haben Vorteil. Treffer aus bis zu 1,5 m (5 ft) sind kritische Treffer."],
-    "petrified": ["Wird mit nichtmagischer Ausrüstung zu Stein (oder anderem festen Material): zehnfaches Gewicht, altert nicht.", "Kampfunfähig, kann sich nicht bewegen und nicht sprechen, nimmt die Umgebung nicht wahr.", "Angriffe gegen sie haben Vorteil; scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.", "Resistent gegen jeden Schaden, immun gegen Gift und Krankheit (bestehende werden nur angehalten)."],
-    "poisoned": ["Nachteil auf Angriffswürfe und Attributsproben."],
-    "prone": ["Kann nur kriechen, bis sie aufsteht (kostet die Hälfte der Bewegung) – das beendet den Zustand.", "Nachteil auf eigene Angriffe.", "Angriffe aus bis zu 1,5 m (5 ft) haben Vorteil, Angriffe aus größerer Entfernung Nachteil."],
-    "restrained": ["Bewegungsrate 0, Boni auf Bewegung zählen nicht.", "Angriffe gegen die Kreatur haben Vorteil, ihre eigenen Angriffe Nachteil.", "Nachteil auf Geschicklichkeitsrettungswürfe."],
-    "stunned": ["Kampfunfähig, kann sich nicht bewegen und nur stockend sprechen.", "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.", "Angriffe gegen sie haben Vorteil."],
-    "unconscious": ["Kampfunfähig, kann sich nicht bewegen und nicht sprechen, nimmt die Umgebung nicht wahr.", "Lässt fallen, was sie hält, und fällt um (liegend).", "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.", "Angriffe gegen sie haben Vorteil. Treffer aus bis zu 1,5 m (5 ft) sind kritische Treffer."],
-    "exhaustion": ["Hat 6 Stufen, die Wirkungen addieren sich: 1 Nachteil auf Attributsproben · 2 Bewegung halbiert · 3 Nachteil auf Angriffe und Rettungswürfe · 4 HP-Maximum halbiert · 5 Bewegung 0 · 6 Tod.", "Eine lange Rast mit Essen und Trinken senkt die Stufe um 1. Die Stufe trägt man am besten als Zähler ein."],
-    "surprised": ["Wer zu Beginn eines Kampfes überrascht ist, kann sich im ersten eigenen Zug nicht bewegen und keine Aktion ausführen.", "Bis dieser Zug vorbei ist, sind auch keine Reaktionen möglich."],
-    "blessed": ["Zauber Segen: Bis zu drei Kreaturen addieren 1W4 zu Angriffswürfen und Rettungswürfen.", "Hält bis zu 1 Minute, solange der Zaubernde sich konzentriert."],
-    "concentration": ["Manche Zauber halten nur, solange man sich konzentriert. Man kann sich immer nur auf einen solchen Zauber konzentrieren.", "Bei Schaden: Konstitutionsrettungswurf gegen SG 10 oder die Hälfte des Schadens (der höhere Wert). Misslingt er, endet der Zauber. Auch Kampfunfähigkeit oder Tod beenden ihn."],
-    "slowed": ["Zauber Verlangsamen: Bewegungsrate halbiert, −2 auf RK und Geschicklichkeitsrettungswürfe, keine Reaktionen.", "Im eigenen Zug nur eine Aktion oder eine Bonusaktion, höchstens ein Angriff.", "Am Ende jedes Zuges ist ein Weisheitsrettungswurf erlaubt, um den Effekt zu beenden."],
-    "burning": ["Kein offizieller Zustand. Wie viel Feuerschaden pro Zug entsteht und wie man das Feuer löscht, legt der DM fest (oft: Aktion zum Löschen)."],
-    "bleeding": ["Kein offizieller Zustand. Wie viel Schaden pro Zug entsteht und wodurch die Blutung endet (z. B. Heilung oder eine Heilkunde-Probe), legt der DM fest."]
+    "blinded": [
+      "Kann nichts sehen und scheitert automatisch an allen Proben, die Sicht erfordern.",
+      "Angriffe gegen die Kreatur haben Vorteil, ihre eigenen Angriffe Nachteil."
+    ],
+    "charmed": [
+      "Kann den Bezauberer nicht angreifen und nicht mit schädlichen Fähigkeiten oder Zaubern belegen.",
+      "Der Bezauberer hat Vorteil auf soziale Proben gegen die Kreatur."
+    ],
+    "deafened": [
+      "Kann nichts hören und scheitert automatisch an allen Proben, die Hören erfordern."
+    ],
+    "frightened": [
+      "Nachteil auf Attributsproben und Angriffswürfe, solange die Quelle der Angst in Sichtweite ist.",
+      "Kann sich nicht freiwillig auf die Quelle der Angst zubewegen."
+    ],
+    "grappled": [
+      "Bewegungsrate 0, Boni auf Bewegung zählen nicht.",
+      "Endet, wenn der Packende kampfunfähig wird oder die Kreatur aus seiner Reichweite gebracht wird."
+    ],
+    "incapacitated": [
+      "Kann keine Aktionen und keine Reaktionen ausführen."
+    ],
+    "invisible": [
+      "Ohne Magie oder besondere Sinne nicht zu sehen; gilt beim Verstecken als stark verdeckt. Geräusche oder Spuren können sie verraten.",
+      "Angriffe gegen die Kreatur haben Nachteil, ihre eigenen Angriffe Vorteil."
+    ],
+    "paralyzed": [
+      "Kampfunfähig, kann sich nicht bewegen und nicht sprechen.",
+      "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.",
+      "Angriffe gegen sie haben Vorteil. Treffer aus bis zu 1,5 m (5 ft) sind kritische Treffer."
+    ],
+    "petrified": [
+      "Wird mit nichtmagischer Ausrüstung zu Stein (oder anderem festen Material): zehnfaches Gewicht, altert nicht.",
+      "Kampfunfähig, kann sich nicht bewegen und nicht sprechen, nimmt die Umgebung nicht wahr.",
+      "Angriffe gegen sie haben Vorteil; scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.",
+      "Resistent gegen jeden Schaden, immun gegen Gift und Krankheit (bestehende werden nur angehalten)."
+    ],
+    "poisoned": [
+      "Nachteil auf Angriffswürfe und Attributsproben."
+    ],
+    "prone": [
+      "Kann nur kriechen, bis sie aufsteht (kostet die Hälfte der Bewegung) – das beendet den Zustand.",
+      "Nachteil auf eigene Angriffe.",
+      "Angriffe aus bis zu 1,5 m (5 ft) haben Vorteil, Angriffe aus größerer Entfernung Nachteil."
+    ],
+    "restrained": [
+      "Bewegungsrate 0, Boni auf Bewegung zählen nicht.",
+      "Angriffe gegen die Kreatur haben Vorteil, ihre eigenen Angriffe Nachteil.",
+      "Nachteil auf Geschicklichkeitsrettungswürfe."
+    ],
+    "stunned": [
+      "Kampfunfähig, kann sich nicht bewegen und nur stockend sprechen.",
+      "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.",
+      "Angriffe gegen sie haben Vorteil."
+    ],
+    "unconscious": [
+      "Kampfunfähig, kann sich nicht bewegen und nicht sprechen, nimmt die Umgebung nicht wahr.",
+      "Lässt fallen, was sie hält, und fällt um (liegend).",
+      "Scheitert automatisch an Stärke- und Geschicklichkeitsrettungswürfen.",
+      "Angriffe gegen sie haben Vorteil. Treffer aus bis zu 1,5 m (5 ft) sind kritische Treffer."
+    ],
+    "exhaustion": [
+      "Hat 6 Stufen, die Wirkungen addieren sich: 1 Nachteil auf Attributsproben · 2 Bewegung halbiert · 3 Nachteil auf Angriffe und Rettungswürfe · 4 HP-Maximum halbiert · 5 Bewegung 0 · 6 Tod.",
+      "Eine lange Rast mit Essen und Trinken senkt die Stufe um 1. Die Stufe trägt man am besten als Zähler ein."
+    ],
+    "surprised": [
+      "Wer zu Beginn eines Kampfes überrascht ist, kann sich im ersten eigenen Zug nicht bewegen und keine Aktion ausführen.",
+      "Bis dieser Zug vorbei ist, sind auch keine Reaktionen möglich."
+    ],
+    "blessed": [
+      "Zauber Segen: Bis zu drei Kreaturen addieren 1W4 zu Angriffswürfen und Rettungswürfen.",
+      "Hält bis zu 1 Minute, solange der Zaubernde sich konzentriert."
+    ],
+    "concentration": [
+      "Manche Zauber halten nur, solange man sich konzentriert. Man kann sich immer nur auf einen solchen Zauber konzentrieren.",
+      "Bei Schaden: Konstitutionsrettungswurf gegen SG 10 oder die Hälfte des Schadens (der höhere Wert). Misslingt er, endet der Zauber. Auch Kampfunfähigkeit oder Tod beenden ihn."
+    ],
+    "slowed": [
+      "Zauber Verlangsamen: Bewegungsrate halbiert, −2 auf RK und Geschicklichkeitsrettungswürfe, keine Reaktionen.",
+      "Im eigenen Zug nur eine Aktion oder eine Bonusaktion, höchstens ein Angriff.",
+      "Am Ende jedes Zuges ist ein Weisheitsrettungswurf erlaubt, um den Effekt zu beenden."
+    ],
+    "burning": [
+      "Kein offizieller Zustand. Wie viel Feuerschaden pro Zug entsteht und wie man das Feuer löscht, legt der DM fest (oft: Aktion zum Löschen)."
+    ],
+    "bleeding": [
+      "Kein offizieller Zustand. Wie viel Schaden pro Zug entsteht und wodurch die Blutung endet (z. B. Heilung oder eine Heilkunde-Probe), legt der DM fest."
+    ]
   }
 }

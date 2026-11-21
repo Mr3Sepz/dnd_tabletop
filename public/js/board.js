@@ -144,6 +144,7 @@ export class Board {
   fit() {
     const { w, h } = this.mapSize();
     const sw = this.stage.width(); const sh = this.stage.height();
+    if (!sw || !sh) { this.fittedSceneId = null; return; } // Karte gerade ausgeblendet: später einpassen
     const s = Math.min(sw / w, sh / h) * 0.95 || 1;
     this.stage.scale({ x: s, y: s });
     this.stage.position({ x: (sw - w * s) / 2, y: (sh - h * s) / 2 });
@@ -369,7 +370,8 @@ export class Board {
       group.add(new Konva.Circle({ radius: r + 3 + (i + 1) * 4, stroke: c.color, strokeWidth: 3.5 }));
     });
     // Grober Gesundheitszustand (N8) als innerer Ring
-    if (info.health) group.add(new Konva.Circle({ radius: r + 3, stroke: HEALTH_COLORS[info.health] || '#999', strokeWidth: 4 }));
+    // unverletzt und tot ohne Ring; tot ist grau mit Kreuz
+    if (info.health && HEALTH_COLORS[info.health]) group.add(new Konva.Circle({ radius: r + 3, stroke: HEALTH_COLORS[info.health], strokeWidth: 4 }));
 
     const url = t.assetId && assetUrl(this.state, t.assetId);
     const img = url ? loadImage(url, () => this.redraw()) : null;

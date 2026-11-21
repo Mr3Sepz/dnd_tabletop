@@ -1,6 +1,7 @@
 // Spieleransicht (A2): eigene Szene, eigene Figuren bewegen, eigener Bogen mit
-// Inventar, privatem Notizbuch, Zuständen und Todesrettungswürfen; Gruppenwerte,
-// gemeinsame Notizen, Würfel, Messen und eigene Zauberschablonen.
+// privatem Notizbuch, Zuständen und Todesrettungswürfen; Attribute und Fertigkeiten;
+// Inventar mit Waffen und Zaubern; Tagebuch/Questlog und gemeinsame Notizen;
+// Würfel, Chat, Weltkarte, Messen und eigene Zauberschablonen.
 
 import { $, $$, h, debounce, dialog, setupViewToggles } from './util.js';
 import { InventoryEditor } from './inventory.js';
@@ -9,6 +10,11 @@ import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
 import { renderInitiative } from './initiative.js';
 import { DicePanel } from './dice.js';
+import { AbilitySheet } from './charsheet.js';
+import { QuestLog } from './quests.js';
+import { ChatPanel } from './chat.js';
+import { WorldMap } from './worldmap.js';
+import { setHelpOverrides } from './help.js';
 
 const params = new URLSearchParams(location.search);
 const seat = Number(params.get('seat')) || storedSeat()?.seat;
@@ -21,6 +27,7 @@ if (join.seat !== seat) join = {};
 let state = null;
 let sheet = null;
 let inv = null;
+let abilities = null;
 let tab = 'sheet';
 
 const sceneId = () => state && state.scenes[0] && state.scenes[0].id;
@@ -54,12 +61,26 @@ const conn = connect({ mode: 'player', seat, pin: join.pin, playerName: join.pla
   onKicked: (k) => gone('Platz freigegeben', k.reason),
   onStopping: () => gone('Spiel beendet', 'Der DM hat den Server beendet.'),
   onConnection: (ok) => $('#conn').classList.toggle('on', ok),
-  onState: (s) => { state = s; dice.setLog(s.diceLog || []); render(); },
+  onState: (s) => { state = s; setHelpOverrides(s.helpTexts); dice.setLog(s.diceLog || []); render(); },
+  onChat: (m) => chat.receive(m),
+  onChatHistory: (list) => chat.setHistory(list),
   onTokenMoved: (m) => board.moveToken(m.id, m.x, m.y),
   onDice: (r) => dice.announce(r),
 });
 
 const dice = new DicePanel({ isDM: false, act: (a) => conn.act(a) });
+const seatName = (n) => {
+  const c = state && state.characters.find((x) => x.seat === n);
+  const st = state && state.seats.find((x) => x.seat === n);
+  return c ? `${c.name}${st && st.playerName ? ` (${st.playerName})` : ''}` : `Platz ${n}`;
+};
+const chat = new ChatPanel({
+  me: seat, conn,
+  people: () => [{ id: 'dm', label: 'DM' }, ...(state ? state.seats.filter((x) => x.seat !== seat && x.taken).map((x) => ({ id: x.seat, label: seatName(x.seat) })) : [])],
+});
+const world = new WorldMap({ isDM: false, mySeat: seat, act: (a) => conn.act(a), seatName });
+$('#worldBtn').onclick = () => { world.update(state); world.open(); };
+const quests = new QuestLog(h('div.quest-wrap'), { act: (a) => conn.act(a), who: (by) => (by === 'dm' ? 'DM' : by === seat ? 'dir' : seatName(by)) });
 
 function gone(title, msg) {
   conn.socket.close();
@@ -98,6 +119,7 @@ function openPanel(which) {
 function renderTabs() {
   $$('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $('#sheet').classList.toggle('hidden', tab !== 'sheet');
+  $('#abilities').classList.toggle('hidden', tab !== 'abilities');
   $('#inventory').classList.toggle('hidden', tab !== 'inventory');
   $('#party').classList.toggle('hidden', tab !== 'party');
 }
@@ -106,16 +128,17 @@ $$('#tabs button').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; ren
 const saveNotes = debounce((v) => conn.act({ type: 'party.update', patch: { notes: v } }), 600);
 function renderParty() {
   const el = $('#party');
-  if (el.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
   const p = state.party;
-  el.replaceChildren(
-    h('h3', {}, 'Gruppe'),
-    h('div.party-values', {},
-      h('div', {}, h('small', {}, 'XP'), h('b', {}, String(p.xp))),
-      h('div', {}, h('small', {}, 'Spieldatum'), h('b', {}, p.date || '–'))),
-    h('label.field', {}, h('span', {}, 'Gemeinsame Notizen (alle sehen und schreiben)'),
-      h('textarea', { rows: 12, oninput: (e) => saveNotes(e.target.value), placeholder: 'Quests, Namen, Hinweise …' }, p.notes || '')),
-  );
+  quests.update(state.quests || []);
+  if (!el.contains(quests.container)) {
+    el.replaceChildren(quests.container,
+      h('h3', {}, 'Gemeinsame Notizen'),
+      h('label.field', {}, h('span', {}, 'Alle sehen und schreiben mit'),
+        h('textarea.party-notes', { rows: 10, oninput: (e) => saveNotes(e.target.value), placeholder: 'Namen, Hinweise, offene Fragen …' }, p.notes || '')));
+  } else {
+    const ta = el.querySelector('textarea.party-notes');
+    if (ta && ta !== document.activeElement && ta.value !== (p.notes || '')) ta.value = p.notes || '';
+  }
 }
 
 function render() {
@@ -126,7 +149,13 @@ function render() {
   $('#sceneName').textContent = sc ? sc.name : '';
   board.setData(state, sc);
 
-  renderInitiative($('#initiative'), state.initiative.entries, { isDM: false, currentId: state.initiative.currentId, state });
+  renderInitiative($('#initiative'), state.initiative.entries, {
+    isDM: false, currentId: state.initiative.currentId, state, round: state.initiative.round, effects: state.effects, mySeat: seat,
+    onEffectAdd: (e) => conn.act({ type: 'effect.add', ...e }),
+    onEffectUpdate: (id, patch) => conn.act({ type: 'effect.update', id, patch }),
+    onEffectDelete: (id) => conn.act({ type: 'effect.delete', id }),
+  });
+  world.update(state);
 
   if (me && me.hp) {
     if (!sheet) {
@@ -139,8 +168,10 @@ function render() {
       });
     }
     sheet.update(me, state);
-    if (!inv) inv = new InventoryEditor($('#inventory'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }) });
+    if (!inv) inv = new InventoryEditor($('#inventory'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }), coinNames: () => state.coinNames });
     inv.update(me);
+    if (!abilities) abilities = new AbilitySheet($('#abilities'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }) });
+    abilities.update(me);
   }
   renderParty();
 }

@@ -23,11 +23,11 @@
     { "key": "slowed",        "label": "Verlangsamt",    "color": "#5fa8a8" }
   ],
   "health": {
-    "unverletzt": "#3f9b57",
-    "angeschlagen": "#d9a520",
-    "schwer verletzt": "#d2542c",
-    "am Boden": "#6d4c9f",
-    "tot": "#444444",
+    "unverletzt": null,
+    "angeschlagen": "#eda3a3",
+    "schwer verletzt": "#e8101c",
+    "am Boden": "#7a4a22",
+    "tot": null,
     "unbekannt": "#999999"
   }
 }
