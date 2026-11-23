@@ -45,7 +45,7 @@ const settle = () => new Promise((r) => setTimeout(r, 80));
 
 before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnd-test-'));
-  inst = createApp({ port: 0, host: '127.0.0.1', dataDir, openBrowser: false, pin: '4711', autosaveMinutes: 60 });
+  inst = createApp({ port: 0, host: '127.0.0.1', dataDir, openBrowser: false, pin: '4711', autosaveMinutes: 60, language: 'de' });
   const port = await inst.start();
   base = `http://127.0.0.1:${port}`;
 });
@@ -521,7 +521,8 @@ test('Münznamen und Infotexte: nur der DM ändert sie, Spieler bekommen sie', a
   await act(dm.c, { type: 'help.set', key: 'hp', lines: null });
   await act(dm.c, { type: 'help.set', group: 'conditions', key: 'prone', lines: null });
   await act(dm.c, { type: 'settings.update', patch: { coinNames: { gp: '' } } });
-  assert.deepEqual(inst.getState().helpTexts, { terms: {}, conditions: {} });
+  const ht = inst.getState().helpTexts;
+  assert.deepEqual([ht.terms, ht.conditions], [{}, {}]);
   dm.c.close(); p.c.close();
 });
 
@@ -551,6 +552,60 @@ test('Zuschauer: sieht die Live-Szene wie ein Spieler, aber keine Bögen, Notize
   assert.equal(chat.ok, false);
   await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [hidden.result.id, onlyMia.result.id, open.result.id] });
   c.close(); dm.c.close();
+});
+
+test('Szene drehen: Karte, Figuren, Nebel und Raster drehen mit, viermal = wie vorher', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const before = JSON.parse(JSON.stringify(sc));
+  const tok = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Dreher', x: 100, y: 200 } });
+  sc.fog.shapes.push({ type: 'rect', op: 'reveal', x: 10, y: 20, w: 300, h: 100 });
+  const W = 70 * 30; const H = 70 * 20;
+  assert.equal((await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 })).result.rotation, 90);
+  const t = sc.tokens.find((x) => x.id === tok.result.id);
+  assert.deepEqual([t.x, t.y], [H - 200, 100], 'im Uhrzeigersinn: (x, y) → (H − y, x)');
+  const f = sc.fog.shapes[sc.fog.shapes.length - 1];
+  assert.deepEqual([f.x, f.y, f.w, f.h], [H - 120, 10, 100, 300]);
+  for (let i = 0; i < 3; i++) await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 });
+  assert.equal(sc.rotation, 0);
+  assert.deepEqual([t.x, t.y], [100, 200]);
+  await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: -1 });
+  await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 });
+  assert.deepEqual([t.x, t.y], [100, 200], 'gegen und mit dem Uhrzeigersinn heben sich auf');
+  assert.deepEqual([sc.grid.offsetX, sc.grid.offsetY], [before.grid.offsetX, before.grid.offsetY]);
+  const p = await joinPlayer(4);
+  assert.equal((await act(p.c, { type: 'scene.rotate', id: sc.id, dir: 1 })).ok, false);
+  sc.fog.shapes.pop();
+  await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [tok.result.id] });
+  dm.c.close(); p.c.close();
+});
+
+test('Münzbilder: landen nicht in der Bildersammlung, Spieler bekommen sie', async () => {
+  const dm = await joinDM();
+  const png = Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex');
+  const res = await fetch(`${base}/api/assets?name=Krone&w=1&h=1&purpose=coin`, { method: 'POST', headers: { 'content-type': 'image/png', 'x-session': dm.session }, body: png });
+  const asset = await res.json();
+  assert.equal(asset.purpose, 'coin');
+  assert.equal((await act(dm.c, { type: 'settings.update', patch: { coinImages: { gp: asset.id } } })).ok, true);
+  assert.equal((await act(dm.c, { type: 'settings.update', patch: { coinImages: { sp: 'gibtsnicht' } } })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  const v = viewForPlayer(inst.getState(), 4);
+  assert.equal(v.coinImages.gp, asset.id);
+  assert.ok(v.assets.some((a) => a.id === asset.id));
+  await act(dm.c, { type: 'settings.update', patch: { coinImages: { gp: null } } });
+  dm.c.close();
+});
+
+test('Infotexte: Deutsch und Englisch werden getrennt angepasst', async () => {
+  const dm = await joinDM();
+  await act(dm.c, { type: 'help.set', key: 'ac', lang: 'en', title: 'AC', lines: ['English line'] });
+  const ht = inst.getState().helpTexts;
+  assert.deepEqual(ht.en.terms.ac.lines, ['English line']);
+  assert.equal(ht.terms.ac, undefined);
+  await act(dm.c, { type: 'help.set', key: 'ac', lang: 'en', lines: null });
+  assert.equal(ht.en.terms.ac, undefined);
+  dm.c.close();
 });
 
 test('Chat: an alle, an einzelne; was nicht an den DM geht, sieht der DM nicht', async () => {

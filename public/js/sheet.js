@@ -12,26 +12,35 @@ import { h, debounce, assetUrl, initials, dialog } from './util.js';
 import { editConditions, conditionChips } from './conditions.js';
 import { info } from './help.js';
 import { lockButton, applyLocks } from './lock.js';
+import { term, termText, enFor, LANG } from './i18n.js';
+import { GLOSSARY } from './glossary.js';
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 10);
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
 /** Fertige Zähler, die man per Haken hinzufügt oder wegklickt. */
+// Name in der aktuellen Sprache; erkannt werden deutsche und englische Namen.
 export const COUNTER_PRESETS = [
-  { name: 'Inspiration', max: 1 },
-  { name: 'Heiltränke', max: 2 },
-  { name: 'Kampfrausch', max: 2 },
-  { name: 'Ki-Punkte', max: 2 },
-  { name: 'Zweiter Wind', max: 1 },
-  { name: 'Tatendrang', max: 1 },
-  { name: 'Bardische Inspiration', max: 3 },
-  { name: 'Göttliche Macht fokussieren', max: 1 },
-  { name: 'Handauflegen (HP-Vorrat)', max: 5 },
-  { name: 'Zaubereipunkte', max: 2 },
-  { name: 'Tiergestalt', max: 2 },
-  { name: 'Erschöpfung (Stufe 0–6)', max: 6, cur: 0 },
-  { name: 'Munition', max: 20 },
-];
+  { key: 'inspiration', max: 1 },
+  { key: 'healingPotions', max: 2 },
+  { key: 'rage', max: 2 },
+  { key: 'ki', max: 2 },
+  { key: 'secondWind', max: 1 },
+  { key: 'actionSurge', max: 1 },
+  { key: 'bardicInspiration', max: 3 },
+  { key: 'channelDivinity', max: 1 },
+  { key: 'layOnHands', max: 5 },
+  { key: 'sorceryPoints', max: 2 },
+  { key: 'wildShape', max: 2 },
+  { key: 'exhaustionLevel', max: 6, cur: 0 },
+  { key: 'ammunition', max: 20 },
+].map((p) => ({ ...p, name: termText(p.key) }));
+
+/** Englischer Begriff klein unter einem Eingabefeld (nur im deutschen Modus). */
+const enHint = (deText) => {
+  const en = LANG === 'de' ? enFor(deText) : '';
+  return en && en.toLowerCase() !== String(deText).trim().toLowerCase() ? h('small.term-en.under', { lang: 'en' }, en) : null;
+};
 
 export class Sheet {
   /**
@@ -128,7 +137,7 @@ export class Sheet {
     const prefs = d.sheetPrefs || { slots: true, counters: true };
 
     // HP
-    const hpNum = (key, label) => h('label.num', {}, h('span', {}, label),
+    const hpNum = (key, label) => h('label.num', {}, h('span', {}, typeof label === 'string' ? label : label),
       h('input', { type: 'number', min: 0, 'data-bind': `hp:${key}`, 'data-lock': '', value: d.hp[key], inputmode: 'numeric',
         onchange: (e) => this.patch({ hp: { ...this.data.hp, [key]: Number(e.target.value) || 0 } }) }));
     const amount = h('input.amount', { type: 'number', min: 0, placeholder: 'Betrag', inputmode: 'numeric' });
@@ -148,9 +157,9 @@ export class Sheet {
       this.refreshValues();
     };
     c.append(h('section', {},
-      h('h4', {}, 'Trefferpunkte ', info('hp')),
+      h('h4', {}, term('hp'), ' ', info('hp')),
       h('div.hpbar', {}, h('div', { style: { width: `${this.hpRatio() * 100}%` } })),
-      h('div.row', {}, hpNum('cur', 'Aktuell'), hpNum('max', 'Maximum'), h('div.with-info', {}, hpNum('temp', 'Temporär'), info('tempHp'))),
+      h('div.row', {}, hpNum('cur', 'Aktuell'), hpNum('max', 'Maximum'), h('div.with-info', {}, hpNum('temp', term('tempShort')), info('tempHp'))),
       h('div.row', {}, amount,
         h('button.danger.small', { onclick: () => apply(-1) }, 'Schaden'),
         h('button.good.small', { onclick: () => apply(1) }, 'Heilung'))));
@@ -158,23 +167,27 @@ export class Sheet {
     // Am Boden: Todesrettungswürfe (P4) und für NPCs "tot oder am Boden" (P5)
     if (d.hp.cur <= 0) {
       const ds = d.deathSaves || { success: 0, fail: 0 };
-      const row = (key, label, cls) => h('div.saves', {}, h('span', {}, label),
+      const row = (key, label, cls) => h('div.saves', {}, h('span', {}, term(label)),
         ...[1, 2, 3].map((i) => h(`button.save${i <= ds[key] ? `.${cls}` : ''}`, {
-          title: `${label} ${i}`,
+          title: `${termText(label)} ${i}`,
           onclick: () => { this.patch({ deathSaves: { ...this.data.deathSaves, [key]: i <= this.data.deathSaves[key] ? i - 1 : i } }); this.signature = ''; this.render(); },
         })));
       c.append(h('section.down', {},
-        h('h4', {}, o.kind === 'npc' ? (d.dead ? 'Tot' : 'Am Boden (bewusstlos)') : 'Am Boden: Todesrettungswürfe', ' ', info('deathSaves')),
+        // NPCs würfeln keine Todesrettungswürfe: nur „am Boden“ oder „tot“
+        o.kind === 'npc'
+          ? h('h4', {}, d.dead ? 'Tot' : 'Am Boden (bewusstlos)')
+          : h('h4', {}, 'Am Boden: ', term('deathSaves'), ' ', info('deathSaves')),
         o.kind === 'npc' ? h('div.row', {},
           h(`button.small${d.dead ? '' : '.primary'}`, { onclick: () => { this.patch({ dead: false }); } }, 'Am Boden'),
           h(`button.small${d.dead ? '.danger' : ''}`, { onclick: () => { this.patch({ dead: true }); } }, 'Tot'),
           h('span.hint', {}, 'Spieler sehen „am Boden“ oder „tot“.')) : null,
-        row('success', 'Erfolge', 'ok'), row('fail', 'Fehlschläge', 'bad')));
+        o.kind === 'npc' ? null : row('success', 'successes', 'ok'),
+        o.kind === 'npc' ? null : row('fail', 'failures', 'bad')));
     }
 
     // Zustände (P4)
     c.append(h('section', {},
-      h('h4', {}, 'Zustände ', h('button.small', { onclick: async () => {
+      h('h4', {}, term('conditions'), ' ', h('button.small', { onclick: async () => {
         const list = await editConditions(this.data.conditions || [], `Zustände: ${this.data.name}`);
         if (list) this.opts.onConditions ? this.opts.onConditions(list) : null;
       } }, 'Ändern')),
@@ -186,7 +199,7 @@ export class Sheet {
     const stats = h('div.stats');
     for (const s of d.stats) {
       stats.append(h('div.stat', {},
-        h('input.label', { value: s.label, 'data-lock': '', 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }),
+        h('div.stat-label', {}, h('input.label', { value: s.label, 'data-lock': '', 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }), enHint(s.label)),
         h('input.value', { value: s.value, 'data-lock': '', 'data-bind': `stat:${s.id}:value`, placeholder: '–', onchange: (e) => this.editStat(s.id, { value: e.target.value }) }),
         h('button.icon', { title: 'Entfernen', 'data-lock': '', onclick: () => this.patch({ stats: this.data.stats.filter((x) => x.id !== s.id) }) }, '×')));
     }
@@ -204,14 +217,14 @@ export class Sheet {
         const boxes = h('div.boxes', { dataset: { slotLevel: sl.level } });
         this.renderSlotBoxes(boxes, sl.level);
         slots.append(h('div.slot', {},
-          h('span.lvl', {}, `Grad ${ROMAN[sl.level - 1]}`),
+          h('span.lvl', {}, `${termText('spellLevel')} ${ROMAN[sl.level - 1]}`),
           editing ? h('input.max', { type: 'number', min: 0, max: 99, value: sl.max, 'data-bind': `slotmax:${sl.level}`, title: `Anzahl Plätze Grad ${ROMAN[sl.level - 1]}`,
             onchange: (e) => this.editSlot(sl.level, { max: Number(e.target.value) || 0 }) }) : null,
           boxes));
       }
       if (!slots.childElementCount) slots.append(h('p.hint', {}, 'Keine Zauberplätze. Mit „Anzahl ändern“ einrichten oder unter „Bogen anpassen“ ausblenden.'));
       c.append(h('section', {},
-        h('h4', {}, 'Zauberplätze ', info('spellSlots'),
+        h('h4', {}, term('spellSlots'), ' ', info('spellSlots'),
           h('button.small', { onclick: () => { this.editSlots = !editing; this.render(); } }, editing ? 'Fertig' : 'Anzahl ändern'),
           d.slots.some((s) => s.used) ? h('button.small', { title: 'Alle Plätze wieder frei (z. B. nach einer langen Rast)', onclick: () => {
             this.patch({ slots: this.data.slots.map((s) => ({ ...s, used: 0 })) }); this.refreshValues();
@@ -224,7 +237,7 @@ export class Sheet {
       const counters = h('div.counters');
       for (const k of d.counters) {
         counters.append(h('div.counter', {},
-          h('input.label', { value: k.name, 'data-lock': '', placeholder: 'z. B. Ki-Punkte', 'data-bind': `counter:${k.id}:name`, onchange: (e) => this.editCounter(k.id, { name: e.target.value }) }),
+          h('div.counter-label', {}, h('input.label', { value: k.name, 'data-lock': '', placeholder: 'z. B. Ki-Punkte', 'data-bind': `counter:${k.id}:name`, onchange: (e) => this.editCounter(k.id, { name: e.target.value }) }), enHint(k.name)),
           h('button.small', { onclick: () => this.editCounter(k.id, { cur: Math.max(0, this.read(`counter:${k.id}:cur`) - 1) }) }, '−'),
           h('input.cur', { type: 'number', min: 0, 'data-lock': '', value: k.cur, 'data-bind': `counter:${k.id}:cur`, onchange: (e) => this.editCounter(k.id, { cur: Number(e.target.value) || 0 }) }),
           h('span', {}, '/'),
@@ -263,24 +276,26 @@ export class Sheet {
   async customize() {
     const d = this.data;
     const prefs = d.sheetPrefs || { slots: true, counters: true };
-    const present = new Set(d.counters.map((k) => k.name));
+    // Vorlagen auf Deutsch und Englisch erkennen
+    const norm = (x) => String(x || '').trim().toLowerCase();
+    const presetOf = (name) => COUNTER_PRESETS.find((p) => [GLOSSARY[p.key].de, GLOSSARY[p.key].en, ...(GLOSSARY[p.key].alt || [])].some((x) => norm(x) === norm(name)));
+    const present = new Set(d.counters.map((k) => presetOf(k.name)?.key).filter(Boolean));
     const r = await dialog({
       title: `Bogen anpassen: ${d.name}`,
       body: 'Wer keine Zauber wirkt (z. B. ein Krieger), blendet die Zauberplätze einfach aus. Vorlagen lassen sich jederzeit an- und abhaken.',
       fields: [
         { name: 'slots', label: 'Zauberplätze anzeigen', type: 'checkbox', value: prefs.slots },
         { name: 'counters', label: 'Zähler anzeigen', type: 'checkbox', value: prefs.counters },
-        { name: 'presets', label: 'Zähler-Vorlagen', type: 'checks', value: COUNTER_PRESETS.filter((p) => present.has(p.name)).map((p) => p.name),
-          options: COUNTER_PRESETS.map((p) => ({ value: p.name, label: `${p.name} (${p.max})` })) },
+        { name: 'presets', label: 'Zähler-Vorlagen', type: 'checks', value: COUNTER_PRESETS.filter((p) => present.has(p.key)).map((p) => p.key),
+          options: COUNTER_PRESETS.map((p) => ({ value: p.key, label: h('span', {}, term(p.key), ` (${p.max})`) })) },
       ],
       okText: 'Übernehmen',
     });
     if (!r) return;
     const wanted = new Set(r.presets);
-    const presetNames = new Set(COUNTER_PRESETS.map((p) => p.name));
-    const counters = d.counters.filter((k) => !presetNames.has(k.name) || wanted.has(k.name));
+    const counters = d.counters.filter((k) => { const p = presetOf(k.name); return !p || wanted.has(p.key); });
     for (const p of COUNTER_PRESETS) {
-      if (wanted.has(p.name) && !present.has(p.name)) counters.push({ id: uid('k_'), name: p.name, max: p.max, cur: p.cur ?? p.max });
+      if (wanted.has(p.key) && !present.has(p.key)) counters.push({ id: uid('k_'), name: p.name, max: p.max, cur: p.cur ?? p.max });
     }
     this.patch({ sheetPrefs: { slots: r.slots, counters: r.counters || wanted.size > 0 }, counters });
     this.signature = '';

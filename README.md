@@ -10,7 +10,7 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 
 [![Tests](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/ci.yml/badge.svg)](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/ci.yml)
 [![Pakete](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/release.yml/badge.svg)](https://github.com/Mr3Sepz/dnd_tabletop/actions/workflows/release.yml)
-![Linux](https://img.shields.io/badge/Linux-AppImage-8b2e1f) ![Windows](https://img.shields.io/badge/Windows-portable-8b2e1f) ![Spieler](https://img.shields.io/badge/Spieler-1–20-8b2e1f) ![Regeln](https://img.shields.io/badge/Regeln-5e%20(2014)-8b2e1f)
+![Linux](https://img.shields.io/badge/Linux-AppImage-8b2e1f) ![Windows](https://img.shields.io/badge/Windows-portable-8b2e1f) ![Spieler](https://img.shields.io/badge/Spieler-1–20-8b2e1f) ![Regeln](https://img.shields.io/badge/Regeln-5e%20(2014)-8b2e1f) ![Sprache](https://img.shields.io/badge/Sprache-DE%20%7C%20EN-8b2e1f)
 
 <img src="docs/img/01-dm-ueberblick.webp" alt="DM-Ansicht: Karte mit Goblins, Wagen und Helden, Porträtleiste oben, Charakterbogen rechts">
 
@@ -25,7 +25,7 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 - [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Figuren und NPCs](#3-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
 - [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative, Runden, Effekte](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Charakterbogen und Attribute](#9-der-charakterbogen) · [Inventar, Waffen, Zauber](#10-inventar) · [Fog of War](#11-fog-of-war) · [Getrennte Gruppen](#12-getrennte-gruppen) · [Sicht pro Spieler](#13-sicht-pro-spieler) · [Messen](#14-entfernungen-messen) · [Würfel und Fuß ↔ Meter](#15-würfeln) · [Vorschau](#16-als-spieler-ansehen)
 - [Alle zusammen](#alle-zusammen): [Tagebuch und Quests](#17-tagebuch-und-quests) · [Chat](#18-chat) · [Weltkarte](#19-weltkarte) · [Zuschauer-Bildschirm](#20-zuschauer-bildschirm)
-- [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
+- [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
 - [Notizen, Speichern, Beenden](#notizen-speichern-beenden)
 - [Was deine Spieler sehen](#was-deine-spieler-sehen)
 - [Spickzettel](#spickzettel)
@@ -84,7 +84,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
@@ -141,12 +141,15 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
 - **Fuß pro Feld** (Standard 5) braucht das Lineal.
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
+- **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
 - **Notiz zur Szene:** Raumbeschreibung, Fallen, Schätze. Nur du siehst sie.
 
 **Im Hintergrund vorbereiten:** Oben bei *Bearbeite* wählst du eine andere Szene aus. Die Spieler sehen weiter die alte, bis du **Live schalten** drückst.
 
 <br clear="right">
+
+<img src="docs/img/35-szene-gedreht.webp" alt="Waldweg um 90° gedreht: Karte, Figuren, Schablone und Zeichnungen sind mitgedreht">
 
 ### 3. Figuren und NPCs
 
@@ -157,6 +160,8 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 **Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
 
 **NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …**
+
+**Durchsichtige PNGs:** Hat ein Bild einen durchsichtigen Hintergrund, füllt die **Hintergrundfarbe** der Figur die Lücke (Rechtsklick → *Bearbeiten …* → *Hintergrundfarbe*). Die Farbe gilt auch für das Porträt in der Leiste.
 
 <br clear="right">
 
@@ -235,17 +240,18 @@ Unten erscheint *„4 markiert · Aktionen …“*:
 - **Gleiche Gegner stehen einzeln** (Goblin A, Goblin B …) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
 - **Initiativwert** ins kleine Feld unter dem Porträt tippen, dann **Sortieren**. Der Höchste beginnt.
 - **Reihenfolge ändern:** Porträt ziehen (Maus) oder **‹ ›** (Touch). **Weiter ▶** schaltet zum Nächsten. Ein Klick auf ein Porträt macht es zum aktuellen.
-- Bei Gegnern sehen die Spieler **nie die HP**, nur einen Ring um Porträt und Figur:
+- **Am Porträt** steht alles über den Zustand, **die Figur auf der Karte bleibt unverändert** (nur „tot“ ändert sie):
 
-  | Zustand | Anzeige |
+  | Was | Anzeige am Porträt |
   | --- | --- |
+  | Zustände (vergiftet, liegend, Segen …) | **farbige Punkte** um das Porträt herum, wie eine Perlenkette. Ein Punkt je Zustand |
   | unverletzt | kein Ring |
   | angeschlagen (über halbe HP) | blassroter Ring |
   | schwer verletzt (halbe HP oder weniger) | knallroter Ring |
   | am Boden | brauner Ring |
-  | tot | Porträt ausgegraut, Figur grau mit Kreuz |
+  | tot | Porträt ausgegraut; **auf der Karte** grau mit Kreuz |
 
-  Gelten mehrere Zustände (vergiftet, liegend …), bekommt die Figur mehrere farbige Ringe.
+  Den HP-Ring sehen die Spieler nur bei Gegnern, ihre genauen HP nie.
 
 **Wer sieht welchen Eintrag?** Unter jedem Gegner steht ein Knopf, z. B. **👁 automatisch**. Antippen öffnet diese Auswahl:
 
@@ -272,7 +278,7 @@ Einträge, die gerade kein Spieler sieht, haben bei dir einen gestrichelten Rahm
 </tr>
 <tr>
 <td><b>Schaden / Heilung</b>: über das Figurenmenü, den Knopf „± HP“ im Bogen oder für mehrere markierte Figuren.</td>
-<td><b>Zustände</b>: farbige Ringe um Figur und Porträt, für alle sichtbar. Spieler dürfen Zustände ihres eigenen Charakters selbst setzen. Ein Klick auf einen Zustand im Bogen erklärt, was er bewirkt.</td>
+<td><b>Zustände</b>: farbige Punkte am Porträt in der Leiste, für alle sichtbar. Spieler dürfen Zustände ihres eigenen Charakters selbst setzen. Ein Klick auf einen Zustand im Bogen erklärt, was er bewirkt.</td>
 </tr>
 </table>
 
@@ -280,11 +286,11 @@ Verfügbar sind alle 5e-Zustände (blind, bezaubert, taub, verängstigt, gepackt
 
 <img src="docs/img/04b-tot-oder-am-boden.webp" alt="Frage: Goblin A ist auf 0 HP – tot oder am Boden?">
 
-**Fällt ein NPC auf 0 HP**, fragt die App: **tot oder am Boden?** Der niedergeschlagene Goblin für das Verhör bleibt so „am Boden“ (grau). Erst „tot“ bekommt ein Kreuz. Wird er geheilt, steht er wieder. Bei 0 HP zeigt der Bogen außerdem die **Todesrettungswürfe** (3 Erfolge, 3 Fehlschläge).
+**Fällt ein NPC auf 0 HP**, fragt die App: **tot oder am Boden?** Der niedergeschlagene Goblin für das Verhör bleibt so „am Boden“ (grau). Erst „tot“ bekommt ein Kreuz. Wird er geheilt, steht er wieder. **NPCs würfeln keine Todesrettungswürfe.** Die gibt es nur bei Spielercharakteren: Bei 0 HP zeigt ihr Bogen 3 Erfolge und 3 Fehlschläge zum Abhaken.
 
 ### 9. Der Charakterbogen
 
-<img src="docs/img/11-npc-bogen.webp" width="300" align="right" alt="NPC-Bogen bei 0 HP mit Todesrettungswürfen">
+<img src="docs/img/11-npc-bogen.webp" width="300" align="right" alt="NPC-Bogen bei 0 HP: am Boden oder tot">
 
 Spieler und NPCs haben denselben Bogen:
 - **Trefferpunkte:** aktuell, maximal, temporär; Knöpfe für Schaden und Heilung.
@@ -335,6 +341,8 @@ Ein **optionaler** digitaler Charakterbogen, eigener Reiter beim Spieler. Du fin
 - **Gegenstände:** ein Textfeld wie ein Notizblock, ein Gegenstand pro Zeile.
 
 **Eigene Münznamen:** Das **⚙** neben „Münzen“ (nur bei dir) gibt den Münzen für alle neue Namen, z. B. „Kronen“ statt Gold. Die Spieler sehen die Namen, ändern können sie sie nicht.
+
+**Münzbilder:** Jede Münze hat ein Standardbild. Tippst du (als DM) auf das Bild einer Münze, kannst du ein **eigenes Bild hochladen** oder zum **Standardbild** zurück. Diese Bilder landen **nicht** in der Bildersammlung.
 
 Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spieler sehen es nicht. **Du** siehst im Reiter **Inventar** alle Charaktere und kannst etwas eintragen, z. B. gefundene Beute oder etwas, das du für später planst.
 
@@ -395,9 +403,13 @@ Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenm
 
 <img src="docs/img/13-wuerfel.webp" alt="Würfel-Panel mit verdecktem DM-Wurf">
 
-**🎲** unten links: Schnellknöpfe d4 bis d100 oder freie Eingabe wie `1d20+5`, `2d20kh1` (Vorteil), `2d20kl1` (Nachteil), `4d6kh3`. Jeder Wurf wird kurz bei allen eingeblendet und landet im Protokoll.
+**🎲** unten links, bewusst schlicht:
 
-**Was heißen „kh“ und „kl“?** *keep highest* und *keep lowest*: die höchsten bzw. niedrigsten Würfel behalten. `2d20kh1` = zwei W20 werfen, den höheren nehmen (Vorteil). `4d6kh3` = vier W6 werfen, die drei höchsten zählen (Attribute auswürfeln).
+- **Vorteil** / **Nachteil:** zwei W20, der höhere bzw. niedrigere zählt.
+- **Anzahl** mit − / +, dann einen Würfel antippen: W4, W6, W8, W10, W12, W20, W100. Zum Beispiel 3 × W6.
+- Keine Formeln, keine Boni: Was dazukommt, rechnet ihr am Tisch.
+
+Jeder Wurf wird kurz bei allen eingeblendet und landet im Protokoll.
 
 **Verdeckt würfeln** (Haken): Das Ergebnis siehst nur du. Echte Würfel am Tisch bleiben natürlich gleichwertig.
 
@@ -430,10 +442,13 @@ Reiter **Notizen** (bei dir) bzw. **Gruppe** (bei den Spielern):
 
 <img src="docs/img/31-chat.webp" width="420" alt="Chat: Nachricht an einen Spieler, Nachricht des DM an alle">
 
-**💬** unten links neben dem Würfel. Bei **An:** wählst du *Alle* oder einzelne Empfänger, auch mehrere: DM → Spieler A, DM → A und B, Spieler A → Spieler C …
+**💬** unten links neben dem Würfel. Jede Unterhaltung hat **einen eigenen Tab**, so geht nichts aus Versehen an alle:
 
+- **📢 Alle:** alle lesen mit.
+- **Ein Tab pro Person:** z. B. *Tom*. Was du dort schreibst, lesen nur Tom und du.
+- **+ Gruppe:** eigene Unterhaltung mit mehreren, z. B. *Tom + Mia*.
+- Über der Nachrichtenliste steht immer, wer mitliest. Ungelesenes zeigt eine rote Zahl am Tab und am 💬.
 - **Was nicht an dich geht, kannst du nicht lesen.** Der Server schickt jede Nachricht nur an Absender und Empfänger.
-- Neue Nachrichten erscheinen kurz unten und als rote Zahl am 💬.
 - Der Chat wird **nicht gespeichert**, auch nicht im Spielstand. Nach einem Neustart des Servers ist er leer.
 
 ### 19. Weltkarte
@@ -457,6 +472,24 @@ Für einen Fernseher oder zweiten Bildschirm am Tisch: **nur die Karte und die P
 - **Ja, ein zweiter Tab am selben PC geht.** Ziehe ihn auf den zweiten Bildschirm und drücke F11. Er belegt keinen Spielerplatz.
 - Er zeigt die **Live-Szene** mit Nebel, so wie die Spieler sie sehen. Versteckte Figuren und Figuren, die nur einzelne Spieler sehen, erscheinen nicht.
 - Von einem anderen Gerät fragt er nach der Raum-PIN, falls eine gesetzt ist.
+
+---
+
+## Deutsch und Englisch
+
+<table>
+<tr>
+<td width="62%"><img src="docs/img/36-englisch-dm.webp" alt="DM-Ansicht auf Englisch"></td>
+<td width="38%"><img src="docs/img/28-attribute-handy.webp" alt="Attribute auf Deutsch mit englischen Begriffen darunter"></td>
+</tr>
+<tr><td>Englische Oberfläche (UK)</td><td>Deutsch: Fachbegriffe mit dem englischen Begriff darunter</td></tr>
+</table>
+
+- **Auf Deutsch** steht bei jedem DnD-Fachbegriff der englische Begriff klein darunter: Stärke / *Strength*, Zauberplätze / *Spell Slots*, Wahrnehmung / *Perception*, Liegend / *Prone* … So findet man sich auch in englischen Regelbüchern und Videos zurecht.
+- **Auf Englisch (UK)** ist die ganze Oberfläche englisch, für internationale Mitspieler, auch die Infotexte.
+- **Umschalten:** **EN** bzw. **DE** oben in der Kopfzeile oder auf der Startseite. Die Wahl gilt pro Gerät. Jeder spielt in seiner Sprache, auch in derselben Runde.
+- Ohne Wahl richtet sich die App nach der Sprache des Browsers.
+- **Infotexte ändern** geht für jede Sprache getrennt.
 
 ---
 
@@ -513,7 +546,7 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 - **Inventar:** Waffen mit Munition, vorbereitete Zauber, Münzen, Gegenstände.
 - **Gruppe:** Tagebuch und Quests, gemeinsame Notizen.
 - **Oben:** Runde und Effekttimer (eigene starten), 🌍 Weltkarte mit eigenen Pins.
-- **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln mit Fuß-↔-Meter-Rechner, 💬 Chat, **🗺 Karte aus** (am Handy wie am PC), ⛶ Vollbild.
+- **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln mit Fuß-↔-Meter-Rechner, 💬 Chat, **🗺 Karte aus** (am Handy wie am PC), ⛶ Vollbild, **EN/DE** Sprache.
 
 <img src="docs/img/25-inventar-handy.webp" width="260" alt="Inventar am Handy: Münzen und Gegenstände">
 
@@ -545,8 +578,12 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Krieger ohne Zauberplätze | Bogen → *⚙ Bogen anpassen* → Zauberplätze aus |
 | Beute verteilen | Reiter *Inventar* → Charakter wählen → Münzen / Gegenstände |
 | Geheim würfeln | 🎲 → *Verdeckt würfeln* |
+| Mit Vorteil würfeln | 🎲 → **Vorteil** |
+| Karte drehen | *Szenen* → **⟲ 90°** / **⟳ 90°** |
+| Sprache wechseln | **EN** / **DE** oben |
+| Münzbild ändern | *Inventar* → aufs Münzbild tippen |
 | Fuß in Meter umrechnen | 🎲 → *Fuß ↔ Meter* |
-| Einem Spieler heimlich etwas sagen | 💬 → *An:* Spieler wählen |
+| Einem Spieler heimlich etwas sagen | 💬 → Tab mit seinem Namen |
 | Quest festhalten | *Notizen* → **+ Eintrag** |
 | Ort auf der Weltkarte markieren | 🌍 → **+ Pin** |
 | Karte auf dem Fernseher zeigen | *Spiel* → *Zuschauer-Ansicht öffnen* → F11 |
@@ -569,8 +606,9 @@ Normalerweise musst du nichts einstellen. Wenn doch: Lege eine Datei **`config.j
 | `autosaveMinutes` | Autosave-Intervall | `5` |
 | `dataDir` | Ordner für Spielstand und Bilder | `data` bzw. `~/.local/share/dnd-tabletop` |
 | `openBrowser` | DM-Ansicht beim Start öffnen | `true` |
+| `language` | `de` oder `en`: Sprache für Standardnamen neuer Spielstände („Erste Szene“ / „First scene“). Die Oberfläche wählt jeder selbst | Systemsprache |
 
-Umgebungsvariablen gehen auch: `PORT`, `DND_DM_PASSWORD`, `DND_PIN`, `DND_SEATS`, `DND_DATA_DIR`, `DND_NO_BROWSER=1`.
+Umgebungsvariablen gehen auch: `PORT`, `DND_DM_PASSWORD`, `DND_PIN`, `DND_SEATS`, `DND_DATA_DIR`, `DND_LANG`, `DND_NO_BROWSER=1`.
 
 ---
 
@@ -631,5 +669,5 @@ bash scripts/build-windows.sh     # portable Windows-ZIP
 ## Lizenzen
 
 - **Programm:** MIT (siehe [LICENSE](LICENSE)). Die Testgrafiken in `test/art` sind für dieses Projekt erstellt.
-- **Regeltexte in den Infopunkten** (`shared/rules-help.json`): gekürzte deutsche Bearbeitungen. *This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.* Die Texte wurden übersetzt, gekürzt und um Hinweise zur Bedienung der App ergänzt. Die Zustände „Brennt“ und „Blutend“ stammen nicht aus dem SRD.
+- **Regeltexte in den Infopunkten** (`shared/rules-help.json` deutsch, `shared/rules-help.en.json` englisch): gekürzte Bearbeitungen. *This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.* Die Texte wurden übersetzt, gekürzt und um Hinweise zur Bedienung der App ergänzt. Die Zustände „Brennt“ und „Blutend“ stammen nicht aus dem SRD.
 - Kompatibel mit der fünften Edition („5E compatible“).

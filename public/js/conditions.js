@@ -1,6 +1,7 @@
 // Zustände auswählen (Vorschlag 3): feste 5e-Liste plus freie Einträge wie "Segen".
 
-import { h, dialog, CATALOG } from './util.js';
+import { h, dialog, CATALOG, CONDITION_BY_KEY } from './util.js';
+import { bi } from './i18n.js';
 import { showConditionHelp } from './help.js';
 
 /** Öffnet den Auswahldialog. Gibt die neue Liste zurück oder null bei Abbruch. */
@@ -9,12 +10,12 @@ export async function editConditions(current = [], title = 'Zustände') {
   const res = await dialog({
     title,
     fields: [
-      { name: 'keys', label: 'Zustände', type: 'checks', value: current.filter((c) => c.key !== 'custom').map((c) => c.key),
-        options: CATALOG.conditions.map((c) => ({ value: c.key, label: c.label, color: c.color })) },
+      { name: 'keys', label: bi('Zustände'), type: 'checks', value: current.filter((c) => c.key !== 'custom').map((c) => c.key),
+        options: CATALOG.conditions.map((c) => ({ value: c.key, label: bi(c.label), color: c.color })) },
       { name: 'customLabel', label: 'Eigener Zustand (optional), z. B. „Schläft (Sleep)“', value: '' },
       { name: 'customColor', label: 'Farbe dafür', type: 'color', value: '#888888' },
       ...(custom.length ? [{ name: 'keepCustom', label: 'Eigene behalten', type: 'checks', value: custom.map((c) => c.id),
-        options: custom.map((c) => ({ value: c.id, label: c.label, color: c.color })) }] : []),
+        options: custom.map((c) => ({ value: c.id, label: h('span', { 'data-raw': '' }, c.label), color: c.color })) }] : []),
     ],
     okText: 'Übernehmen',
   });
@@ -25,10 +26,16 @@ export async function editConditions(current = [], title = 'Zustände') {
   return list;
 }
 
+/** Name eines Zustands: zweisprachig aus dem Katalog, eigene Zustände unverändert. */
+export function condLabel(c) {
+  const cat = c.key !== 'custom' && CONDITION_BY_KEY.get(c.key);
+  return cat ? bi(cat.label) : h('span', { 'data-raw': '' }, c.label);
+}
+
 /** Kleine farbige Chips zur Anzeige. */
 export function conditionChips(list = [], onRemove) {
   return h('div.chips', {}, ...list.map((c) => h('span.chip', { style: { borderColor: c.color } },
     h('button.chip-label', { type: 'button', title: 'Was bewirkt das?', onclick: () => showConditionHelp(c) },
-      h('span.swatch', { style: { background: c.color } }), c.label, h('span.info.inline', {}, 'i')),
+      h('span.swatch', { style: { background: c.color } }), condLabel(c), h('span.info.inline', {}, 'i')),
     onRemove ? h('button.icon.chip-x', { title: 'Entfernen', onclick: () => onRemove(c) }, '×') : null)));
 }

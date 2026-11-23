@@ -47,6 +47,7 @@ const safeEqual = (a, b) => {
 
 function createApp(overrides = {}) {
   const config = loadConfig(overrides);
+  S.configureLanguage(config.language);
   S.configureSeats(config.seats);
   const store = new Store(config.dataDir);
   let state = store.loadLatest() || S.createInitialState();
@@ -105,6 +106,8 @@ function createApp(overrides = {}) {
       width: Math.max(1, Number(req.query.w) || 0),
       height: Math.max(1, Number(req.query.h) || 0),
     };
+    // Bilder für Münzen landen nicht in der Bildersammlung
+    if (req.query.purpose === 'coin') asset.purpose = 'coin';
     state.assets.push(asset);
     changed();
     res.json(asset);

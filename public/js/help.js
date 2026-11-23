@@ -4,8 +4,11 @@
 // Angepasste Texte liegen im Spielstand (state.helpTexts) und gelten für alle.
 
 import { h, CONDITION_BY_KEY, dialog } from './util.js';
+import { LANG, bi, enFor } from './i18n.js';
 
-export const HELP = await fetch('/shared/rules-help.json').then((r) => r.json());
+const [DE, EN] = await Promise.all(['/shared/rules-help.json', '/shared/rules-help.en.json'].map((u) => fetch(u).then((r) => r.json())));
+/** Texte in der Sprache der Oberfläche */
+export const HELP = LANG === 'en' ? EN : DE;
 
 let ctx = { isDM: false, act: null };
 let overrides = { terms: {}, conditions: {} };
@@ -13,26 +16,31 @@ let overrides = { terms: {}, conditions: {} };
 /** Wer darf ändern? Nur der DM bekommt den Knopf „Text ändern“. */
 export function setHelpContext(c) { ctx = { ...ctx, ...c }; }
 /** Angepasste Texte aus dem Spielstand übernehmen. */
-export function setHelpOverrides(o) { overrides = { terms: {}, conditions: {}, ...(o || {}) }; }
+export function setHelpOverrides(o) {
+  const src = LANG === 'en' ? (o && o.en) : o;
+  overrides = { terms: { ...((src && src.terms) || {}) }, conditions: { ...((src && src.conditions) || {}) } };
+}
 
 function termText(key) {
   const base = HELP.terms[key];
   const o = overrides.terms[key];
   if (!base && !o) return null;
-  return { title: (o && o.title) || base.title, text: o ? o.lines : base.text, custom: !!o, baseTitle: base ? base.title : key };
+  return { title: (o && o.title) || base.title, text: o ? o.lines : base.text, custom: !!o, baseTitle: base ? base.title : key, en: LANG === 'de' && EN.terms[key] ? EN.terms[key].title : '' };
 }
 function conditionText(key, fallbackLabel) {
   const o = overrides.conditions[key];
   const base = HELP.conditions[key];
   const meta = CONDITION_BY_KEY.get(key);
-  return { title: meta ? meta.label : fallbackLabel, text: o ? o.lines : (base || null), custom: !!o };
+  return { title: meta ? meta.label : fallbackLabel, text: o ? o.lines : (base || null), custom: !!o, cond: !!meta };
 }
 
-function showHelp({ title, text, color, custom, group, key }) {
+function showHelp({ title, text, color, custom, group, key, en, cond }) {
   const close = () => overlay.remove();
   const src = h('p.help-source.hidden', {}, HELP.attribution);
   const box = h('div.dialog.help', {},
-    h('h3', {}, color ? h('span.swatch', { style: { background: color } }) : null, ' ', title),
+    h('h3', {}, color ? h('span.swatch', { style: { background: color } }) : null, ' ',
+      // Überschrift im deutschen Modus mit englischem Begriff darunter
+      cond ? bi(title) : h('span.term', { 'data-raw': '' }, title, en && en !== title ? h('small.term-en', { lang: 'en' }, en) : null)),
     h('ul', {}, ...text.map((l) => h('li', {}, l))),
     h('p.help-source', {}, custom ? 'Vom DM angepasst · ' : '', HELP.short, ' · ',
       h('a', { href: '#', onclick: (e) => { e.preventDefault(); src.classList.toggle('hidden'); } }, 'Quelle')),
@@ -48,7 +56,9 @@ function showHelp({ title, text, color, custom, group, key }) {
 async function editHelp({ title, text, custom, group, key }) {
   const r = await dialog({
     title: `Infotext ändern: ${title}`,
-    body: 'Eine Zeile pro Punkt. Gilt für alle Spieler und wird im Spielstand gespeichert.',
+    body: LANG === 'en'
+      ? 'One line per point. Applies to everyone using the English version and is saved with the game. The German text is changed separately.'
+      : 'Eine Zeile pro Punkt. Gilt für alle Spieler mit deutscher Oberfläche und wird im Spielstand gespeichert. Die englischen Texte änderst du getrennt in der englischen Ansicht.',
     fields: [
       group === 'terms' ? { name: 'title', label: 'Überschrift', value: title } : null,
       { name: 'text', label: 'Text', type: 'textarea', value: text.join('\n') },
@@ -59,8 +69,8 @@ async function editHelp({ title, text, custom, group, key }) {
     ].filter(Boolean),
   });
   if (!r) return;
-  if (r._button === 'reset') await ctx.act({ type: 'help.set', group, key, lines: null });
-  else await ctx.act({ type: 'help.set', group, key, title: r.title || '', lines: r.text.split('\n') });
+  if (r._button === 'reset') await ctx.act({ type: 'help.set', group, key, lang: LANG, lines: null });
+  else await ctx.act({ type: 'help.set', group, key, lang: LANG, title: r.title || '', lines: r.text.split('\n') });
 }
 
 /** ⓘ-Knopf für einen Begriff aus HELP.terms */
@@ -79,7 +89,7 @@ export function helpLines(key) { return termText(key)?.text || []; }
 /** Erklärung zu einem Zustand anzeigen (eigene Zustände ohne Regeltext). */
 export function showConditionHelp(c) {
   const t = conditionText(c.key, c.label);
-  if (t.text) showHelp({ title: t.title, text: t.text, color: c.color, custom: t.custom, group: 'conditions', key: c.key });
+  if (t.text) showHelp({ title: LANG === 'en' ? (enFor(t.title) || t.title) : t.title, text: t.text, color: c.color, custom: t.custom, group: 'conditions', key: c.key, cond: LANG === 'de' });
   else showHelp({ title: c.label, text: ['Eigener Zustand. Was er bewirkt, legt der DM fest.'], color: c.color });
 }
 

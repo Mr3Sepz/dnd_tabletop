@@ -31,7 +31,15 @@ const defaults = {
   seats: 5,
   dataDir: PACKAGED ? USER_DATA : path.join(ROOT, 'data'),
   openBrowser: true,
+  // Sprache für Standardnamen und das Startfenster: 'de' oder 'en'.
+  // Leer = aus der Systemsprache. Die Oberfläche wählt jeder Nutzer selbst (DE/EN oben).
+  language: '',
 };
+
+function systemLanguage() {
+  const loc = process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANG || Intl.DateTimeFormat().resolvedOptions().locale || '';
+  return /^de/i.test(loc) ? 'de' : 'en';
+}
 
 function loadConfig(overrides = {}) {
   let file = {};
@@ -48,10 +56,12 @@ function loadConfig(overrides = {}) {
   if (process.env.DND_DATA_DIR) env.dataDir = process.env.DND_DATA_DIR;
   if (process.env.DND_SEATS) env.seats = Number(process.env.DND_SEATS);
   if (process.env.DND_NO_BROWSER) env.openBrowser = false;
+  if (process.env.DND_LANG) env.language = process.env.DND_LANG;
 
   const cfg = { ...defaults, ...file, ...env, ...overrides };
   cfg.dataDir = path.resolve(PACKAGED ? path.dirname(USER_DATA) : ROOT, cfg.dataDir);
   cfg.configPath = cfgPath;
+  cfg.language = cfg.language === 'en' || cfg.language === 'de' ? cfg.language : systemLanguage();
   return cfg;
 }
 

@@ -23,7 +23,7 @@ os.makedirs(OUT, exist_ok=True)
 errors = []
 steps = []
 
-env = dict(os.environ, PORT=PORT, DND_DATA_DIR=os.path.join(TMP, 'data'), DND_NO_BROWSER='1', DND_PIN='')
+env = dict(os.environ, PORT=PORT, DND_DATA_DIR=os.path.join(TMP, 'data'), DND_NO_BROWSER='1', DND_PIN='', DND_LANG='de')
 srv = subprocess.Popen(['node', 'server/index.js'], cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 time.sleep(1.2)
 
@@ -94,7 +94,7 @@ try:
     with sync_playwright() as p:
         chrome = os.environ.get('CHROME')
         b = p.chromium.launch(executable_path=chrome, args=['--no-sandbox']) if chrome else p.chromium.launch()
-        dm = b.new_page(viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
+        dm = b.new_page(locale='de-DE', viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
         watch(dm, 'dm')
         dm.goto(BASE + '/dm')
         dm.wait_for_selector('#tabBody h3')
@@ -106,8 +106,8 @@ try:
 
         step('Bildersammlung füllen')
         dm.click('#tabs button[data-tab=tokens]')
-        upload(dm, '+ Bilder', [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wagen.png', 'weltkarte.jpg']])
-        dm.wait_for_selector('.gallery .asset >> nth=5')
+        upload(dm, '+ Bilder', [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wagen.png', 'weltkarte.jpg', 'wolf.png']])
+        dm.wait_for_selector('.gallery .asset >> nth=6')
         dm.evaluate("window.scrollTo(0, 0); document.scrollingElement.scrollTop = 0; document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.3)
         panel_shot(dm, '19-figuren-reiter.png', 560)
 
@@ -205,7 +205,7 @@ try:
         bx, by = token_pos(dm, 'Borin')
         click_world(dm, bx, by, button='right')
         dm.get_by_role('button', name='Zustände …').click()
-        dm.check('.dialog input[value=prone]')
+        dm.check('.dialog input[value=prone]'); dm.check('.dialog input[value=blessed]'); dm.check('.dialog input[value=concentration]')
         shot(dm, '05-zustaende.png')
         dialog_ok(dm)
         gbx, gby = token_pos(dm, 'Goblin B')
@@ -220,14 +220,27 @@ try:
         assert dm.locator('.round-num b').inner_text() == '2'
         assert dm.locator('.effect.over').count() == 1, 'Netz ist abgelaufen'
 
+        step('Wolf (durchsichtiges PNG) mit Hintergrundfarbe')
+        dm.click('#tabs button[data-tab=tokens]'); time.sleep(0.2)
+        dm.click('.gallery .asset:has(img[alt="wolf"]) .asset-more'); time.sleep(0.2)
+        dm.get_by_role('button', name='🙂 Als Figur setzen (rund)').click(); time.sleep(0.2)
+        click_world(dm, G * 15.5, G * 9.5); time.sleep(0.4)
+        wx, wy = token_pos(dm, 'wolf')
+        click_world(dm, wx, wy, button='right')
+        dm.get_by_role('button', name='Bearbeiten …').click(); time.sleep(0.2)
+        dm.fill('.dialog input[name=name]', 'Wolf'); dm.fill('.dialog input[name=color]', '#2f6b3a'); dialog_ok(dm); time.sleep(0.4)
+
         step('Zauberschablone: Feuerball 20 ft')
         dm.click('button.tool[title^="Zauberschablone"]')
         dialog_ok(dm)
         click_world(dm, G * 6, G * 3.2)
 
         step('Würfeln: offen und verdeckt')
-        dm.click('.dice-toggle'); dm.click('.dice-quick button:has-text("d20")'); time.sleep(0.4)
-        dm.check('.dice-panel input[type=checkbox]'); dm.fill('.dice-panel .expr', '2d20kh1+3'); dm.press('.dice-panel .expr', 'Enter'); time.sleep(0.5)
+        dm.click('.dice-toggle'); dm.click('.dice-quick button:has-text("W20")'); time.sleep(0.4)
+        dm.click('.dice-count-row button[title="Mehr Würfel"]'); dm.click('.dice-count-row button[title="Mehr Würfel"]')
+        dm.click('.dice-quick button:has-text("W6")'); time.sleep(0.4)
+        assert dm.locator('.dice-panel input.expr').count() == 0, 'keine Formeleingabe mehr'
+        dm.check('.dice-panel input[type=checkbox]'); dm.click('.dice-adv button >> nth=0'); time.sleep(0.5)
         shot(dm, '13-wuerfel.png')
         dm.click('.dice-toggle'); time.sleep(0.3)
 
@@ -242,7 +255,7 @@ try:
         dm.click('.party-card >> nth=1'); time.sleep(0.3)
         dm.get_by_role('button', name='⚙ Bogen anpassen').click()
         dm.uncheck('.dialog input[name=slots]')
-        dm.check('.dialog input[value="Zweiter Wind"]'); dm.check('.dialog input[value="Tatendrang"]')
+        dm.check('.dialog input[value="secondWind"]'); dm.check('.dialog input[value="actionSurge"]')
         shot(dm, '22-bogen-anpassen.png')
         dialog_ok(dm); time.sleep(0.4)
         assert dm.locator('.sheet .diamond').count() == 0, 'Krieger ohne Zauberplätze'
@@ -264,11 +277,11 @@ try:
         panel_shot(dm, '20-inventar-dm.png', 750)
 
         step('Spieler treten bei: Mia (Handy) und Tom (Laptop)')
-        mia = b.new_page(viewport={'width': 390, 'height': 820}, is_mobile=True, has_touch=True, device_scale_factor=2)
+        mia = b.new_page(locale='de-DE', viewport={'width': 390, 'height': 820}, is_mobile=True, has_touch=True, device_scale_factor=2)
         watch(mia, 'mia')
         mia.goto(BASE + '/'); mia.click('.seat >> nth=0'); mia.fill('input[name=playerName]', 'Mia'); mia.click('#joinForm button')
         mia.wait_for_url('**/player?seat=1'); mia.wait_for_selector('.ini-item'); time.sleep(0.8)
-        tom = b.new_page(viewport={'width': 1280, 'height': 800})
+        tom = b.new_page(locale='de-DE', viewport={'width': 1280, 'height': 800})
         watch(tom, 'tom')
         tom.goto(BASE + '/'); tom.click('.seat >> nth=1'); tom.fill('input[name=playerName]', 'Tom'); tom.click('#joinForm button')
         tom.wait_for_url('**/player?seat=2'); tom.wait_for_selector('.ini-item'); time.sleep(0.8)
@@ -328,7 +341,7 @@ try:
 
         step('Chat: Mia flüstert Tom etwas zu, der DM schreibt an alle')
         mia.click('.chat-toggle'); time.sleep(0.3)
-        mia.locator('.chat-to .chip', has_text='Tom').click()
+        mia.locator('.chat-tab', has_text='Tom').click()
         mia.fill('.chat-input', 'Psst, ich habe hinter dem Wagen etwas glitzern sehen.'); mia.press('.chat-input', 'Enter'); time.sleep(0.4)
         mia.click('.chat-toggle'); time.sleep(0.2)
         dm.click('.chat-toggle'); time.sleep(0.2)
@@ -336,8 +349,11 @@ try:
         assert 'glitzern' not in dm.locator('.chat-log').inner_text(), 'DM liest Spieler-Nachrichten nicht mit'
         dm.click('.chat-toggle'); time.sleep(0.2)
         tom.click('.chat-toggle'); time.sleep(0.4)
+        assert 'Hufgetrappel' in tom.locator('.chat-log').inner_text(), 'Tab „Alle“'
+        assert tom.locator('.chat-tab', has_text='Mia').locator('.tab-badge').count() == 1, 'ungelesen im Tab von Mia'
+        tom.locator('.chat-tab', has_text='Mia').click(); time.sleep(0.2)
         assert 'glitzern' in tom.locator('.chat-log').inner_text()
-        tom.locator('.chat-to .chip', has_text='Mia').click()
+        assert 'Hufgetrappel' not in tom.locator('.chat-log').inner_text(), 'Unterhaltungen getrennt'
         tom.fill('.chat-input', 'Ich schaue nach, gib mir Deckung!'); tom.press('.chat-input', 'Enter'); time.sleep(0.5)
         shot(tom, '31-chat.png', clip={'x': 0, 'y': 300, 'width': 520, 'height': 500})
         tom.click('.chat-toggle'); time.sleep(0.2)
@@ -364,8 +380,19 @@ try:
         dm.locator('.wm-pin', has_text='Phandalin').locator('span').click(); time.sleep(0.3)
         dm.click('.dialog button[value=go]'); time.sleep(0.5)
 
+        step('Szene drehen')
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        before = token_pos(dm, 'Wolf')
+        mh = dm.evaluate("window.dnd.board.mapSize().h")
+        dm.get_by_role('button', name='⟳ 90°').click(); time.sleep(0.8)
+        after = token_pos(dm, 'Wolf')
+        assert abs(after[0] - (mh - before[1])) < 1 and abs(after[1] - before[0]) < 1, (before, after, mh)
+        shot(dm, '35-szene-gedreht.png')
+        dm.get_by_role('button', name='⟲ 90°').click(); time.sleep(0.8)
+        assert token_pos(dm, 'Wolf') == before
+
         step('Zuschauer-Bildschirm (Battle Map am Tisch)')
-        tv = b.new_page(viewport={'width': 1280, 'height': 720})
+        tv = b.new_page(locale='de-DE', viewport={'width': 1280, 'height': 720})
         watch(tv, 'zuschauer')
         tv.goto(BASE + '/spectator'); tv.wait_for_selector('.ini-item'); time.sleep(1.0)
         tv_names = tv.evaluate("window.dnd.board.scene.tokens.map(t => t.name + (t.label ? ' ' + t.label : ''))")
@@ -373,6 +400,28 @@ try:
         assert tv.locator('.panel').count() == 0
         shot(tv, '33-zuschauer.png')
         tv.close()
+
+        step('Englische Oberfläche (UK)')
+        GERMAN = r"[äöüÄÖÜß„]"
+        def leftover(page):
+            return page.evaluate("""(re) => { const rx = new RegExp(re); const out = [];
+              const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+              while ((n = w.nextNode())) { const p = n.parentElement; if (!p || p.closest('[data-raw],textarea,script,style')) continue;
+                const t = n.nodeValue.trim(); if (t && rx.test(t)) out.push(t); }
+              return out; }""", GERMAN)
+        for pg in (dm, mia):
+            pg.evaluate("localStorage.setItem('dnd.lang', 'en')"); pg.reload(); time.sleep(1.5)
+        dm.wait_for_selector('#tabBody h3')
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.3); dm.click('.party-card >> nth=0'); time.sleep(0.5)
+        shot(dm, '36-englisch-dm.png')
+        if not mia.locator('#tabs').is_visible(): mia.click('#panelToggle'); time.sleep(0.3)
+        mia.click('#tabs button[data-tab=abilities]'); time.sleep(0.4)
+        shot(mia, '37-englisch-handy.png')
+        rest = [t for t in leftover(dm) + leftover(mia) if t not in ('Waldweg', 'Höhle')]
+        print('  Deutsch übrig (EN):', rest[:20])
+        for pg in (dm, mia):
+            pg.evaluate("localStorage.setItem('dnd.lang', 'de')"); pg.reload(); time.sleep(1.5)
+        dm.wait_for_selector('#tabBody h3')
 
         step('DM-Überblick')
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
@@ -490,7 +539,7 @@ try:
     with sync_playwright() as p:
         chrome = os.environ.get('CHROME')
         b = p.chromium.launch(executable_path=chrome, args=['--no-sandbox']) if chrome else p.chromium.launch()
-        pg = b.new_page(viewport={'width': 820, 'height': 400})
+        pg = b.new_page(locale='de-DE', viewport={'width': 820, 'height': 400})
         pg.set_content(page_html)
         pg.locator('body > div').screenshot(path=os.path.join(OUT, '00-startfenster.png'))
         b.close()

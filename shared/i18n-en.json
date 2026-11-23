@@ -1,0 +1,883 @@
+{
+ "strings": {
+  "(antippen zum Ändern)": "(tap to change)",
+  "· für Spieler gerade unsichtbar": "· currently invisible to players",
+  "· mit Szene verknüpft": "· linked to a scene",
+  "· nur du siehst ihn": "· only you can see it",
+  "· verdeckt": "· hidden",
+  "(ohne Name)": "(no name)",
+  "(ohne Namen)": "(no name)",
+  "+ Bilder": "+ Images",
+  "+ Eintrag": "+ Entry",
+  "+ Gruppe": "+ Group",
+  "+ Munitionszähler": "+ Ammunition counter",
+  "+ Neue Szene": "+ New scene",
+  "+ Neuer NPC": "+ New NPC",
+  "+ Pin": "+ Pin",
+  "+ Waffe": "+ Weapon",
+  "+ Wert": "+ Value",
+  "+ Zauber": "+ Spell",
+  "+ Zähler": "+ Counter",
+  "1, 2, 3 …": "1, 2, 3 …",
+  "A, B, C …": "A, B, C …",
+  "Abbrechen": "Cancel",
+  "Aktionen …": "Actions …",
+  "Alle": "All",
+  "Alle Figuren und Zeichnungen dieser Szene gehen verloren.": "All tokens and drawings in this scene will be lost.",
+  "Alle Plätze wieder frei (z. B. nach einer langen Rast)": "Restore all slots (e.g. after a long rest)",
+  "Alle Spielercharaktere in die Porträtleiste": "Add all player characters to the portrait bar",
+  "Alle aufdecken": "Reveal all",
+  "Alle frei": "Restore all",
+  "Alle hierher": "Everyone here",
+  "Alle in Leiste": "All to bar",
+  "Alle lesen mit": "Everyone can read this",
+  "Alle löschen": "Delete all",
+  "Alle sehen und schreiben mit": "Everyone can read and write",
+  "Alle verstecken": "Hide all",
+  "Alles aufdecken": "Reveal everything",
+  "Alles verdecken": "Cover everything",
+  "Als Gruppe in die Porträtleiste (ein Eintrag)": "Add to portrait bar as a group (one entry)",
+  "Als Spieler ansehen (A4)": "View as player",
+  "Als erledigt abhaken": "Mark as done",
+  "Als tot markieren": "Mark as dead",
+  "Alter": "Age",
+  "Am Boden": "Down",
+  "Am Boden (bewusstlos)": "Down (unconscious)",
+  "Am Boden:": "Down:",
+  "Am selben Tisch (WLAN)": "At the same table (Wi-Fi)",
+  "Angaben": "Details",
+  "Anlegen": "Create",
+  "Anmelden": "Log in",
+  "Anzahl": "Number",
+  "Anzahl Spielerplätze": "Number of player seats",
+  "Anzahl ändern": "Change number",
+  "Anzeigen": "Show",
+  "Attribute": "Abilities",
+  "Attribute und Fertigkeiten": "Abilities and skills",
+  "Attribute und Fertigkeiten (Reiter „Attribute“ beim Spieler)": "Abilities and skills (players' “Abilities” tab)",
+  "Auf Karte setzen …": "Place on map …",
+  "Auf die Karte tippen zum Setzen.": "Tap the map to place it.",
+  "Auf die Karte tippen …": "Tap the map …",
+  "Auf die Karte tippen, um das Objekt zu setzen. Danach kannst du es drehen und skalieren.": "Tap the map to place the object. Afterwards you can rotate and resize it.",
+  "Auf die Karte tippen: Dort ist der Ursprung. Danach mit dem Drehgriff ausrichten.": "Tap the map to set the origin. Then aim it with the rotation handle.",
+  "Auf die Karte ziehen oder antippen": "Drag onto the map or tap",
+  "Aufdecken": "Reveal",
+  "Aufdecken (für Spieler sichtbar)": "Reveal (visible to players)",
+  "Aufdecken und Verdecken mit den Nebel-Werkzeugen links auf der Karte (☀ = aufdecken, ☁ = verdecken). Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.": "Reveal and cover with the fog tools on the left of the map (☀ = reveal, ☁ = cover). You see the fog half-transparent, players see it black. Tokens in the fog are never sent to players.",
+  "Aufheben": "Clear",
+  "Aus Leiste entfernen": "Remove from bar",
+  "Ausdruck zu lang": "Expression too long",
+  "Auswahl aufheben": "Clear selection",
+  "Auswählen und Verschieben": "Select and move",
+  "Automatisch – sobald eine Figur davon sichtbar ist": "Automatic – as soon as one of its tokens is visible",
+  "Bearbeite:": "Editing:",
+  "Bearbeiten …": "Edit …",
+  "Beenden": "Quit",
+  "Beenden nicht möglich": "Cannot quit",
+  "Begriff fehlt": "Term missing",
+  "Beitreten": "Join",
+  "Beitreten – DnD-Tabletop": "Join – DnD-Tabletop",
+  "Beitritt nicht möglich": "Cannot join",
+  "Beschriftung": "Label",
+  "Betrag": "Amount",
+  "Bild": "Image",
+  "Bild (F5)": "Image",
+  "Bild antippen oder auf die Karte ziehen = Figur. Mit „⋯ Verwenden“ machst du daraus einen NPC, ein Objekt, die Karte der Szene oder die Weltkarte. Dateien kannst du auch direkt ins Fenster ziehen.": "Tap an image or drag it onto the map = token. With “⋯ Use” you turn it into an NPC, an object, the scene's map or the world map. You can also drag files straight into the window.",
+  "Bild für die Weltkarte aus der Bildersammlung": "Image from the library for the world map",
+  "Bild hochladen": "Upload image",
+  "Bild hochladen …": "Upload image …",
+  "Bild löschen?": "Delete image?",
+  "Bild nicht gefunden": "Image not found",
+  "Bild umbenennen": "Rename image",
+  "Bild wird noch verwendet": "Image is still in use",
+  "Bildersammlung": "Image library",
+  "Bitte die Raum-PIN eingeben.": "Please enter the room PIN.",
+  "Bitte einen Namen eingeben.": "Please enter a name.",
+  "Bitte mindestens einen Empfänger wählen": "Please choose at least one recipient",
+  "Breite in Feldern": "Width in squares",
+  "Charakter": "Character",
+  "Chat": "Chat",
+  "DM – DnD-Tabletop": "DM – DnD-Tabletop",
+  "DM-Anmeldung": "DM login",
+  "DM-Ansicht (hier am Rechner):": "DM view (on this computer):",
+  "DM-Passwort": "DM password",
+  "Darf bewegen (F7)": "May move",
+  "Dauer in Runden (1 Minute = 10)": "Duration in rounds (1 minute = 10)",
+  "Deckkraft": "Opacity",
+  "Deckkraft (0.1–1)": "Opacity (0.1–1)",
+  "Dein Name": "Your name",
+  "Der DM hat das Spiel beendet.": "The DM has ended the game.",
+  "Der DM hat den Server beendet.": "The DM has shut down the server.",
+  "Der DM hat noch keine Weltkarte hinterlegt.": "The DM hasn't added a world map yet.",
+  "Der DM sieht nur, was an alle oder an ihn geht. Gespeichert wird der Chat nicht.": "The DM only sees messages to everyone or to the DM. The chat is not saved.",
+  "Der Kampf ist vorbei: Runde wieder 1, alle Effekttimer werden entfernt.": "Combat is over: round back to 1, all effect timers are removed.",
+  "Der Spieler wird getrennt und kann sich neu anmelden.": "The player is disconnected and can join again.",
+  "Der Spielstand wird gespeichert, alle Spieler werden getrennt.": "The game is saved and all players are disconnected.",
+  "Der Spielstand wurde gespeichert. Du kannst dieses Fenster schließen.": "The game has been saved. You can close this window.",
+  "Die PIN stimmt nicht.": "Wrong PIN.",
+  "Die ZIP-Datei enthält alles: Szenen, Bilder, Figuren, Zeichnungen, Nebel, Werte, Inventare und Notizen. Du kannst sie auch auf einem anderen Rechner laden.": "The ZIP file contains everything: scenes, images, tokens, drawings, fog, stats, inventories and notes. You can also load it on another computer.",
+  "Die letzte Szene kann nicht gelöscht werden": "The last scene cannot be deleted",
+  "Diese Figur": "This token",
+  "Diese Szene für alle Spieler anzeigen (S3)": "Show this scene to all players",
+  "Doch nur am Boden": "Only down after all",
+  "Durch Komma getrennt. Du kannst sie frei ändern (F3).": "Comma-separated. You can change them freely.",
+  "Effekt": "Effect",
+  "Effekttimer starten (zählt pro Runde herunter)": "Start an effect timer (counts down each round)",
+  "Eigene Namen für deine Welt, z. B. „Kronen“ statt Gold. Leer lassen = Standardname. Die Spieler sehen die Namen, ändern können sie sie nicht. Ein eigenes Bild bekommt eine Münze, wenn du auf ihr Bild tippst.": "Custom names for your world, e.g. “Crowns” instead of gold. Leave empty = default name. Players see the names but can't change them. To give a coin its own picture, tap its picture.",
+  "Eigene behalten": "Keep custom ones",
+  "Eigener Zustand (optional), z. B. „Schläft (Sleep)“": "Custom condition (optional), e.g. “Asleep”",
+  "Eigener Zustand. Was er bewirkt, legt der DM fest.": "Custom condition. The DM decides what it does.",
+  "Eigenes Bild für diese Münze, für alle Spieler. Es landet nicht in der Bildersammlung.": "Your own picture for this coin, for all players. It is not added to the image library.",
+  "Ein Bild als eckiges, drehbares Objekt auf die Karte legen, z. B. Wagen, Tür, Tisch.": "Place an image on the map as a square, rotatable object, e.g. a cart, door or table.",
+  "Ein Gegenstand pro Zeile, z. B.\nSeil (15 m)\nHeiltrank ×2\nKarte von Phandalin": "One item per line, e.g.\nRope (50 ft)\nPotion of healing ×2\nMap of Phandalin",
+  "Eine Zeile pro Punkt. Gilt für alle Spieler mit deutscher Oberfläche und wird im Spielstand gespeichert. Die englischen Texte änderst du getrennt in der englischen Ansicht.": "One line per point. Applies to everyone using the German version and is saved with the game.",
+  "Einen aufsammeln": "Pick one up",
+  "Einen verschießen": "Shoot one",
+  "Eintrag": "Entry",
+  "Eintrag löschen": "Delete entry",
+  "Einzeln in die Porträtleiste": "Add to portrait bar individually",
+  "Ellipse": "Ellipse",
+  "Entfernen": "Remove",
+  "Entfernung messen": "Measure distance",
+  "Entsperren": "Unlock",
+  "Erledigt": "Done",
+  "Erst Bilder in die Sammlung laden (Reiter Figuren).": "Upload images to the library first (Tokens tab).",
+  "Farbe": "Colour",
+  "Farbe dafür": "Its colour",
+  "Feld": "square",
+  "Felder": "squares",
+  "Felder wieder sperren": "Lock fields again",
+  "Felder zum Ändern freigeben (sonst geht am Handy ständig die Tastatur auf)": "Unlock fields for editing (otherwise the keyboard keeps popping up on phones)",
+  "Fertig": "Done",
+  "Figur": "Token",
+  "Figur auf die Karte setzen": "Place token on the map",
+  "Figur bearbeiten": "Edit token",
+  "Figur löschen?": "Delete token?",
+  "Figur ohne Bild setzen": "Place token without image",
+  "Figur setzen": "Place token",
+  "Figuren": "Tokens",
+  "Figuren rasten im Feld ein": "Tokens snap to squares",
+  "Fog of War": "Fog of war",
+  "Form": "Shape",
+  "Freigeben": "Free seat",
+  "Freihand zeichnen": "Draw freehand",
+  "Fuß": "Feet",
+  "Fuß pro Feld": "Feet per square",
+  "Fuß ↔ Meter": "Feet ↔ metres",
+  "Füllfarbe": "Fill colour",
+  "Füllung": "Fill",
+  "Für Spieler zeigen": "Show to players",
+  "Für eine Gruppe braucht es mindestens zwei andere.": "A group needs at least two other people.",
+  "Ganze Karte": "Whole map",
+  "Gemeinsame Notizen": "Shared notes",
+  "Gemeinsame Notizen (sehen alle, alle dürfen schreiben)": "Shared notes (everyone can read and write)",
+  "Geschlecht": "Gender",
+  "Gespeichert": "Saved",
+  "Gewicht": "Weight",
+  "Glaube": "Faith",
+  "Gruppe": "Group",
+  "Gruppe anlegen": "Create group",
+  "Gruppe für Leiste": "Group for bar",
+  "Gruppe für die Porträtleiste": "Group for the portrait bar",
+  "Größe": "Height",
+  "Größe in Feldern (F9)": "Size in squares",
+  "Größe in Fuß": "Size in feet",
+  "Größer": "Bigger",
+  "Handy ins selbe WLAN, QR-Code scannen.": "Connect the phone to the same Wi-Fi and scan the QR code.",
+  "Heilung": "Healing",
+  "Hintergrund": "Background",
+  "Hintergrundfarbe (ohne Bild oder hinter durchsichtigen PNGs)": "Background colour (without image or behind transparent PNGs)",
+  "Hinzufügen": "Add",
+  "Höchstwert": "Maximum",
+  "Ich": "Me",
+  "Ich bin der DM": "I'm the DM",
+  "Immer zeigen – auch ohne Figur auf der Karte": "Always show – even without a token on the map",
+  "In Leiste": "To bar",
+  "In Porträtleiste": "Add to portrait bar",
+  "In die Porträtleiste / Initiative aufnehmen": "Add to portrait bar / initiative",
+  "In diesem Rettungswurf geübt?": "Proficient in this saving throw?",
+  "Ini": "Ini",
+  "Initiativwert": "Initiative value",
+  "Initiativwert (optional)": "Initiative value (optional)",
+  "Inventar": "Inventory",
+  "Inventar der Charaktere": "Characters' inventories",
+  "Ist live": "Is live",
+  "Jeder Charakter hat sein eigenes Inventar mit Waffen, Zaubern, Münzen und Gegenständen. Die Spieler pflegen es selbst, du kannst hier mitlesen und etwas eintragen, z. B. gefundene Beute. ⚙ bei „Münzen“ gibt den Münzen eigene Namen.": "Every character has their own inventory with weapons, spells, coins and items. Players keep it up to date themselves; you can read along here and add things, e.g. loot they found. ⚙ next to “Coins” gives the coins custom names.",
+  "Jetzt speichern": "Save now",
+  "Kampfrunde": "Combat round",
+  "Karte aus- oder einblenden (z. B. am Handy oder mit echter Karte auf dem Tisch)": "Hide or show the map (e.g. on a phone or with a real map on the table)",
+  "Karte aus- oder einblenden (z. B. mit echter Karte auf dem Tisch oder am Handy)": "Hide or show the map (e.g. with a real map on the table or on a phone)",
+  "Karte ausblenden (z. B. am Handy oder mit echter Karte auf dem Tisch)": "Hide the map (e.g. on a phone or with a real map on the table)",
+  "Karte wieder einblenden": "Show the map again",
+  "Kartenbild wählen …": "Choose map image …",
+  "Kartenbild …": "Map image …",
+  "Kegel (Länge)": "Cone (length)",
+  "Kein Zugriff": "No access",
+  "Keine Antwort": "No response",
+  "Keine Berechtigung": "Not allowed",
+  "Keine NPCs gewählt": "No NPCs selected",
+  "Keine Netzwerkadresse gefunden. Ist der Rechner mit dem WLAN verbunden?": "No network address found. Is the computer connected to the Wi-Fi?",
+  "Keine Verbindung": "No connection",
+  "Keine Zauberplätze. Mit „Anzahl ändern“ einrichten oder unter „Bogen anpassen“ ausblenden.": "No spell slots. Set them up with “Change number” or hide them under “Customise sheet”.",
+  "Keine gültige ZIP-Datei": "Not a valid ZIP file",
+  "Keine. Fertige Vorlagen gibt es unter „Bogen anpassen“.": "None. Ready-made presets are under “Customise sheet”.",
+  "Keine.": "None.",
+  "Kennung, z. B. 1 oder A (F3)": "Tag, e.g. 1 or A",
+  "Kennungen": "Tags",
+  "Kennungen vorschlagen": "Suggest tags",
+  "Kleiner": "Smaller",
+  "Kopie": "copy",
+  "Kopieren": "Copy",
+  "Kreis/Ellipse zeichnen": "Draw circle/ellipse",
+  "Kreis/Kugel (Radius)": "Sphere (radius)",
+  "Lade …": "Loading …",
+  "Laden": "Load",
+  "Laden fehlgeschlagen": "Loading failed",
+  "Leeren": "Clear",
+  "Leerer Wurf": "Empty roll",
+  "Leiste leeren": "Clear bar",
+  "Linie (Länge, 5 ft breit)": "Line (length, 5 ft wide)",
+  "Linienfarbe": "Line colour",
+  "Live schalten": "Go live",
+  "Lädt …": "Loading …",
+  "Löschen": "Delete",
+  "Markieren (für Aktionen mit mehreren)": "Select (for actions on several)",
+  "Mehr Würfel": "More dice",
+  "Mehrere NPCs teilen sich einen Eintrag, z. B. „Goblins 15“. Einzelne Einträge dieser NPCs wandern in die Gruppe.": "Several NPCs share one entry, e.g. “Goblins 15”. Individual entries of these NPCs move into the group.",
+  "Mehrere markieren: Umschalt + Klick auf Figuren, Umschalt + Rahmen ziehen oder ☐ in der Liste. Rechtsklick (lange drücken) öffnet das Menü.": "Select several: Shift + click tokens, Shift + drag a box, or ☐ in the list. Right-click (long press) opens the menu.",
+  "Mein Charakter": "My character",
+  "Mein Notizblock (nur für dich)": "My notepad (only for you)",
+  "Mein Notizbuch (nur für mich, auch der DM sieht es nicht)": "My notebook (only for me, not even the DM can see it)",
+  "Meter": "Metres",
+  "Mit Szene verknüpfen (optional)": "Link to scene (optional)",
+  "Mit den Werkzeugen links auf der Karte zeichnen.": "Draw with the tools on the left of the map.",
+  "Mit „Ort“ legst du fest, welche Szene ein Spieler sieht. So kann sich die Gruppe aufteilen. „Live schalten“ holt alle wieder zusammen.": "“Location” sets which scene a player sees, so the party can split up. “Go live” brings everyone back together.",
+  "Modifikator (automatisch)": "Modifier (automatic)",
+  "Munitionszähler": "Ammunition counter",
+  "Munitionszähler entfernen": "Remove ammunition counter",
+  "Münznamen für alle": "Coin names for everyone",
+  "Münznamen für alle ändern": "Change coin names for everyone",
+  "NPCs": "NPCs",
+  "Nach Initiativwert sortieren, der Höchste beginnt": "Sort by initiative, highest goes first",
+  "Nach hinten": "Send to back",
+  "Nach links": "Move left",
+  "Nach oben": "Move up",
+  "Nach rechts": "Move right",
+  "Nach vorne": "Bring to front",
+  "Nachricht an alle …": "Message to everyone …",
+  "Nachrichten zwischen Spielern siehst du nicht. Gespeichert wird der Chat nicht.": "You can't see messages between players. The chat is not saved.",
+  "Nachtfilter (S8)": "Night filter",
+  "Name": "Name",
+  "Name (F4)": "Name",
+  "Name des Ortes": "Name of the place",
+  "Namen, Hinweise, offene Fragen …": "Names, clues, open questions …",
+  "Nebel an (Spieler sehen nur Aufgedecktes)": "Fog on (players only see revealed areas)",
+  "Nebel aufdecken (Pinsel)": "Reveal fog (brush)",
+  "Nebel aufdecken (Rechteck)": "Reveal fog (rectangle)",
+  "Nebel verdecken (Pinsel)": "Cover with fog (brush)",
+  "Nebel verdecken (Rechteck)": "Cover with fog (rectangle)",
+  "Neue Gruppe": "New group",
+  "Neue Szene": "New scene",
+  "Neuen Eintrag anlegen": "Add a new entry",
+  "Neuer Effekttimer": "New effect timer",
+  "Neuer NPC": "New NPC",
+  "Neuer Pin": "New pin",
+  "Neues Bild hochladen …": "Upload new image …",
+  "Nicht angemeldet": "Not logged in",
+  "Nicht gefunden": "Not found",
+  "Nicht gesendet": "Not sent",
+  "Noch Runden": "Rounds left",
+  "Noch keine Bilder.": "No images yet.",
+  "Noch keine Einträge. Mit „+ Eintrag“ hält jeder Quests, Hinweise und Erlebnisse fest.": "No entries yet. With “+ Entry” everyone can record quests, clues and adventures.",
+  "Noch keine Figuren.": "No tokens yet.",
+  "Noch keine NPCs.": "No NPCs yet.",
+  "Noch keine NPCs. Spieler sehen nie die genauen Werte, nur einen groben Zustand.": "No NPCs yet. Players never see exact stats, only a rough state.",
+  "Noch keine Nachrichten.": "No messages yet.",
+  "Noch keine Weltkarte. Wähle oben ein Bild aus der Bildersammlung (oder im Reiter „Figuren“ beim Bild: ⋯ → „Als Weltkarte“).": "No world map yet. Choose an image from the library above (or in the “Tokens” tab on the image: ⋯ → “As world map”).",
+  "Noch keine. „✎ Bearbeiten“, dann „+ Waffe“.": "None yet. “✎ Edit”, then “+ Weapon”.",
+  "Notiz zu diesem NPC": "Note on this NPC",
+  "Notiz zur Szene (T2, nur für dich)": "Scene notes (only for you)",
+  "Notizen": "Notes",
+  "Notizen zu einzelnen Szenen findest du unter „Szenen“.": "Notes on individual scenes are under “Scenes”.",
+  "Notizen …": "Notes …",
+  "Nur die Karte und die Porträtleiste, so wie die Spieler sie sehen: z. B. für einen Fernseher oder zweiten Bildschirm am Tisch. Belegt keinen Spielerplatz.": "Only the map and the portrait bar, as players see them: e.g. for a TV or a second screen at the table. Doesn't take a player seat.",
+  "Nur eigene Pins": "Only your own pins",
+  "Nur für bestimmte Plätze sichtbar": "Visible only to certain seats",
+  "Nur für den DM": "DM only",
+  "Nur ich sehe ihn (Spieler nicht)": "Only I can see it (not the players)",
+  "Nächster ist dran": "Next turn",
+  "Objekt": "Object",
+  "Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)": "Place an object from the library (e.g. cart, door)",
+  "Objekt setzen": "Place object",
+  "Objekt setzen (eckig, drehbar)": "Place object (square, rotatable)",
+  "Optional. Werte eintragen, den Rest rechnet die App nach den Regeln von 2014. Zum Ändern „✎ Bearbeiten“ antippen.": "Optional. Enter the scores; the app works out the rest using the 2014 rules. Tap “✎ Edit” to make changes.",
+  "Original wiederherstellen": "Restore original",
+  "Ort": "Location",
+  "PIN entfernt": "PIN removed",
+  "Pinsel": "Brush",
+  "Pinselgröße": "Brush size",
+  "Platz freigeben (V10)": "Free seat",
+  "Platz freigegeben": "Seat freed",
+  "Platz unbekannt": "Unknown seat",
+  "Plätze": "Seats",
+  "Porträt wählen": "Choose portrait",
+  "Porträtleiste leer. Bei NPCs, Spielern oder markierten Figuren „In Leiste“ wählen.": "Portrait bar empty. Choose “To bar” for NPCs, players or selected tokens.",
+  "Porträtleiste leeren?": "Clear the portrait bar?",
+  "Quelle": "Source",
+  "Raster": "Grid",
+  "Raster anzeigen": "Show grid",
+  "Raum-PIN": "Room PIN",
+  "Raumbeschreibung, Fallen, Schätze …": "Room description, traps, treasure …",
+  "Rechteck": "Rectangle",
+  "Rechteck zeichnen": "Draw rectangle",
+  "Reihenfolge unvollständig": "Incomplete order",
+  "Runde vor": "Next round",
+  "Runde zurück": "Previous round",
+  "Rückgängig": "Undo",
+  "Schablone": "Template",
+  "Schablone entfernen?": "Remove template?",
+  "Schaden": "Damage",
+  "Schaden / Heilung für alle …": "Damage / healing for all …",
+  "Schaden / Heilung …": "Damage / healing …",
+  "Schaden oder Heilung": "Damage or healing",
+  "Schließen": "Close",
+  "Seitenleiste": "Sidebar",
+  "Senden": "Send",
+  "Server beenden": "Shut down server",
+  "Server beenden?": "Shut down the server?",
+  "Server beendet": "Server shut down",
+  "Setzen": "Place",
+  "Sichtbar für …": "Visible to …",
+  "Sichtbarkeit für Spieler": "Visibility for players",
+  "Sortieren": "Sort",
+  "Speichern": "Save",
+  "Speichern und Laden": "Save and load",
+  "Sperren (nicht verschiebbar)": "Lock (can't be moved)",
+  "Spiel": "Game",
+  "Spiel beendet": "Game over",
+  "Spieler": "Players",
+  "Spieler (Tailscale):": "Players (Tailscale):",
+  "Spieler (WLAN/LAN):": "Players (Wi-Fi/LAN):",
+  "Spieler brauchen Tailscale und müssen in deinem Tailscale-Netz sein.": "Players need Tailscale and must be in your Tailscale network.",
+  "Spieler einladen": "Invite players",
+  "Spieler sehen „am Boden“ oder „tot“.": "Players see “down” or “dead”.",
+  "Spieler sehen:": "Players see:",
+  "Spieler – DnD-Tabletop": "Player – DnD-Tabletop",
+  "Spielersicht:": "Player view:",
+  "Spielstand geladen": "Game loaded",
+  "Spielstand herunterladen": "Download game",
+  "Spielstand laden": "Load game",
+  "Spielstand laden?": "Load game?",
+  "Später": "Later",
+  "Standardbild": "Default picture",
+  "Starten": "Start",
+  "Strichstärke": "Line width",
+  "Szene bearbeiten": "Edit scene",
+  "Szene um 90° gegen den Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)": "Rotate scene 90° anticlockwise (tokens, drawings and fog rotate too)",
+  "Szene um 90° im Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)": "Rotate scene 90° clockwise (tokens, drawings and fog rotate too)",
+  "Szenen": "Scenes",
+  "Teilnehmer": "Participants",
+  "Temporäre HP": "Temp HP",
+  "Text": "Text",
+  "Tipp: Feldgröße so einstellen, dass ein Feld genau einem Kästchen der Karte entspricht, oder die Kartengröße ändern.": "Tip: set the square size so that one square matches exactly one square on the map, or change the map size.",
+  "Titel, z. B. Gundren Felsensucher finden": "Title, e.g. Find Gundren Rockseeker",
+  "Tot": "Dead",
+  "Tot oder nur am Boden (bewusstlos, z. B. für ein Verhör)? Spieler sehen „tot“ oder „am Boden“.": "Dead or just down (unconscious, e.g. for an interrogation)? Players see “dead” or “down”.",
+  "Unbekannte Nebelform": "Unknown fog shape",
+  "Ungültige Aktion": "Invalid action",
+  "Ungültiger Dateiname": "Invalid file name",
+  "Unterhaltung mit mehreren Personen": "Conversation with several people",
+  "Upload fehlgeschlagen": "Upload failed",
+  "Verbergen – nur ich sehe den Eintrag": "Hide – only I see the entry",
+  "Verbindung": "Connection",
+  "Verdeckt würfeln (nur ich sehe es)": "Roll in secret (only I see it)",
+  "Vergrößern": "Zoom in",
+  "Verkleinern": "Zoom out",
+  "Verknüpft mit (F12)": "Linked to",
+  "Verknüpfte Szene (nur du siehst das)": "Linked scene (only you can see this)",
+  "Versatz X": "Offset X",
+  "Versatz Y": "Offset Y",
+  "Verstanden": "Got it",
+  "Verstecken": "Hide",
+  "Verstecken (nur du siehst sie)": "Hide (only you see it)",
+  "Versteckt setzen (z. B. Hinterhalt)": "Place hidden (e.g. ambush)",
+  "Vollbild (auch F11)": "Full screen (also F11)",
+  "Vom DM angepasst ·": "Edited by the DM ·",
+  "Von zu Hause (Tailscale)": "From home (Tailscale)",
+  "Vor Spielern verstecken": "Hide from players",
+  "Waffe entfernen": "Remove weapon",
+  "Was bewirkt das?": "What does this do?",
+  "Was soll das Bild werden? Figur, NPC, Objekt, Karte …": "What should this image become? Token, NPC, object, map …",
+  "Was wird gezählt?": "What is being counted?",
+  "Was wissen wir? Wer hat den Auftrag gegeben? Belohnung?": "What do we know? Who gave the job? Reward?",
+  "Weiter": "Next",
+  "Weiter ▶": "Next ▶",
+  "Weltkarte": "World map",
+  "Weniger Würfel": "Fewer dice",
+  "Wer ist das? Was will er?": "Who is this? What do they want?",
+  "Wer keine Zauber wirkt (z. B. ein Krieger), blendet die Zauberplätze einfach aus. Vorlagen lassen sich jederzeit an- und abhaken.": "Characters who don't cast spells (e.g. a fighter) can simply hide the spell slots. Presets can be ticked and unticked at any time.",
+  "Wer sieht diesen Eintrag? (antippen zum Ändern)": "Who sees this entry? (tap to change)",
+  "Wer soll in dieser Unterhaltung mitlesen?": "Who should be in this conversation?",
+  "Werkzeuge": "Tools",
+  "Wert": "Value",
+  "Werte": "Stats",
+  "Werte öffnen": "Open stats",
+  "Wichtige Namen, offene Fragen …": "Important names, open questions …",
+  "Wieder öffnen": "Reopen",
+  "Wo ist dieser Spieler? (getrennte Gruppen)": "Where is this player? (split party)",
+  "Wähle deinen Platz:": "Choose your seat:",
+  "Würfel (Kantenlänge)": "Cube (edge length)",
+  "Würfeln": "Dice",
+  "Zauber entfernen": "Remove spell",
+  "Zauberplätze anzeigen": "Show spell slots",
+  "Zauberplätze und Zähler ein- oder ausblenden, Zähler-Vorlagen": "Show or hide spell slots and counters, counter presets",
+  "Zauberschablone": "Spell template",
+  "Zauberschablone legen": "Place spell template",
+  "Zauberschablone setzen": "Place spell template",
+  "Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)": "Place spell template (sphere, cone, line, cube)",
+  "Zeichnung bearbeiten": "Edit drawing",
+  "Zeigen": "Show",
+  "Zu viele Effekte": "Too many effects",
+  "Zu viele Einträge": "Too many entries",
+  "Zu viele Nebelformen, bitte „Alles aufdecken“ oder „Alles verdecken“ nutzen": "Too many fog shapes, please use “Reveal everything” or “Cover everything”",
+  "Zu viele Pins": "Too many pins",
+  "Zu viele Zeichnungen in dieser Szene": "Too many drawings in this scene",
+  "Zum Beispiel nach einem Wahrnehmungswurf: nur wer ihn geschafft hat, sieht die Figur. Keiner angehakt = für alle sichtbar.": "For example after a Perception check: only those who succeeded see the token. None ticked = visible to all.",
+  "Zum Ändern erst „✎ Bearbeiten“ antippen.": "Tap “✎ Edit” first to make changes.",
+  "Zur Platzwahl": "Back to seat selection",
+  "Zur Szene": "Go to scene",
+  "Zurück": "Back",
+  "Zuschauer": "Spectator",
+  "Zuschauer – DnD-Tabletop": "Spectator – DnD-Tabletop",
+  "Zuschauer-Ansicht öffnen": "Open spectator view",
+  "Zuschauer-Bildschirm": "Spectator screen",
+  "Zustand für alle …": "Condition for all …",
+  "Zustände …": "Conditions …",
+  "Zwei W20, der höhere zählt": "Two d20s, the higher counts",
+  "Zwei W20, der niedrigere zählt": "Two d20s, the lower counts",
+  "Zähler": "Counters",
+  "Zähler anzeigen": "Show counters",
+  "Zähler-Vorlagen": "Counter presets",
+  "am Boden": "down",
+  "aus": "off",
+  "aus Sammlung …": "from library …",
+  "belegt": "taken",
+  "eine Markierung": "a marker",
+  "frei": "free",
+  "frei (antippen = verbraucht)": "free (tap = expended)",
+  "füllen": "fill",
+  "kein Bild": "no image",
+  "kein Bild (Farbe)": "no image (colour)",
+  "keine Münzen": "no coins",
+  "niemand (nur DM bewegt)": "nobody (only the DM moves it)",
+  "noch nicht": "not yet",
+  "ohne Füllung": "no fill",
+  "schwer verletzt": "badly wounded",
+  "angeschlagen": "injured",
+  "unverletzt": "unhurt",
+  "tot": "dead",
+  "vorbei": "over",
+  "state.json fehlt in der ZIP-Datei": "state.json is missing from the ZIP file",
+  "state.json ist beschädigt": "state.json is damaged",
+  "verbraucht (antippen = wieder frei)": "expended (tap = restore)",
+  "vom DM": "from the DM",
+  "z. B. Feuerpfeil": "e.g. Fire Bolt",
+  "z. B. Ki-Punkte": "e.g. Ki Points",
+  "z. B. Langbogen": "e.g. Longbow",
+  "z. B. Mia": "e.g. Mia",
+  "z. B. Phandalin": "e.g. Phandalin",
+  "z. B. Segen auf Borin": "e.g. Bless on Borin",
+  "z. B. Tymora": "e.g. Tymora",
+  "z. B. 27": "e.g. 27",
+  "z. B. 1,75 m": "e.g. 5 ft 9 in",
+  "z. B. 70 kg": "e.g. 11 st",
+  "Ändern": "Change",
+  "Übernehmen": "Apply",
+  "Überschrift": "Heading",
+  "– keine –": "– none –",
+  "⋯ Verwenden": "⋯ Use",
+  "⚙ Bogen anpassen": "⚙ Customise sheet",
+  "✎ Bearbeiten": "✎ Edit",
+  "✎ Text ändern": "✎ Edit text",
+  "✎ Umbenennen": "✎ Rename",
+  "✓ Fertig": "✓ Done",
+  "🌍 Als Weltkarte": "🌍 As world map",
+  "🌍 Weltkarte": "🌍 World map",
+  "👁 automatisch": "👁 automatic",
+  "👁 immer zeigen": "👁 always show",
+  "👹 Als NPC anlegen (mit Werten)": "👹 Create NPC (with stats)",
+  "📢 Alle": "📢 All",
+  "🗑 Löschen": "🗑 Delete",
+  "🙂 Als Figur setzen (rund)": "🙂 Place as token (round)",
+  "🚫 verborgen": "🚫 hidden",
+  "🧱 Als Objekt setzen (eckig, drehbar)": "🧱 Place as object (square, rotatable)",
+  "Verdeckt": "Secret",
+  "verdeckt": "secret",
+  "Temporär": "Temp HP",
+  "Aktuell": "Current",
+  "Maximum": "Maximum",
+  "Gruppe (sehen alle)": "Party (everyone sees this)",
+  "Tagebuch und Quests": "Journal and quests",
+  "Mein Notizblock": "My notepad",
+  "Zur Szene springen": "Go to scene",
+  "Szene": "Scene",
+  "Karte": "Map",
+  "Kopfzeile": "Header",
+  "Ganze Karte anzeigen": "Fit whole map",
+  "Zoom": "Zoom",
+  "Weltkarte öffnen": "Open world map",
+  "Neu laden": "Reload",
+  "Verbunden": "Connected",
+  "Getrennt": "Disconnected",
+  "Platz ist schon belegt": "Seat is already taken",
+  "Falsche PIN": "Wrong PIN",
+  "Falsches Passwort": "Wrong password",
+  "Die DM-Ansicht ist nur am Host-Rechner erreichbar (oder mit Passwort, siehe config.json)": "The DM view is only available on the host computer (or with a password, see config.json)",
+  "Leere Nachricht": "Empty message",
+  "Am Boden: ": "Down:",
+  "Wo ist dieser Spieler?": "Where is this player?",
+  "Charakter wählen": "Choose character",
+  "Charaktere": "Characters",
+  "Bogen": "Sheet",
+  "Gruppe teilt sich": "Party splits",
+  "Ort:": "Location:"
+ },
+ "patterns": [
+  [
+   "„(.+)“ löschen\\?",
+   "Delete “$1”?"
+  ],
+  [
+   "Platz (\\d+)",
+   "Seat $1"
+  ],
+  [
+   "Platz (\\d+) freigeben\\?",
+   "Free seat $1?"
+  ],
+  [
+   "Platz (\\d+) \\((.+)\\)",
+   "Seat $1 ($2)"
+  ],
+  [
+   "Platz (.+) ist noch belegt\\. Erst freigeben, dann verkleinern\\.",
+   "Seat $1 is still taken. Free it first, then reduce the number."
+  ],
+  [
+   "Weiter auf Platz (\\d+)",
+   "Continue on seat $1"
+  ],
+  [
+   "(.+) · Platz (\\d+)(.*)",
+   "$1 · Seat $2$3"
+  ],
+  [
+   "\\(Platz (.+) woanders\\)",
+   "(seat $1 elsewhere)"
+  ],
+  [
+   "(\\d+) Spieler",
+   "$1 players"
+  ],
+  [
+   "(\\d+) Bild\\(er\\) in die Sammlung geladen",
+   "$1 image(s) added to the library"
+  ],
+  [
+   "(\\d+) Bild\\(er\\) hochgeladen",
+   "$1 image(s) uploaded"
+  ],
+  [
+   "(.+) ist auf 0 HP",
+   "$1 is at 0 HP"
+  ],
+  [
+   "(\\d+) markiert",
+   "$1 selected"
+  ],
+  [
+   "(\\d+) Figuren",
+   "$1 tokens"
+  ],
+  [
+   "(\\d+) Figuren löschen\\?",
+   "Delete $1 tokens?"
+  ],
+  [
+   "(.+): geübt \\(Übungsbonus \\+(\\d+)\\)",
+   "$1: proficient (proficiency bonus +$2)"
+  ],
+  [
+   "(.+): Expertise \\(doppelter Übungsbonus \\+(\\d+)\\)",
+   "$1: expertise (double proficiency bonus +$2)"
+  ],
+  [
+   "1 (.+) mehr",
+   "1 more $1"
+  ],
+  [
+   "1 (.+) weniger",
+   "1 less $1"
+  ],
+  [
+   "Anzahl Plätze Grad (.+)",
+   "Number of level $1 slots"
+  ],
+  [
+   "Automatisch gespeichert wird alle (\\d+) Minuten\\. Zuletzt: (.+)\\.",
+   "Autosave every $1 minutes. Last: $2."
+  ],
+  [
+   "Bild für (.+) ändern",
+   "Change picture for $1"
+  ],
+  [
+   "Bild für (.+)",
+   "Picture for $1"
+  ],
+  [
+   "Bogen anpassen: (.+)",
+   "Customise sheet: $1"
+  ],
+  [
+   "Die PIN brauchen nur neue Spieler\\. Plätze: 1 bis (\\d+); belegte Plätze werden beim Verkleinern nicht entfernt\\.",
+   "Only new players need the PIN. Seats: 1 to $1; taken seats are not removed when reducing."
+  ],
+  [
+   "Du bearbeitest „(.+)“\\. Hier sind gerade: Platz (.+)\\.",
+   "You are editing “$1”. Currently here: seat $2."
+  ],
+  [
+   "Du bearbeitest „(.+)“\\. Kein Spieler sieht diese Szene gerade\\.",
+   "You are editing “$1”. No player is viewing this scene right now."
+  ],
+  [
+   "Effekt: (.+)",
+   "Effect: $1"
+  ],
+  [
+   "Einstellungen: (.+)",
+   "Settings: $1"
+  ],
+  [
+   "Erklärung: (.+)",
+   "Explanation: $1"
+  ],
+  [
+   "Feldgröße: (\\d+) px",
+   "Square size: $1 px"
+  ],
+  [
+   "Figuren in „(.+)“",
+   "Tokens in “$1”"
+  ],
+  [
+   "Gesetzt von (.+)",
+   "Placed by $1"
+  ],
+  [
+   "Grad (.+): verbraucht \\(antippen = wieder frei\\)",
+   "Level $1: expended (tap = restore)"
+  ],
+  [
+   "Grad (.+): frei \\(antippen = verbraucht\\)",
+   "Level $1: free (tap = expended)"
+  ],
+  [
+   "Grad (.+)",
+   "Level $1"
+  ],
+  [
+   "Höchstens (\\d+) Würfel",
+   "At most $1 dice"
+  ],
+  [
+   "Infotext ändern: (.+)",
+   "Edit help text: $1"
+  ],
+  [
+   "Jetzt (\\d+) Plätze",
+   "Now $1 seats"
+  ],
+  [
+   "Karte drehen \\(gedreht um (\\d+)°\\)",
+   "Rotate map (rotated by $1°)"
+  ],
+  [
+   "Karte drehen",
+   "Rotate map"
+  ],
+  [
+   "Kartengröße: (\\d+) %",
+   "Map size: $1 %"
+  ],
+  [
+   "NPC „(.+)“ angelegt\\. Mit „Auf Karte setzen …“ kommt er auf die Karte\\.",
+   "NPC “$1” created. Use “Place on map …” to put it on the map."
+  ],
+  [
+   "Nachricht an (.+) …",
+   "Message to $1 …"
+  ],
+  [
+   "Nur (.+) und du",
+   "Only $1 and you"
+  ],
+  [
+   "PIN ist jetzt (.+)",
+   "PIN is now $1"
+  ],
+  [
+   "QR-Code für (.+)",
+   "QR code for $1"
+  ],
+  [
+   "Regelbuch: (.+) m \\(5 ft = 1,5 m\\)",
+   "German rulebooks: $1 m (5 ft = 1.5 m)"
+  ],
+  [
+   "Schablone (\\d+) ft",
+   "Template $1 ft"
+  ],
+  [
+   "Schaden / Heilung: (.+)",
+   "Damage / healing: $1"
+  ],
+  [
+   "Sichtbar für \\((\\d+) Figuren\\)",
+   "Visible to ($1 tokens)"
+  ],
+  [
+   "Sichtbar für: (.+)",
+   "Visible to: $1"
+  ],
+  [
+   "Spieler: (.+)",
+   "Player: $1"
+  ],
+  [
+   "NPC: (.+)",
+   "NPC: $1"
+  ],
+  [
+   "Tagebuch und Quests \\((\\d+) offen\\)",
+   "Journal and quests ($1 open)"
+  ],
+  [
+   "Tippe auf die Karte, um (.+) zu setzen\\.",
+   "Tap the map to place $1."
+  ],
+  [
+   "Unbekannte Aktion: (.+)",
+   "Unknown action: $1"
+  ],
+  [
+   "Ungültiger Würfel: (.+)",
+   "Invalid die: $1"
+  ],
+  [
+   "Unverständlich ab „(.+)“",
+   "Not understood from “$1”"
+  ],
+  [
+   "Verdeckt: (.+) = (.+)",
+   "Secret: $1 = $2"
+  ],
+  [
+   "Vorschau: So sieht Platz (\\d+) das Spiel, mit Nebel und allem, was verborgen ist\\. Bearbeiten ist aus\\.",
+   "Preview: this is how seat $1 sees the game, with fog and everything hidden. Editing is off."
+  ],
+  [
+   "Was ist das\\? (.+)",
+   "What is this? $1"
+  ],
+  [
+   "Wer sieht „(.+)“ in der Leiste\\?",
+   "Who sees “$1” in the bar?"
+  ],
+  [
+   "Zauberplatz Grad (.+) verbraucht",
+   "Level $1 spell slot expended"
+  ],
+  [
+   "Zauberplatz Grad (.+) frei",
+   "Level $1 spell slot free"
+  ],
+  [
+   "Zeichnungen und Objekte \\((\\d+)\\)",
+   "Drawings and objects ($1)"
+  ],
+  [
+   "Zustände für (\\d+) Figuren \\(werden ergänzt\\)",
+   "Conditions for $1 tokens (added to existing ones)"
+  ],
+  [
+   "Zustände: (.+)",
+   "Conditions: $1"
+  ],
+  [
+   "angelegt von (.+)",
+   "added by $1"
+  ],
+  [
+   "„(.+)“ ersetzt den aktuellen Stand komplett\\. Lade vorher den aktuellen Stand herunter, falls du ihn behalten willst\\.",
+   "“$1” completely replaces the current game. Download the current game first if you want to keep it."
+  ],
+  [
+   "„(.+)“ auf die Karte",
+   "“$1” onto the map"
+  ],
+  [
+   "🗺 Als Karte von „(.+)“",
+   "🗺 As map of “$1”"
+  ],
+  [
+   "(.+): noch (\\d+) Runden?(.*)",
+   "$1: $2 rounds left$3"
+  ],
+  [
+   "(.+): vorbei(.*)",
+   "$1: over$2"
+  ],
+  [
+   "(\\d+)/(\\d+) \\(\\+(\\d+) temp\\.\\)",
+   "$1/$2 (+$3 temp)"
+  ],
+  [
+   "(.+) \\(verdeckt\\): (.+)",
+   "$1 (secret): $2"
+  ],
+  [
+   "(.+) \\(an dich\\)",
+   "$1 (to you)"
+  ],
+  [
+   "Spieler sehen: (.+)",
+   "Players see: $1"
+  ],
+  [
+   "(.+) \\(Kopie\\)",
+   "$1 (copy)"
+  ],
+  [
+   "Charakter (\\d+)",
+   "Character $1"
+  ],
+  [
+   "(.+) · verdeckt",
+   "$1 · secret"
+  ],
+  [
+   "(.+) · für Spieler gerade unsichtbar",
+   "$1 · currently invisible to players"
+  ],
+  [
+   "Am Boden: (.+)",
+   "Down: $1"
+  ],
+  [
+   "Hier: (.+)",
+   "Here: $1"
+  ]
+ ]
+}

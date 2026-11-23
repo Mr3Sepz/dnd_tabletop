@@ -3,7 +3,8 @@
 // Nebel · Figuren · Werkzeuge (Messen, Auswahlrahmen, Vorschau).
 
 /* global Konva */
-import { assetUrl, throttle, HEALTH_COLORS, gridDistance } from './util.js';
+import { assetUrl, throttle, gridDistance } from './util.js';
+import { LANG } from './i18n.js';
 
 const imageCache = new Map();
 function loadImage(url, onLoad) {
@@ -136,9 +137,9 @@ export class Board {
   mapSize(scene = this.scene) {
     if (!scene) return { w: 1400, h: 1000 };
     const a = scene.background && this.state.assets.find((x) => x.id === scene.background.assetId);
-    if (a) return { w: a.width * scene.mapScale, h: a.height * scene.mapScale };
-    const g = scene.grid.size || 70;
-    return { w: g * 30, h: g * 20 };
+    let w; let h;
+    if (a) { w = a.width * scene.mapScale; h = a.height * scene.mapScale; } else { const g = scene.grid.size || 70; w = g * 30; h = g * 20; }
+    return (scene.rotation || 0) % 180 ? { w: h, h: w } : { w, h };
   }
 
   fit() {
@@ -174,7 +175,9 @@ export class Board {
     this.#drawDrawings();
     this.#drawFog();
     this.#drawTokens();
-    if (scene && this.fittedSceneId !== scene.id) { this.fittedSceneId = scene.id; this.fit(); }
+    // Neu einpassen bei anderer Szene oder nach dem Drehen
+    const fitKey = scene && `${scene.id}:${scene.rotation || 0}`;
+    if (scene && this.fittedSceneId !== fitKey) { this.fittedSceneId = fitKey; this.fit(); }
   }
 
   redraw() { if (this.state) this.setData(this.state, this.scene); }
@@ -189,7 +192,13 @@ export class Board {
     const url = scene.background && assetUrl(this.state, scene.background.assetId);
     if (url) {
       const img = loadImage(url, () => this.redraw());
-      if (img) layer.add(new Konva.Image({ image: img, x: 0, y: 0, width: w, height: h }));
+      if (img) {
+        // Gedrehte Szene: das Bild so drehen, dass es wieder genau die Fläche 0..w × 0..h füllt
+        const rot = scene.rotation || 0;
+        const iw = rot % 180 ? h : w; const ih = rot % 180 ? w : h;
+        const pos = { 0: [0, 0], 90: [w, 0], 180: [w, h], 270: [0, h] }[rot] || [0, 0];
+        layer.add(new Konva.Image({ image: img, x: pos[0], y: pos[1], width: iw, height: ih, rotation: rot }));
+      }
     }
     const g = scene.grid;
     if (g.enabled && g.size >= 10) {
@@ -364,19 +373,15 @@ export class Board {
 
     if (this.selection.has(t.id)) group.add(new Konva.Circle({ radius: r + 10, stroke: '#2d7ff9', strokeWidth: 3, dash: [6, 4] }));
 
-    // Zustände (X7): ein farbiger Ring je Zustand, außen herum
-    const conds = info.conditions || [];
-    conds.slice(0, 5).forEach((c, i) => {
-      group.add(new Konva.Circle({ radius: r + 3 + (i + 1) * 4, stroke: c.color, strokeWidth: 3.5 }));
-    });
-    // Grober Gesundheitszustand (N8) als innerer Ring
-    // unverletzt und tot ohne Ring; tot ist grau mit Kreuz
-    if (info.health && HEALTH_COLORS[info.health]) group.add(new Konva.Circle({ radius: r + 3, stroke: HEALTH_COLORS[info.health], strokeWidth: 4 }));
+    // Auf der Karte keine Ringe: Zustände und grober Gesundheitszustand stehen am Porträt
+    // in der Porträtleiste. Nur „tot“ verändert die Figur (grau mit Kreuz).
 
     const url = t.assetId && assetUrl(this.state, t.assetId);
     const img = url ? loadImage(url, () => this.redraw()) : null;
     const dash = t.hidden ? [6, 4] : undefined;
     if (img) {
+      // Hintergrundfarbe der Figur hinter dem Bild (für PNGs mit durchsichtigem Hintergrund)
+      group.add(new Konva.Circle({ radius: r, fill: t.color || '#8a6d3b' }));
       const clip = new Konva.Group({ clipFunc: (ctx) => { ctx.arc(0, 0, r, 0, Math.PI * 2, false); } });
       const s = Math.max((2 * r) / img.width, (2 * r) / img.height);
       clip.add(new Konva.Image({ image: img, width: img.width * s, height: img.height * s, x: -img.width * s / 2, y: -img.height * s / 2 }));
@@ -387,9 +392,9 @@ export class Board {
       if (!t.label) group.add(new Konva.Text({ text: (t.name || '?').slice(0, 2), fontSize: r * 0.8, fill: '#fff', fontStyle: 'bold', width: 2 * r, align: 'center', x: -r, y: -r * 0.4 }));
     }
 
-    // Am Boden (grau) bzw. tot (grau mit Kreuz) – N5, P5
-    if (info.down || info.dead) group.add(new Konva.Circle({ radius: r, fill: '#555', opacity: 0.55 }));
+    // Tot: grau mit Kreuz (N5, P5)
     if (info.dead) {
+      group.add(new Konva.Circle({ radius: r, fill: '#555', opacity: 0.55 }));
       group.add(new Konva.Line({ points: [-r * 0.6, -r * 0.6, r * 0.6, r * 0.6], stroke: '#222', strokeWidth: 3 }));
       group.add(new Konva.Line({ points: [r * 0.6, -r * 0.6, -r * 0.6, r * 0.6], stroke: '#222', strokeWidth: 3 }));
     }
@@ -595,7 +600,7 @@ export class Board {
       } else if (draft.kind === 'measure') {
         draft.line.points([draft.start.x, draft.start.y, p.x, p.y]);
         const dist = gridDistance(p.x - draft.start.x, p.y - draft.start.y, this.scene.grid);
-        this.#showDragInfo(p.x, p.y - 14 / stage.scaleX(), `${dist.feet} ft (${dist.cells} Felder)`);
+        this.#showDragInfo(p.x, p.y - 14 / stage.scaleX(), `${dist.feet} ft (${dist.cells} ${LANG === 'en' ? (dist.cells === 1 ? 'square' : 'squares') : (dist.cells === 1 ? 'Feld' : 'Felder')})`);
       } else {
         const last = draft.points.slice(-2);
         if (Math.hypot(p.x - last[0], p.y - last[1]) < 4 / stage.scaleX()) return;

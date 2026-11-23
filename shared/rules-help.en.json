@@ -1,0 +1,269 @@
+{
+  "attribution": "These help texts are shortened adaptations of material from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode). Rules: 5e (2014), not 2024.",
+  "short": "Based on SRD 5.1 (2014), CC BY 4.0 – shortened",
+  "terms": {
+    "hp": {
+      "title": "Hit Points (HP)",
+      "text": [
+        "How much punishment a character can still take. Damage reduces HP, healing restores it, but never above the maximum.",
+        "At 0 HP a player character falls unconscious and starts making death saving throws.",
+        "If the damage left over after reaching 0 HP is at least the HP maximum, the character dies outright."
+      ]
+    },
+    "tempHp": {
+      "title": "Temporary Hit Points",
+      "text": [
+        "A buffer that absorbs damage before your real HP drop. Example: 5 temporary HP and 8 damage → the 5 are gone and HP drop by 3.",
+        "They are not healing and do not stack: if you gain new ones, you choose whether to keep the old or the new. The app keeps the higher value.",
+        "Unless stated otherwise, they disappear after a long rest."
+      ]
+    },
+    "deathSaves": {
+      "title": "Death Saving Throws",
+      "text": [
+        "A creature lying at 0 HP rolls a d20 with no bonus at the start of each of its turns.",
+        "10 or higher = success, lower = failure. 3 successes: the character is stable (unconscious, but out of danger). 3 failures: the character dies.",
+        "A 1 counts as two failures, a 20 restores 1 HP immediately.",
+        "Damage at 0 HP counts as a failure (a critical hit as two). Any healing ends the saving throws."
+      ]
+    },
+    "ac": {
+      "title": "Armour Class (AC)",
+      "text": [
+        "How hard a character is to hit. An attack hits if the attack roll equals or exceeds the target's AC.",
+        "In this app, players never see the AC of enemies."
+      ]
+    },
+    "spellSlots": {
+      "title": "Spell Slots",
+      "text": [
+        "Spellcasters have a number of slots per spell level (I to IX). Casting a spell of level I or higher uses a slot of that level or higher.",
+        "Cantrips (level 0) need no slot.",
+        "Expended slots return after a long rest. Warlocks regain theirs after a short rest.",
+        "In the app: tap a diamond = expended (grey). Characters without spells can hide this section under “Customise sheet”."
+      ]
+    },
+    "counters": {
+      "title": "Counters",
+      "text": [
+        "For anything with limited uses: ki points, rage, potions of healing, inspiration and so on.",
+        "“−” and “+” count down and up. “Customise sheet” has ready-made presets you can add or leave out."
+      ]
+    },
+    "initiative": {
+      "title": "Initiative",
+      "text": [
+        "Determines the order at the start of a combat: everyone rolls d20 + Dexterity modifier. The highest goes first.",
+        "Identical enemies often roll together and act as a group.",
+        "In the app: type in the values, “Sort”, then “Next ▶” to move on."
+      ]
+    },
+    "advantage": {
+      "title": "Advantage and Disadvantage",
+      "text": [
+        "Advantage: roll two d20s and use the higher. Disadvantage: roll two d20s and use the lower.",
+        "If you have both at once, they cancel out: roll normally.",
+        "The dice window has “Advantage” and “Disadvantage” buttons for this."
+      ]
+    },
+    "coins": {
+      "title": "Coins",
+      "text": [
+        "1 platinum piece (pp) = 10 gold pieces (gp). 1 gp = 10 silver pieces (sp). 1 sp = 10 copper pieces (cp).",
+        "50 coins weigh about 1 pound."
+      ]
+    },
+    "visibility": {
+      "title": "Visibility in the portrait bar",
+      "text": [
+        "Automatic: the enemy only appears for a player once that player can see at least one of its tokens on the map. A hidden ambush does not give itself away.",
+        "Always show: the entry is always visible to everyone, even without a token on the map (e.g. a voice from the dark).",
+        "Hide: the entry is never visible to players, only to you."
+      ]
+    },
+    "abilities": {
+      "title": "Ability Scores and Modifiers",
+      "text": [
+        "Every character has six abilities: Strength, Dexterity, Constitution, Intelligence, Wisdom and Charisma. A score of 10–11 is average.",
+        "Each score gives a modifier: (score − 10) ÷ 2, rounded down. 8–9 gives −1, 12–13 gives +2, 16–17 gives +3, 20 gives +5.",
+        "The modifier applies to almost every roll with that ability: ability checks, skills, saving throws, attacks.",
+        "The app calculates the modifier automatically."
+      ]
+    },
+    "proficiency": {
+      "title": "Proficiency Bonus",
+      "text": [
+        "A bonus for everything the character is proficient in: certain skills, saving throws, weapons, tools and spell attacks.",
+        "It depends only on level: level 1–4 +2, 5–8 +3, 9–12 +4, 13–16 +5, 17–20 +6.",
+        "It is added at most once per roll (doubled for expertise)."
+      ]
+    },
+    "skills": {
+      "title": "Skills, Proficiency and Expertise",
+      "text": [
+        "Each skill belongs to an ability, e.g. Stealth to Dexterity. Bonus = that ability's modifier.",
+        "First dot (P) = proficient: add the proficiency bonus.",
+        "Second dot (E) = expertise (e.g. rogue, bard): add the proficiency bonus twice.",
+        "The dots can only be changed after “✎ Edit”, so nothing flips by accident."
+      ]
+    },
+    "saves": {
+      "title": "Saving Throws",
+      "text": [
+        "A saving throw resists a danger, e.g. poison (Constitution) or a fireball (Dexterity).",
+        "Roll: d20 + the ability modifier, plus the proficiency bonus if the character is proficient in that saving throw (usually two from the class).",
+        "If the result equals or exceeds the difficulty class (DC), the save succeeds."
+      ]
+    },
+    "passivePerception": {
+      "title": "Passive Perception",
+      "text": [
+        "How alert a character is without actively searching. Score: 10 + Perception bonus.",
+        "The DM compares it, for example, with the Stealth check of a lurking enemy. Advantage gives +5, disadvantage −5."
+      ]
+    },
+    "level": {
+      "title": "Level",
+      "text": [
+        "The character's experience level (1–20). It determines the proficiency bonus.",
+        "Entered by the player."
+      ]
+    },
+    "alignment": {
+      "title": "Alignment",
+      "text": [
+        "A rough moral outlook in two parts: lawful – neutral – chaotic (order) and good – neutral – evil (morality).",
+        "Examples: lawful good (helps others, follows the rules), chaotic neutral (follows their whims).",
+        "It describes the character; it does not force them to do anything."
+      ]
+    },
+    "size": {
+      "title": "Size",
+      "text": [
+        "Tiny, Small, Medium, Large, Huge, Gargantuan. Most races are Medium; halflings and gnomes are Small.",
+        "On the map a Medium creature occupies one square (5 × 5 ft), a Large one 2 × 2 squares, a Huge one 3 × 3."
+      ]
+    },
+    "attackBonus": {
+      "title": "Attack Bonus",
+      "text": [
+        "What is added to the d20 for an attack roll. It hits if the total equals or exceeds the target's AC.",
+        "Melee weapon: Strength modifier + proficiency bonus (if proficient). Ranged weapon: Dexterity + proficiency bonus. Finesse weapons may use Dexterity.",
+        "Spell attack: spellcasting ability modifier (e.g. Intelligence for a wizard) + proficiency bonus.",
+        "Damage: the weapon's dice + the same ability modifier (without proficiency bonus)."
+      ]
+    },
+    "effects": {
+      "title": "Effect timers",
+      "text": [
+        "Keeps track of how many rounds an effect has left, e.g. Bless (up to 10 rounds = 1 minute) or a net.",
+        "With every new round of combat the timer counts down by one. At 0 it turns red: the effect is over.",
+        "1 round lasts about 6 seconds; 1 minute is 10 rounds."
+      ]
+    },
+    "round": {
+      "title": "Round",
+      "text": [
+        "In a round every combatant takes one turn (about 6 seconds of game time).",
+        "The app counts automatically: pressing “Next ▶” after the last combatant starts the next round. The DM can change the number with − and +."
+      ]
+    },
+    "units": {
+      "title": "Feet and metres",
+      "text": [
+        "The rules use feet (ft). 1 foot = 0.3048 m.",
+        "German rulebooks round: 5 ft (one square) = 1.5 m, 30 ft = 9 m."
+      ]
+    }
+  },
+  "conditions": {
+    "blinded": [
+      "Can't see and automatically fails any check that requires sight.",
+      "Attack rolls against the creature have advantage; its own attack rolls have disadvantage."
+    ],
+    "charmed": [
+      "Can't attack the charmer or target them with harmful abilities or spells.",
+      "The charmer has advantage on social checks against the creature."
+    ],
+    "deafened": [
+      "Can't hear and automatically fails any check that requires hearing."
+    ],
+    "frightened": [
+      "Disadvantage on ability checks and attack rolls while the source of its fear is in sight.",
+      "Can't willingly move closer to the source of its fear."
+    ],
+    "grappled": [
+      "Speed becomes 0 and can't benefit from any bonus to speed.",
+      "Ends if the grappler is incapacitated or the creature is moved out of the grappler's reach."
+    ],
+    "incapacitated": [
+      "Can't take actions or reactions."
+    ],
+    "invisible": [
+      "Impossible to see without magic or a special sense; heavily obscured for the purpose of hiding. Noise or tracks can give it away.",
+      "Attack rolls against the creature have disadvantage; its own attack rolls have advantage."
+    ],
+    "paralyzed": [
+      "Incapacitated, can't move or speak.",
+      "Automatically fails Strength and Dexterity saving throws.",
+      "Attack rolls against it have advantage. Any hit from within 5 ft is a critical hit."
+    ],
+    "petrified": [
+      "Transformed, with any non-magical equipment, into stone (or another solid substance): weight increases tenfold, it stops ageing.",
+      "Incapacitated, can't move or speak, unaware of its surroundings.",
+      "Attack rolls against it have advantage; automatically fails Strength and Dexterity saving throws.",
+      "Resistance to all damage, immune to poison and disease (existing ones are only suspended)."
+    ],
+    "poisoned": [
+      "Disadvantage on attack rolls and ability checks."
+    ],
+    "prone": [
+      "Can only crawl until it stands up (costs half its movement), which ends the condition.",
+      "Disadvantage on its own attack rolls.",
+      "Attack rolls from within 5 ft have advantage; from further away, disadvantage."
+    ],
+    "restrained": [
+      "Speed becomes 0 and can't benefit from any bonus to speed.",
+      "Attack rolls against the creature have advantage; its own attack rolls have disadvantage.",
+      "Disadvantage on Dexterity saving throws."
+    ],
+    "stunned": [
+      "Incapacitated, can't move and can speak only falteringly.",
+      "Automatically fails Strength and Dexterity saving throws.",
+      "Attack rolls against it have advantage."
+    ],
+    "unconscious": [
+      "Incapacitated, can't move or speak, unaware of its surroundings.",
+      "Drops whatever it is holding and falls prone.",
+      "Automatically fails Strength and Dexterity saving throws.",
+      "Attack rolls against it have advantage. Any hit from within 5 ft is a critical hit."
+    ],
+    "exhaustion": [
+      "Has 6 levels whose effects add up: 1 disadvantage on ability checks · 2 speed halved · 3 disadvantage on attack rolls and saving throws · 4 HP maximum halved · 5 speed 0 · 6 death.",
+      "A long rest with food and drink reduces the level by 1. Track the level as a counter."
+    ],
+    "surprised": [
+      "A creature surprised at the start of combat can't move or take an action on its first turn.",
+      "It also can't take reactions until that turn ends."
+    ],
+    "blessed": [
+      "Bless spell: up to three creatures add 1d4 to attack rolls and saving throws.",
+      "Lasts up to 1 minute while the caster concentrates."
+    ],
+    "concentration": [
+      "Some spells only last while you concentrate. You can concentrate on only one such spell at a time.",
+      "When you take damage: Constitution saving throw, DC 10 or half the damage (whichever is higher). On a failure the spell ends. Being incapacitated or killed also ends it."
+    ],
+    "slowed": [
+      "Slow spell: speed halved, −2 to AC and Dexterity saving throws, no reactions.",
+      "On its turn only an action or a bonus action, and at most one attack.",
+      "At the end of each of its turns it may make a Wisdom saving throw to end the effect."
+    ],
+    "burning": [
+      "Not an official condition. How much fire damage it takes each turn and how the fire is put out is up to the DM (often: an action to put it out)."
+    ],
+    "bleeding": [
+      "Not an official condition. How much damage it takes each turn and what stops the bleeding (e.g. healing or a Medicine check) is up to the DM."
+    ]
+  }
+}

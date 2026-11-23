@@ -5,6 +5,7 @@
 
 import { h, assetUrl, initials, HEALTH_COLORS, dialog } from './util.js';
 import { info, helpLines } from './help.js';
+import { term } from './i18n.js';
 
 const VIS = { auto: '👁 automatisch', show: '👁 immer zeigen', hide: '🚫 verborgen' };
 
@@ -44,7 +45,7 @@ function roundBox(opts) {
   const round = opts.round || 1;
   const box = h('div.round-box', {},
     h('div.round', { title: 'Kampfrunde' },
-      h('small', {}, 'Runde ', info('round')),
+      h('small', {}, term('round'), info('round')),
       h('div.round-num', {},
         opts.isDM ? h('button.icon', { title: 'Runde zurück', onclick: () => opts.onRound(Math.max(1, round - 1)) }, '−') : null,
         h('b', {}, String(round)),
@@ -85,7 +86,7 @@ export function renderInitiative(container, entries, opts) {
   entries.forEach((e, i) => {
     const url = e.portraitAssetId && assetUrl(opts.state, e.portraitAssetId);
     const ring = e.condition ? HEALTH_COLORS[e.condition] : null;
-    const dots = (e.conditions || []).slice(0, 4);
+    const dots = (e.conditions || []).slice(0, 13);
     const isCurrent = e.id === opts.currentId;
     const cls = `div.ini-item${isCurrent ? '.current' : ''}${e.condition === 'tot' ? '.defeated' : ''}${opts.isDM && e.hiddenNow ? '.hidden-for-players' : ''}`;
     const item = h(cls, {
@@ -104,10 +105,14 @@ export function renderInitiative(container, entries, opts) {
       },
       onclick: () => { if (opts.isDM) opts.onSetCurrent(e.id); },
     },
-    h('div.ini-portrait', { style: ring ? { boxShadow: `0 0 0 3px ${ring}` } : {} },
+    h('div.ini-portrait', { style: { ...(ring ? { boxShadow: `0 0 0 5px ${ring}` } : {}), ...(e.color ? { background: e.color } : {}) } },
       url ? h('img', { src: url, alt: '' }) : h('span', {}, initials(e.name)),
-      e.count ? h('span.ini-count', {}, `×${e.count}`) : null),
-    dots.length ? h('div.ini-dots', {}, ...dots.map((c) => h('span', { style: { background: c.color }, title: c.label }))) : null,
+      e.count ? h('span.ini-count', {}, `×${e.count}`) : null,
+      // Zustände als farbige Perlen um das Porträt herum, oben beginnend im Uhrzeigersinn
+      ...dots.map((c, k) => {
+        const a = (-90 + k * 26) * Math.PI / 180;
+        return h('span.ini-pearl', { title: c.label, style: { background: c.color, left: `${23 + 29 * Math.cos(a)}px`, top: `${23 + 29 * Math.sin(a)}px` } });
+      })),
     h('div.ini-name', {}, e.name),
     opts.isDM
       ? h('div.ini-tools', {},

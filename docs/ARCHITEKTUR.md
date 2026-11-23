@@ -37,6 +37,8 @@ server/
 shared/
   conditions.json Zustände und Farben (Server und Browser)
   rules-help.json Texte der Infopunkte (SRD 5.1, gekürzt und übersetzt, mit Quellenangabe)
+  rules-help.en.json  dieselben Texte auf Englisch
+  i18n-en.json    Wörterbuch Deutsch → Englisch für die Oberfläche (Texte und Muster)
 public/
   dm.html, player.html, spectator.html, index.html
   js/board.js     Karte: Ebenen, Werkzeuge, Nebel, Auswahl, Messen
@@ -49,6 +51,8 @@ public/
   js/inventory.js Inventar (Waffen, Zauber, Münzen, Gegenstände), für DM und Spieler
   js/charsheet.js Attribute, Fertigkeiten, Rettungswürfe (Regeln 2014)
   js/lock.js      Sperre „✎ Bearbeiten“ gegen versehentliches Ändern
+  js/i18n.js      Sprache: Glossar-Begriffe zweisprachig, englische Oberfläche per Wörterbuch
+  js/glossary.js  DnD-Fachbegriffe Deutsch/Englisch
   js/quests.js    Tagebuch / Questlog
   js/chat.js      Direktchat
   js/worldmap.js  Weltkarte mit Pins
@@ -66,7 +70,7 @@ test/             Server-Tests (npm test), Browser-Rundgang, Testgrafiken
 state
 ├─ activeSceneId              Szene für alle (Live)
 ├─ seatScenes{seat: sceneId}  abweichende Szene einzelner Plätze (getrennte Gruppen)
-├─ settings                   pin, seatCount, coinNames{pp,gp,sp,cp}
+├─ settings                   pin, seatCount, coinNames{pp,gp,sp,cp}, coinImages{pp,gp,sp,cp}
 ├─ scenes[]                   name, background, mapScale, night, notes,
 │   ├─ grid                   enabled, size, feet, snap, offsetX/Y, color, opacity
 │   ├─ fog                    enabled, shapes[{op: reveal|hide, type: all|rect|circle|stroke, …}]
@@ -108,6 +112,10 @@ Münzen, Inventar und Werte anderer Charaktere bekommt ein Spieler nicht: Von fr
 Der **Zuschauer-Bildschirm** ist „Platz 0“: `viewForSpectator` nutzt dieselbe Filterung wie ein Spieler (Live-Szene, Nebel, keine Figuren mit `visibleTo`), zeigt alle Spielerfiguren und lässt Bögen, Notizen, Questlog und Chat weg. Zuschauer dürfen keine Aktionen senden.
 
 **Chat** (`server/index.js`): Nachrichten gehen nur an die Socket-Räume von Absender und Empfängern und liegen nur im Arbeitsspeicher (höchstens 300). Sie stehen nicht in `state` und damit weder in `state.json` noch im Export.
+
+**Sprache** (`public/js/i18n.js`): Der Code ist einsprachig deutsch. Im deutschen Modus zeigen `term()` und `bi()` Fachbegriffe aus `glossary.js` mit dem englischen Begriff darunter. Im englischen Modus übersetzt ein `MutationObserver` jeden neu erscheinenden Text, Titel und Platzhalter mit `shared/i18n-en.json` (feste Texte und reguläre Ausdrücke für Texte mit Namen oder Zahlen). Nutzerinhalte tragen `data-raw` und bleiben unberührt. Neue Texte in der Oberfläche brauchen einen Eintrag im Wörterbuch. Der Browser-Rundgang meldet deutsche Reste in der englischen Ansicht.
+
+**Szene drehen** (`rotateScene` in `server/state.js`): Der Server rechnet alle Koordinaten um (Figuren, Zeichnungen samt Drehwinkel, Nebelformen, Rasterversatz) und merkt sich `scene.rotation`; der Browser zeichnet das Kartenbild entsprechend gedreht.
 
 Ob die Karte ein- oder ausgeblendet ist (`body.no-map`), ist reine Anzeige und wird pro Gerät im `localStorage` gemerkt.
 

@@ -9,7 +9,7 @@
 </head>
 <body class="join">
   <main class="card join-card">
-    <h1>DnD-Tabletop</h1>
+    <div class="join-head"><h1>DnD-Tabletop</h1><span data-lang-switch></span></div>
     <div id="resume"></div>
     <p>Wähle deinen Platz:</p>
     <div id="seats" class="seats"></div>
@@ -50,7 +50,7 @@
           form.classList.remove('hidden');
           form.elements.playerName.focus();
         },
-      }, h('b', {}, `Platz ${s.seat}`), h('span', {}, ch ? ch.name : ''), h('small', {}, s.taken ? (s.playerName || 'belegt') : 'frei'));
+      }, h('b', {}, `Platz ${s.seat}`), h('span', { 'data-raw': '' }, ch ? ch.name : ''), h('small', {}, s.taken ? (s.playerName || 'belegt') : 'frei'));
       seats.append(btn);
     }
 

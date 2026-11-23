@@ -47,7 +47,7 @@ export class WorldMap {
       url ? h(`button.small${this.adding ? '.primary' : ''}`, { onclick: () => { this.adding = !this.adding; this.render(); } }, this.adding ? 'Auf die Karte tippen …' : '+ Pin') : null,
       o.isDM ? h('select', { title: 'Bild für die Weltkarte aus der Bildersammlung', onchange: (e) => { o.act({ type: 'world.setMap', assetId: e.target.value || null }); this.fitted = false; } },
         h('option', { value: '' }, url ? 'Kartenbild …' : 'Kartenbild wählen …'),
-        ...(st.assets || []).map((a) => h('option', { value: a.id, selected: a.id === w.assetId }, a.name))) : null,
+        ...(st.assets || []).filter((a) => !a.purpose).map((a) => h('option', { value: a.id, selected: a.id === w.assetId }, a.name))) : null,
       h('span.spacer'),
       h('span.wm-legend', {}, h('i.pin-dot.dm'), 'DM', h('i.pin-dot.player'), 'Spieler'),
       h('button.icon', { title: 'Verkleinern', onclick: () => this.zoomBy(0.8) }, '−'),

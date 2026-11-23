@@ -1,7 +1,7 @@
 // DM-Ansicht (A1): Karte mit Werkzeugleiste in der Mitte, alle Verwaltung in der Seitenleiste.
 
 import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
-import { InventoryEditor, COINS, coinLabel } from './inventory.js';
+import { InventoryEditor, COINS, coinLabel, coinImage } from './inventory.js';
 import { connect } from './net.js';
 import { Board, TOOLS } from './board.js';
 import { Sheet } from './sheet.js';
@@ -25,6 +25,8 @@ let placing = null;      // nächste Figur (F1: von Hand setzen)
 let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bogen / Inventar
 let invEditor = null;
 let selection = [];      // markierte Figuren (Mehrfachauswahl)
+/** Bilder der Bildersammlung (ohne Münzbilder). */
+const galleryAssets = () => state.assets.filter((a) => !a.purpose);
 const sheets = new Map();
 const abilitySheets = new Map();
 let panelDirty = false;
@@ -241,9 +243,9 @@ function renderToolbar() {
 }
 
 async function placeObject(assetId) {
-  if (!state.assets.length) return toast('Erst Bilder in die Sammlung laden (Reiter Figuren).', 'error');
+  if (!galleryAssets().length) return toast('Erst Bilder in die Sammlung laden (Reiter Figuren).', 'error');
   const r = await dialog({ title: 'Objekt setzen', body: 'Ein Bild als eckiges, drehbares Objekt auf die Karte legen, z. B. Wagen, Tür, Tisch.',
-    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : state.assets[0].id, options: state.assets.map((a) => ({ value: a.id, label: a.name })) },
+    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : galleryAssets()[0].id, options: galleryAssets().map((a) => ({ value: a.id, label: a.name })) },
       { name: 'cells', label: 'Breite in Feldern', type: 'number', value: 2, step: 0.5, min: 0.5 }], okText: 'Auf die Karte tippen …' });
   if (!r) return;
   const a = state.assets.find((x) => x.id === r.asset);
@@ -414,7 +416,7 @@ async function editToken(t) {
   const linkOpts = [{ value: '', label: 'nichts' },
     ...state.characters.map((c) => ({ value: `player:${c.id}`, label: `Spieler: ${c.name}` })),
     ...state.npcs.map((n) => ({ value: `npc:${n.id}`, label: `NPC: ${n.name}` }))];
-  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...state.assets.map((a) => ({ value: a.id, label: a.name }))];
+  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...galleryAssets().map((a) => ({ value: a.id, label: a.name }))];
   const res = await dialog({
     title: 'Figur bearbeiten',
     fields: [
@@ -424,7 +426,7 @@ async function editToken(t) {
       { name: 'size', label: 'Größe in Feldern (F9)', type: 'number', step: 0.5, min: 0.5, value: t.size || 1 },
       { name: 'link', label: 'Verknüpft mit (F12)', type: 'select', value: t.refId ? `${t.kind === 'npc' ? 'npc' : 'player'}:${t.refId}` : '', options: linkOpts },
       { name: 'ownerSeat', label: 'Darf bewegen (F7)', type: 'select', value: t.ownerSeat ? String(t.ownerSeat) : '', options: seatOpts },
-      { name: 'color', label: 'Farbe ohne Bild', type: 'color', value: t.color || '#8a6d3b' },
+      { name: 'color', label: 'Hintergrundfarbe (ohne Bild oder hinter durchsichtigen PNGs)', type: 'color', value: t.color || '#8a6d3b' },
     ],
     okText: 'Speichern',
   });
@@ -553,6 +555,7 @@ function renderInitiativeBar() {
     const src = e.kind === 'npc' ? npc(e.refId) : character(e.refId);
     return { ...e, name: src ? src.name : '?', portraitAssetId: src ? src.portraitAssetId : null,
       condition: e.kind === 'npc' && src ? src.condition : undefined, conditions: src ? src.conditions : [],
+      color: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.color)?.color || null,
       hiddenNow: e.kind !== 'character' && !e.visibleSeats.length };
   });
   renderInitiative($('#initiative'), entries, {
@@ -636,9 +639,13 @@ function tabScenes() {
           const [a] = await pickAndUploadImages(conn.session, { multiple: false }).catch((e) => { toast(e.message, 'error'); return []; });
           if (a) { await update({ background: { assetId: a.id }, mapScale: 1 }); board.fittedSceneId = null; }
         } }, 'Bild hochladen'),
-        state.assets.length ? h('select', { onchange: (e) => { if (e.target.value) { update({ background: { assetId: e.target.value } }); board.fittedSceneId = null; } } },
-          h('option', { value: '' }, 'aus Sammlung …'), ...state.assets.map((a) => h('option', { value: a.id }, a.name))) : null,
+        galleryAssets().length ? h('select', { onchange: (e) => { if (e.target.value) { update({ background: { assetId: e.target.value } }); board.fittedSceneId = null; } } },
+          h('option', { value: '' }, 'aus Sammlung …'), ...galleryAssets().map((a) => h('option', { value: a.id }, a.name))) : null,
         bgAsset ? h('button.small', { onclick: () => update({ background: null }) }, 'Entfernen') : null)),
+    h('div.field', {}, h('span', {}, `Karte drehen${sc.rotation ? ` (gedreht um ${sc.rotation}°)` : ''}`),
+      h('div.row', {},
+        h('button.small', { title: 'Szene um 90° gegen den Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)', onclick: async () => { await act({ type: 'scene.rotate', id: sc.id, dir: -1 }); board.fittedSceneId = null; } }, '⟲ 90°'),
+        h('button.small', { title: 'Szene um 90° im Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)', onclick: async () => { await act({ type: 'scene.rotate', id: sc.id, dir: 1 }); board.fittedSceneId = null; } }, '⟳ 90°'))),
     h('label.field', {}, h('span', {}, `Kartengröße: ${Math.round(sc.mapScale * 100)} %`),
       h('input', { type: 'range', min: 0.1, max: 4, step: 0.01, value: sc.mapScale, onchange: (e) => update({ mapScale: Number(e.target.value) }) })),
     h('fieldset', {}, h('legend', {}, 'Raster'),
@@ -677,7 +684,7 @@ function moveScene(i, dir) {
 
 function tabTokens() {
   const sc = editScene();
-  const gallery = h('div.gallery', {}, ...state.assets.map((a) => h('div.asset', {
+  const gallery = h('div.gallery', {}, ...galleryAssets().map((a) => h('div.asset', {
     draggable: true,
     title: 'Auf die Karte ziehen oder antippen',
     ondragstart: (e) => { e.dataTransfer.setData('text/asset', a.id); e.dataTransfer.effectAllowed = 'copy'; },
@@ -704,7 +711,7 @@ function tabTokens() {
         try { const list = await pickAndUploadImages(conn.session); if (list.length) toast(`${list.length} Bild(er) hochgeladen`); } catch (e) { toast(e.message, 'error'); }
       } }, '+ Bilder')),
     h('p.hint', {}, 'Bild antippen oder auf die Karte ziehen = Figur. Mit „⋯ Verwenden“ machst du daraus einen NPC, ein Objekt, die Karte der Szene oder die Weltkarte. Dateien kannst du auch direkt ins Fenster ziehen.'),
-    state.assets.length ? gallery : h('p.hint', {}, 'Noch keine Bilder.'),
+    galleryAssets().length ? gallery : h('p.hint', {}, 'Noch keine Bilder.'),
     h('div.row', {},
       h('button.small', { onclick: () => startPlacing({ kind: 'token', token: { kind: 'marker', name: '', label: '' } }, 'eine Markierung') }, 'Figur ohne Bild setzen'),
       h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
@@ -906,7 +913,7 @@ function sheetActions(kind, id) {
 }
 
 async function pickPortrait(kind, id) {
-  const opts = [{ value: '', label: 'kein Bild' }, { value: '__upload', label: 'Neues Bild hochladen …' }, ...state.assets.map((a) => ({ value: a.id, label: a.name }))];
+  const opts = [{ value: '', label: 'kein Bild' }, { value: '__upload', label: 'Neues Bild hochladen …' }, ...galleryAssets().map((a) => ({ value: a.id, label: a.name }))];
   const src = kind === 'npc' ? npc(id) : character(id);
   const r = await dialog({ title: 'Porträt wählen', fields: [{ name: 'asset', label: 'Bild', type: 'select', value: src.portraitAssetId || '', options: opts }] });
   if (!r) return;
@@ -940,6 +947,20 @@ function tabInventory() {
       isDM: true,
       onPatch: (patch) => act({ type: 'character.update', id: selected.inventory, patch }),
       coinNames: () => state.settings.coinNames || {},
+      coinImage: (key) => coinImage(key, state),
+      onCoinImage: async (key) => {
+        const coin = COINS.find((c) => c.key === key);
+        const custom = state.settings.coinImages && state.settings.coinImages[key];
+        const r = await dialog({
+          title: `Bild für ${coinLabel(coin, state.settings.coinNames).label}`,
+          body: 'Eigenes Bild für diese Münze, für alle Spieler. Es landet nicht in der Bildersammlung.',
+          buttons: [custom ? { label: 'Standardbild', value: 'reset', cls: '' } : null, { label: 'Bild hochladen …', value: 'upload' }].filter(Boolean),
+        });
+        if (!r) return;
+        if (r === 'reset' || r._button === 'reset') return act({ type: 'settings.update', patch: { coinImages: { [key]: null } } });
+        const [a] = await pickAndUploadImages(conn.session, { multiple: false, maxPx: 256, purpose: 'coin' }).catch((e) => { toast(e.message, 'error'); return []; });
+        if (a) act({ type: 'settings.update', patch: { coinImages: { [key]: a.id } } });
+      },
       onCoinNames: (names) => act({ type: 'settings.update', patch: { coinNames: names } }),
     });
   }

@@ -48,17 +48,17 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ | Zauberplätze als blaue Rauten mit Grad (I, II, III …), verbrauchte grau |
+| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ (NPCs ohne Todesrettungswürfe) | Zauberplätze als blaue Rauten mit Grad (I, II, III …), verbrauchte grau |
 | — | Bogen anpassen | ✅ | Zauberplätze und Zähler pro Charakter/NPC ein- und ausblendbar, fertige Zähler-Vorlagen (Ki, Kampfrausch, Zweiter Wind …) |
 | C5 | Inventar pro Charakter | ✅ | Waffen (Name, Angr. Bonus, Schaden/Art, Munitionszähler), vorbereitete Zauber (mit Reichweite), Platin, Gold, Silber, Kupfer + Gegenstände (Text). Spieler bearbeiten das eigene, der DM alle (Reiter *Inventar*). Andere Spieler sehen es nicht. Münznamen für alle änderbar (DM) |
 | — | Attribute und Fertigkeiten (optional, Reiter *Attribute*) | ✅ | Stufe, 6 Attribute mit Modifikator, Übungsbonus, Rettungswürfe, 18 Fertigkeiten mit Übung/Expertise, Initiative, passive Wahrnehmung, Angaben (Alter, Glaube, Größe, Kategorie, Gewicht, Geschlecht, Gesinnung). Regeln 2014 |
 | — | Schutz gegen versehentliches Bearbeiten | ✅ | Felder im Bogen erst nach „✎ Bearbeiten“ änderbar (keine Tastatur beim Antippen am Handy). Notizen, Gegenstände, Tagebuch bleiben frei |
 | — | RK | ✅ | Spieler sehen und ändern ihre eigene RK, NPC-Werte nie |
-| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt + eigene. Ein farbiger Ring je Zustand an der Figur |
+| P4 | Zustände | ✅ | 15 Zustände aus 5e + Überrascht, Brennt, Blutend, Segen, Konzentration, Verlangsamt + eigene. Farbige Punkte („Perlenkette“) um das Porträt; Figuren auf der Karte ohne Ringe |
 | P4 | Todesrettungswürfe | ✅ | erscheinen im Bogen bei 0 HP |
 | P5 | Am Boden statt besiegt | ✅ | Bei 0 HP fragt die App „tot oder am Boden?“. Spieler sehen das entsprechend |
 | P7 | Schaden/Heilung für mehrere | ✅ | temporäre HP zuerst |
-| N1–N5, N7, N8 | NPCs, Porträtleiste, grober Zustand | ✅ | unverletzt ohne Ring, angeschlagen blassrot, schwer verletzt knallrot, am Boden braun, tot ausgegraut |
+| N1–N5, N7, N8 | NPCs, Porträtleiste, grober Zustand | ✅ | HP-Ring nur am Porträt: unverletzt ohne Ring, angeschlagen blassrot, schwer verletzt knallrot, am Boden braun, tot ausgegraut (auf der Karte grau mit Kreuz) |
 | N6 | NPC-Vorlagen über Kampagnen hinweg | ⏳ | Mehrfach setzen und Kopieren decken den häufigsten Fall ab |
 
 ## 6. Porträtleiste / Initiative
@@ -78,8 +78,8 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | T1–T3 | DM-Notizblock, Szenen-Notizen, private Spielernotizen | ✅ |
 | T4 / P12 | Gemeinsame Notizen | ✅ (XP und Spieldatum entfernt, Gold ist ins Inventar gewandert) |
 | — | Tagebuch / Questlog | ✅ (alle dürfen alles; „Erledigt“ graut aus und sortiert nach hinten) |
-| X10 | Direktchat | ✅ (an alle oder einzelne; nur Absender und Empfänger bekommen die Nachricht; wird nicht gespeichert) |
-| X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (`1d20+5`, `2d20kh1`, `4d6kh3`) |
+| X10 | Direktchat | ✅ (Tabs: Alle, je Person, Gruppen; nur Absender und Empfänger bekommen die Nachricht; wird nicht gespeichert) |
+| X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (schlicht: Anzahl × Würfel, Knöpfe Vorteil/Nachteil, keine Formeln) |
 | — | Fuß ↔ Meter | ✅ (im Würfel-Fenster, genau und nach Regelbuch) |
 
 ## 8. Zeichnen und Messen
@@ -98,6 +98,10 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Karte aus/ein | ✅ | 🗺 bei DM und Spielern, pro Gerät gemerkt; Verwaltung nutzt dann die ganze Breite |
 | — | Vollbild | ✅ | ⛶ oder F11 |
 | — | Infopunkte (ⓘ) | ✅ | Kurze deutsche Regeltexte nach SRD 5.1 (2014, CC BY 4.0) zu HP, Todesrettungswürfen, RK, Zauberplätzen, Attributen, Übung, Fertigkeiten, Rettungswürfen, Angriffsbonus, Gesinnung, Größe, Runden, Effekten u. a. und allen Zuständen. Der DM kann jeden Text ändern |
+| — | Szene drehen | ✅ | ⟲/⟳ 90°, Figuren, Zeichnungen, Nebel und Raster drehen mit |
+| — | Hintergrundfarbe hinter durchsichtigen PNGs | ✅ | Figur und Porträt |
+| — | Münzbilder | ✅ | Standardbilder, eigene Bilder (DM), nicht in der Bildersammlung |
+| — | Zweisprachig | ✅ | Deutsch mit englischen Fachbegriffen darunter; komplette englische Oberfläche (UK), umschaltbar pro Gerät; Infotexte in beiden Sprachen |
 | — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
 | — | Zuschauer-Bildschirm | ✅ | `/spectator`: Live-Szene wie bei Spielern, nur Karte und Leiste, belegt keinen Platz |
 | — | Bildersammlung: „Verwenden als“ | ✅ | Figur, NPC, Objekt, Szenenkarte, Weltkarte |

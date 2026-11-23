@@ -7,6 +7,17 @@ const os = require('os');
 const path = require('path');
 const { createApp } = require('../server/index');
 
+test('Standardnamen auf Englisch, wenn language = en', async () => {
+  const S = require('../server/state');
+  S.configureLanguage('en');
+  try {
+    const st = S.createInitialState();
+    assert.equal(st.scenes[0].name, 'First scene');
+    assert.equal(st.characters[0].name, 'Character 1');
+    assert.equal(st.characters[0].stats[0].label, 'AC');
+  } finally { S.configureLanguage('de'); }
+});
+
 test('Anzahl der Plätze ist einstellbar (Vorschlag 13)', async () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnd-seats-'));
   const inst = createApp({ port: 0, host: '127.0.0.1', dataDir, openBrowser: false, seats: 7 });

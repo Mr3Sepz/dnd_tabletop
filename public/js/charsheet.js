@@ -6,6 +6,8 @@
 import { h } from './util.js';
 import { info } from './help.js';
 import { lockButton, applyLocks } from './lock.js';
+import { term, termText, LANG } from './i18n.js';
+import { GLOSSARY } from './glossary.js';
 
 export const ABILITIES = [
   { key: 'str', label: 'Stärke', short: 'STÄ' },
@@ -37,9 +39,10 @@ export const SKILLS = [
   { key: 'perception', label: 'Wahrnehmung', ab: 'wis' },
 ];
 
-const SIZES = ['', 'Winzig', 'Klein', 'Mittelgroß', 'Groß', 'Riesig', 'Gigantisch'];
-const ALIGNMENTS = ['', 'Rechtschaffen gut', 'Neutral gut', 'Chaotisch gut', 'Rechtschaffen neutral', 'Neutral', 'Chaotisch neutral',
-  'Rechtschaffen böse', 'Neutral böse', 'Chaotisch böse', 'Ohne Gesinnung'];
+// Gespeichert wird der deutsche Begriff, angezeigt je nach Sprache.
+const SIZES = ['', 'tiny', 'small', 'medium', 'large', 'huge', 'gargantuan'];
+const ALIGNMENTS = ['', 'lg', 'ng', 'cg', 'ln', 'n', 'cn', 'le', 'ne', 'ce', 'unaligned'];
+const optLabel = (key) => (!key ? '–' : LANG === 'en' ? GLOSSARY[key].en : `${GLOSSARY[key].de} (${GLOSSARY[key].en})`);
 
 /** Regeln 2014 */
 export const modifier = (score) => Math.floor((Number(score) - 10) / 2);
@@ -92,13 +95,13 @@ export class AbilitySheet {
       const score = c.abilities[a.key];
       const save = modifier(score) + (c.saveProf[a.key] ? pb : 0);
       return h('div.cs-ability', {},
-        h('div.cs-ab-name', { title: a.label }, a.label),
+        h('div.cs-ab-name', { title: termText(a.key) }, term(a.key)),
         h('div.cs-mod', { title: 'Modifikator (automatisch)' }, signed(modifier(score))),
         h('input.cs-score', { type: 'number', min: 1, max: 30, inputmode: 'numeric', value: score, 'data-lock': '', 'aria-label': `${a.label}-Wert`,
           onchange: (e) => this.patch({ abilities: { [a.key]: Math.max(1, Math.min(30, Number(e.target.value) || 10)) } }) }),
         h('label.cs-save', { title: 'In diesem Rettungswurf geübt?' },
           h('input', { type: 'checkbox', checked: !!c.saveProf[a.key], 'data-lock': '', onchange: (e) => this.patch({ saveProf: { [a.key]: e.target.checked } }) }),
-          h('span', {}, 'Rettung'), h('b', {}, signed(save))));
+          term('saveShort'), h('b', {}, signed(save))));
     }));
 
     const dot = (skill, level, title) => {
@@ -111,35 +114,35 @@ export class AbilitySheet {
           const next = level === 1 ? (cur >= 1 ? 0 : 1) : (cur === 2 ? 1 : 2);
           this.patch({ skills: { [skill]: next } });
         },
-      }, level === 1 ? 'Ü' : 'E');
+      }, level === 1 ? (LANG === 'en' ? 'P' : 'Ü') : 'E');
     };
     const skills = h('div.cs-skills', {}, ...SKILLS.map((s) => h(`div.cs-skill${c.skills[s.key] ? '.trained' : ''}`, {},
-      dot(s.key, 1, `${s.label}: geübt (Übungsbonus +${pb})`),
-      dot(s.key, 2, `${s.label}: Expertise (doppelter Übungsbonus +${pb * 2})`),
-      h('span.cs-skill-name', {}, s.label, ' ', h('small', {}, ABILITIES.find((a) => a.key === s.ab).short)),
+      dot(s.key, 1, `${termText(s.key)}: geübt (Übungsbonus +${pb})`),
+      dot(s.key, 2, `${termText(s.key)}: Expertise (doppelter Übungsbonus +${pb * 2})`),
+      h('span.cs-skill-name', {}, term(s.key), h('small.cs-skill-ab', {}, termText(`${s.ab}Short`))),
       h('b.cs-skill-val', {}, signed(skillBonus(c, s.key))))));
 
-    const personal = (key, label, opts = {}) => h('label.field.cs-pers', {}, h('span', {}, label, opts.info ? info(opts.info) : null),
+    const personal = (key, label, opts = {}) => h('label.field.cs-pers', {}, h('span', {}, opts.term ? term(opts.term) : label, opts.info ? info(opts.info) : null),
       opts.options
         ? h('select', { 'data-lock': '', onchange: (e) => this.patch({ personal: { [key]: e.target.value } }) },
-          ...opts.options.map((o) => h('option', { value: o, selected: (c.personal[key] || '') === o }, o || '–')),
-          c.personal[key] && !opts.options.includes(c.personal[key]) ? h('option', { value: c.personal[key], selected: true }, c.personal[key]) : null)
+          ...opts.options.map((k) => { const v = k ? GLOSSARY[k].de : ''; return h('option', { value: v, selected: (c.personal[key] || '') === v }, optLabel(k)); }),
+          c.personal[key] && !opts.options.some((k) => k && GLOSSARY[k].de === c.personal[key]) ? h('option', { value: c.personal[key], selected: true }, c.personal[key]) : null)
         : h('input', { value: c.personal[key] || '', placeholder: opts.placeholder || '', 'data-lock': '', onchange: (e) => this.patch({ personal: { [key]: e.target.value } }) }));
 
     this.container.replaceChildren(h('div.charsheet', {},
       h('div.section-head', {}, h('h3', {}, 'Attribute und Fertigkeiten'), lockButton()),
       h('p.hint', {}, 'Optional. Werte eintragen, den Rest rechnet die App nach den Regeln von 2014. Zum Ändern „✎ Bearbeiten“ antippen.'),
       h('div.cs-top', {},
-        h('label.cs-box', {}, h('small', {}, 'Stufe', info('level')),
+        h('label.cs-box', {}, h('small', {}, term('level'), info('level')),
           h('input.cs-level', { type: 'number', min: 1, max: 20, inputmode: 'numeric', value: c.level, 'data-lock': '',
             onchange: (e) => this.patch({ level: Math.max(1, Math.min(20, Number(e.target.value) || 1)) }) })),
-        box('Übungsbonus', signed(pb), 'proficiency'),
-        box('Initiative', signed(modifier(c.abilities.dex)), 'initiative'),
-        box('Passive Wahrnehmung', String(perception), 'passivePerception')),
-      h('h4', {}, 'Attribute ', info('abilities'), ' · Rettungswürfe ', info('saves')),
+        box(term('proficiency'), signed(pb), 'proficiency'),
+        box(term('initiative'), signed(modifier(c.abilities.dex)), 'initiative'),
+        box(term('passivePerception'), String(perception), 'passivePerception')),
+      h('h4', {}, term('abilities'), ' ', info('abilities'), ' · ', term('savingThrows'), ' ', info('saves')),
       abilities,
-      h('h4', {}, 'Fertigkeiten ', info('skills')),
-      h('p.hint', {}, 'Ü = geübt, E = Expertise (doppelter Übungsbonus).'),
+      h('h4', {}, term('skills'), ' ', info('skills')),
+      h('p.hint', {}, LANG === 'en' ? 'P = proficient, E = expertise (double proficiency bonus).' : 'Ü = geübt (proficient), E = Expertise (doppelter Übungsbonus).'),
       skills,
       h('h4', {}, 'Angaben'),
       h('div.cs-personal', {},
@@ -147,9 +150,9 @@ export class AbilitySheet {
         personal('gender', 'Geschlecht'),
         personal('faith', 'Glaube', { placeholder: 'z. B. Tymora' }),
         personal('height', 'Größe', { placeholder: 'z. B. 1,75 m' }),
-        personal('size', 'Kategorie', { options: SIZES, info: 'size' }),
+        personal('size', 'Kategorie', { options: SIZES, info: 'size', term: 'sizeCategory' }),
         personal('weight', 'Gewicht', { placeholder: 'z. B. 70 kg' }),
-        personal('alignment', 'Gesinnung', { options: ALIGNMENTS, info: 'alignment' }))));
+        personal('alignment', 'Gesinnung', { options: ALIGNMENTS, info: 'alignment', term: 'alignment' }))));
     applyLocks(this.container);
   }
 }

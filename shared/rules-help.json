@@ -63,8 +63,7 @@
       "text": [
         "Vorteil: zwei W20 würfeln, der höhere zählt. Nachteil: zwei W20, der niedrigere zählt.",
         "Hat man beides gleichzeitig, heben sie sich auf: Man würfelt normal.",
-        "Im Würfelfeld: 2d20kh1 = Vorteil, 2d20kl1 = Nachteil.",
-        "In der Würfelzeile: „kh“ heißt „keep highest“ (die höchsten behalten), „kl“ heißt „keep lowest“ (die niedrigsten behalten). 2d20kh1 = zwei W20 werfen, den höheren nehmen."
+        "Im Würfelfenster gibt es dafür die Knöpfe „Vorteil“ und „Nachteil“."
       ]
     },
     "coins": {

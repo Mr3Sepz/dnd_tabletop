@@ -1,3 +1,4 @@
+import './i18n.js';
 // Kleine Hilfsfunktionen für alle Seiten.
 
 export const $ = (sel, root = document) => root.querySelector(sel);
@@ -113,21 +114,21 @@ export function dialog({ title, body, fields = [], okText = 'OK', cancelText = '
  * Bild auswählen, im Browser verkleinern (S7) und zum Server hochladen.
  * Gibt das Asset-Objekt zurück.
  */
-export async function pickAndUploadImages(session, { multiple = true, maxPx = 4096 } = {}) {
+export async function pickAndUploadImages(session, { multiple = true, maxPx = 4096, purpose = '' } = {}) {
   const files = await new Promise((resolve) => {
     const input = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', multiple });
     input.onchange = () => resolve([...input.files]);
     input.click();
   });
   const out = [];
-  for (const f of files) out.push(await uploadImage(session, f, maxPx));
+  for (const f of files) out.push(await uploadImage(session, f, maxPx, purpose));
   return out;
 }
 
-export async function uploadImage(session, file, maxPx = 4096) {
+export async function uploadImage(session, file, maxPx = 4096, purpose = '') {
   const { blob, width, height } = await downscale(file, maxPx);
   const name = file.name.replace(/\.[^.]+$/, '');
-  const res = await fetch(`/api/assets?name=${encodeURIComponent(name)}&w=${width}&h=${height}`, {
+  const res = await fetch(`/api/assets?name=${encodeURIComponent(name)}&w=${width}&h=${height}${purpose ? `&purpose=${purpose}` : ''}`, {
     method: 'POST', headers: { 'content-type': blob.type, 'x-session': session }, body: blob,
   });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload fehlgeschlagen');

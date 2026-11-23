@@ -12,6 +12,15 @@ const CATALOG = require('../shared/conditions.json');
 const { rollDice } = require('./dice');
 
 const SLOT_LEVELS = 9;
+
+// Standardnamen für neue Spielstände, Szenen, NPCs: Deutsch oder Englisch (config.language).
+const NAMES = {
+  de: { character: 'Charakter', ac: 'RK', npc: 'Neuer NPC', scene: 'Neue Szene', firstScene: 'Erste Szene', copy: 'Kopie' },
+  en: { character: 'Character', ac: 'AC', npc: 'New NPC', scene: 'New scene', firstScene: 'First scene', copy: 'copy' },
+};
+let LANG = 'de';
+const L = (k) => NAMES[LANG][k];
+function configureLanguage(lang) { LANG = lang === 'en' ? 'en' : 'de'; }
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const SKILLS = ['acrobatics', 'arcana', 'athletics', 'performance', 'intimidation', 'sleightOfHand', 'history', 'medicine',
   'stealth', 'animalHandling', 'insight', 'investigation', 'nature', 'religion', 'deception', 'survival', 'persuasion', 'perception'];
@@ -74,12 +83,12 @@ function newCharacter(seat) {
   return {
     id: newId('c_'),
     seat,
-    name: `Charakter ${seat}`,
+    name: `${L('character')} ${seat}`,
     portraitAssetId: null,
     hp: { cur: 10, max: 10, temp: 0 },
     deathSaves: { success: 0, fail: 0 },
     conditions: [],
-    stats: [{ id: newId('s_'), label: 'RK', value: '10' }],
+    stats: [{ id: newId('s_'), label: L('ac'), value: '10' }],
     slots: emptySlots(),
     counters: [],
     inventory: '',
@@ -103,7 +112,7 @@ function newAbilitySheet() {
   };
 }
 
-function newNpc(name = 'Neuer NPC') {
+function newNpc(name = L('npc')) {
   return {
     id: newId('n_'),
     name,
@@ -113,19 +122,20 @@ function newNpc(name = 'Neuer NPC') {
     dead: false,
     deathSaves: { success: 0, fail: 0 },
     conditions: [],
-    stats: [{ id: newId('s_'), label: 'RK', value: '10' }],
+    stats: [{ id: newId('s_'), label: L('ac'), value: '10' }],
     slots: emptySlots(),
     counters: [],
     sheetPrefs: { slots: true, counters: true },
   };
 }
 
-function newScene(name = 'Neue Szene') {
+function newScene(name = L('scene')) {
   return {
     id: newId('sc_'),
     name,
     background: null, // { assetId }
     mapScale: 1,
+    rotation: 0, // 0, 90, 180, 270: Karte samt Figuren, Zeichnungen und Nebel gedreht
     grid: { enabled: true, size: 70, offsetX: 0, offsetY: 0, color: '#000000', opacity: 0.35, feet: 5, snap: true },
     night: false,
     notes: '',
@@ -136,12 +146,12 @@ function newScene(name = 'Neue Szene') {
 }
 
 function createInitialState() {
-  const first = newScene('Erste Szene');
+  const first = newScene(L('firstScene'));
   return {
     version: STATE_VERSION,
     activeSceneId: first.id,
     seatScenes: {},
-    settings: { pin: '', seatCount: SEAT_COUNT, coinNames: { pp: '', gp: '', sp: '', cp: '' } },
+    settings: { pin: '', seatCount: SEAT_COUNT, coinNames: { pp: '', gp: '', sp: '', cp: '' }, coinImages: { pp: null, gp: null, sp: null, cp: null } },
     scenes: [first],
     assets: [],
     seats: Array.from({ length: SEAT_COUNT }, (_, i) => ({ seat: i + 1, playerName: '', claimToken: null })),
@@ -167,6 +177,7 @@ function normalizeState(raw) {
   const s = { ...base, ...raw };
   s.settings = { ...base.settings, ...(raw.settings || {}) };
   s.settings.coinNames = { ...base.settings.coinNames, ...((raw.settings || {}).coinNames || {}) };
+  s.settings.coinImages = { ...base.settings.coinImages, ...((raw.settings || {}).coinImages || {}) };
   const sceneDefaults = newScene();
   s.scenes = (Array.isArray(raw.scenes) && raw.scenes.length ? raw.scenes : base.scenes).map((sc) => ({
     ...sceneDefaults, ...sc,
@@ -208,7 +219,9 @@ function normalizeState(raw) {
   s.party = { notes: str((raw.party || {}).notes, LONG_TEXT) }; // XP, Spieldatum und Gold gibt es nicht mehr
   s.quests = Array.isArray(raw.quests) ? raw.quests : [];
   s.world = { assetId: (raw.world && raw.world.assetId) || null, pins: Array.isArray(raw.world && raw.world.pins) ? raw.world.pins : [] };
-  s.helpTexts = { terms: { ...((raw.helpTexts || {}).terms || {}) }, conditions: { ...((raw.helpTexts || {}).conditions || {}) } };
+  const ht = raw.helpTexts || {};
+  s.helpTexts = { terms: { ...(ht.terms || {}) }, conditions: { ...(ht.conditions || {}) } };
+  if (ht.en) s.helpTexts.en = { terms: { ...(ht.en.terms || {}) }, conditions: { ...(ht.en.conditions || {}) } };
   s.diceLog = Array.isArray(raw.diceLog) ? raw.diceLog.slice(-DICE_LOG) : [];
   s.settings.seatCount = SEAT_COUNT;
   s.version = STATE_VERSION;
@@ -252,6 +265,46 @@ function normalizeSlots(slots) {
 }
 
 // ---------- Sichtbarkeit ----------
+
+/** Farbe der Figur zu einem Charakter/NPC (Hintergrund hinter durchsichtigen Porträts). */
+function tokenColorFor(state, refId) {
+  for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === refId && t.color) return t.color;
+  return null;
+}
+
+/** Größe der Karte in Weltkoordinaten (wie im Browser: Board.mapSize). */
+function sceneSize(sc, state) {
+  const a = sc.background && state.assets.find((x) => x.id === sc.background.assetId);
+  let w; let h;
+  if (a) { w = a.width * sc.mapScale; h = a.height * sc.mapScale; } else { const g = sc.grid.size || 70; w = g * 30; h = g * 20; }
+  return (sc.rotation || 0) % 180 ? { w: h, h: w } : { w, h };
+}
+
+/** Dreht die Szene um 90° (dir 1 = im Uhrzeigersinn, -1 = dagegen). */
+function rotateScene(sc, state, dir) {
+  const { w: W, h: H } = sceneSize(sc, state);
+  const pt = (x, y) => (dir === 1 ? [H - y, x] : [y, W - x]);
+  for (const t of sc.tokens) [t.x, t.y] = pt(t.x, t.y);
+  for (const d of sc.drawings) {
+    [d.x, d.y] = pt(d.x, d.y);
+    d.rotation = (((d.rotation || 0) + 90 * dir) % 360 + 360) % 360;
+  }
+  for (const f of sc.fog.shapes) {
+    if (f.type === 'rect') {
+      const [nx, ny] = dir === 1 ? [H - (f.y + f.h), f.x] : [f.y, W - (f.x + f.w)];
+      [f.x, f.y, f.w, f.h] = [nx, ny, f.h, f.w];
+    } else if (f.type === 'circle') [f.x, f.y] = pt(f.x, f.y);
+    else if (f.type === 'stroke') {
+      const out = [];
+      for (let i = 0; i + 1 < f.points.length; i += 2) out.push(...pt(f.points[i], f.points[i + 1]));
+      f.points = out;
+    }
+  }
+  const g = sc.grid; const size = g.size || 70;
+  const mod = (v) => ((v % size) + size) % size;
+  [g.offsetX, g.offsetY] = dir === 1 ? [mod(H - g.offsetY), mod(g.offsetX)] : [mod(g.offsetY), mod(W - g.offsetX)];
+  sc.rotation = (((sc.rotation || 0) + 90 * dir) % 360 + 360) % 360;
+}
 
 /** Der Zuschauer-Bildschirm (Battle Map am Tisch) ist "Platz 0": Live-Szene, Nebel wie bei Spielern. */
 const SPECTATOR = 0;
@@ -516,7 +569,7 @@ function applyAction(state, who, action) {
     // ---------- Szenen ----------
     case 'scene.create': {
       if (!isDM) deny();
-      const sc = newScene(str(action.name, 80) || 'Neue Szene');
+      const sc = newScene(str(action.name, 80) || L('scene'));
       state.scenes.push(sc);
       return { id: sc.id };
     }
@@ -528,7 +581,10 @@ function applyAction(state, who, action) {
       if ('notes' in p) sc.notes = str(p.notes, LONG_TEXT);
       if ('night' in p) sc.night = bool(p.night);
       if ('mapScale' in p) sc.mapScale = Math.min(10, Math.max(0.05, num(p.mapScale, 1)));
-      if ('background' in p) sc.background = p.background && p.background.assetId ? { assetId: str(p.background.assetId, 60) } : null;
+      if ('background' in p) {
+        sc.background = p.background && p.background.assetId ? { assetId: str(p.background.assetId, 60) } : null;
+        sc.rotation = 0;
+      }
       if (p.grid && typeof p.grid === 'object') {
         const g = { ...sc.grid };
         if ('enabled' in p.grid) g.enabled = bool(p.grid.enabled);
@@ -543,12 +599,19 @@ function applyAction(state, who, action) {
       }
       return {};
     }
+    case 'scene.rotate': {
+      // Ganze Szene um 90° drehen: Karte, Raster, Figuren, Zeichnungen, Nebel.
+      if (!isDM) deny();
+      const sc = findScene(action.id); must(sc);
+      rotateScene(sc, state, action.dir === -1 ? -1 : 1);
+      return { rotation: sc.rotation };
+    }
     case 'scene.duplicate': {
       if (!isDM) deny();
       const sc = findScene(action.id); must(sc);
       const copy = JSON.parse(JSON.stringify(sc));
       copy.id = newId('sc_');
-      copy.name = `${sc.name} (Kopie)`;
+      copy.name = `${sc.name} (${L('copy')})`;
       copy.tokens.forEach((t) => { t.id = newId('t_'); });
       copy.drawings.forEach((d) => { d.id = newId('d_'); });
       state.scenes.splice(state.scenes.indexOf(sc) + 1, 0, copy);
@@ -807,7 +870,7 @@ function applyAction(state, who, action) {
     // ---------- NPCs ----------
     case 'npc.create': {
       if (!isDM) deny();
-      const n = newNpc(str(action.name, 80) || 'Neuer NPC');
+      const n = newNpc(str(action.name, 80) || L('npc'));
       state.npcs.push(n);
       return { id: n.id };
     }
@@ -822,7 +885,7 @@ function applyAction(state, who, action) {
       const n = state.npcs.find((x) => x.id === action.id); must(n);
       const copy = JSON.parse(JSON.stringify(n));
       copy.id = newId('n_');
-      copy.name = str(action.name, 80) || `${n.name} (Kopie)`;
+      copy.name = str(action.name, 80) || `${n.name} (${L('copy')})`;
       copy.hp.cur = copy.hp.max; copy.dead = false; copy.conditions = [];
       state.npcs.splice(state.npcs.indexOf(n) + 1, 0, copy);
       return { id: copy.id };
@@ -1024,13 +1087,19 @@ function applyAction(state, who, action) {
     // ---------- Infotexte: der DM kann sie anpassen ----------
     case 'help.set': {
       if (!isDM) deny();
+      // Deutsche und englische Texte werden getrennt angepasst.
       const group = action.group === 'conditions' ? 'conditions' : 'terms';
       const key = str(action.key, 40);
       must(key, 'Begriff fehlt');
-      if (action.lines === null) { delete state.helpTexts[group][key]; return {}; }
+      let target = state.helpTexts;
+      if (action.lang === 'en') {
+        if (!state.helpTexts.en) state.helpTexts.en = { terms: {}, conditions: {} };
+        target = state.helpTexts.en;
+      }
+      if (action.lines === null) { delete target[group][key]; return {}; }
       const lines = (Array.isArray(action.lines) ? action.lines : []).map((l) => str(l, 1000).trim()).filter(Boolean).slice(0, 20);
-      if (!lines.length) delete state.helpTexts[group][key];
-      else state.helpTexts[group][key] = { lines, title: group === 'terms' ? str(action.title, 80).trim() : '' };
+      if (!lines.length) delete target[group][key];
+      else target[group][key] = { lines, title: group === 'terms' ? str(action.title, 80).trim() : '' };
       return {};
     }
 
@@ -1082,6 +1151,14 @@ function applyAction(state, who, action) {
       if (p.coinNames && typeof p.coinNames === 'object') {
         for (const k of COIN_KEYS) if (k in p.coinNames) state.settings.coinNames[k] = str(p.coinNames[k], 20).trim();
       }
+      if (p.coinImages && typeof p.coinImages === 'object') {
+        for (const k of COIN_KEYS) {
+          if (!(k in p.coinImages)) continue;
+          const id = p.coinImages[k];
+          if (id) must(state.assets.some((a) => a.id === id), 'Bild nicht gefunden');
+          state.settings.coinImages[k] = id ? str(id, 60) : null;
+        }
+      }
       if ('seatCount' in p) return { seatCount: changeSeatCount(state, p.seatCount) };
       return {};
     }
@@ -1116,11 +1193,13 @@ function viewForDM(state) {
 /** Was alle Spieler gemeinsam sehen: Questlog, Weltkarte, Effekte, Münznamen, angepasste Infotexte. */
 function sharedForPlayers(state, usedAssets) {
   if (state.world.assetId) usedAssets.add(state.world.assetId);
+  for (const id of Object.values(state.settings.coinImages || {})) if (id) usedAssets.add(id);
   return {
     quests: state.quests,
     world: { assetId: state.world.assetId, pins: state.world.pins.map(({ sceneId, ...p }) => p) },
     effects: state.effects.filter((e) => !e.hidden),
     coinNames: state.settings.coinNames,
+    coinImages: state.settings.coinImages,
     helpTexts: state.helpTexts,
   };
 }
@@ -1168,6 +1247,7 @@ function viewForPlayer(state, seatNo) {
       portraitAssetId: src ? src.portraitAssetId : null,
       condition: e.kind === 'npc' && src ? roughCondition(src.hp, src.dead) : undefined,
       conditions: src ? src.conditions : [],
+      color: tokenColorFor(state, e.refId),
     };
   });
   const currentVisible = entries.some((e) => e.id === state.initiative.currentId);
@@ -1182,7 +1262,7 @@ function viewForPlayer(state, seatNo) {
     version: state.version,
     activeSceneId: scene.id,
     scenes: [{
-      id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale,
+      id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale, rotation: scene.rotation || 0,
       grid: scene.grid, night: scene.night, tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
@@ -1204,7 +1284,7 @@ function viewForPlayer(state, seatNo) {
 function viewForSpectator(state) {
   const v = viewForPlayer(state, SPECTATOR);
   v.spectator = true;
-  delete v.party; delete v.world; delete v.coinNames; delete v.helpTexts;
+  delete v.party; delete v.world; delete v.coinNames; delete v.coinImages; delete v.helpTexts;
   return v;
 }
 
@@ -1217,6 +1297,6 @@ function exportableState(state) {
 
 module.exports = {
   MAX_SEATS, configureSeats, seatCount, createInitialState, normalizeState, applyAction, ActionError,
-  viewForDM, viewForPlayer, viewForSpectator, exportableState, SPECTATOR, CHAT_MAX, ABILITIES, SKILLS, roughCondition, newId,
+  configureLanguage, viewForDM, viewForPlayer, viewForSpectator, exportableState, SPECTATOR, CHAT_MAX, ABILITIES, SKILLS, roughCondition, newId,
   sceneIdForSeat, tokenVisibleToSeat, pointRevealed,
 };
