@@ -174,6 +174,15 @@
         "Die Regeln rechnen in Fuß (ft). 1 Fuß = 0,3048 m.",
         "Die deutschen Regelbücher runden: 5 Fuß (ein Feld) = 1,5 m, 30 Fuß = 9 m."
       ]
+    },
+    "abilityEffects": {
+      "title": "Effekte auf Attribute",
+      "text": [
+        "Für Tränke, Zauber oder Flüche, die ein Attribut eine Zeit lang verändern, z. B. „+8 Stärke für 10 Runden“.",
+        "Der Wert im Bogen ändert sich sofort: grün = erhöht, rot = gesenkt. Modifikator, Rettungswurf, Fertigkeiten, Initiative und passive Wahrnehmung rechnen mit.",
+        "Mit jeder neuen Kampfrunde zählt der Effekt herunter. Bei 0 ist er vorbei und der Wert springt zurück.",
+        "Mehrere Effekte zählt die App einfach zusammen. Ob sie sich laut Regeln stapeln, entscheidet ihr am Tisch. Manche Tränke setzen einen festen Wert (Trank der Hügelriesenstärke: Stärke 21) – dann den Unterschied eintragen, z. B. +5 bei Stärke 16."
+      ]
     }
   },
   "conditions": {

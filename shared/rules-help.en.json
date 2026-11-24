@@ -174,6 +174,15 @@
         "The rules use feet (ft). 1 foot = 0.3048 m.",
         "German rulebooks round: 5 ft (one square) = 1.5 m, 30 ft = 9 m."
       ]
+    },
+    "abilityEffects": {
+      "title": "Ability effects",
+      "text": [
+        "For potions, spells or curses that change an ability score for a while, e.g. “+8 Strength for 10 rounds”.",
+        "The score on the sheet changes immediately: green = raised, red = lowered. Modifier, saving throw, skills, initiative and passive Perception follow.",
+        "The effect counts down with every new round of combat. At 0 it is over and the score returns to normal.",
+        "The app simply adds several effects together. Whether they stack under the rules is up to your table. Some potions set a fixed score (Potion of Hill Giant Strength: Strength 21) – enter the difference, e.g. +5 for Strength 16."
+      ]
     }
   },
   "conditions": {

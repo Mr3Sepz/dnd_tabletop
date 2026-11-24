@@ -32,6 +32,7 @@ export const TOOLS = {
   'fog-brush-hide': 'Nebel verdecken (Pinsel)',
   'place-template': 'Zauberschablone setzen',
   'place-image': 'Objekt setzen',
+  'light-brush': 'Licht malen (Nachtmodus)',
 };
 
 export class Board {
@@ -209,8 +210,43 @@ export class Board {
       for (let y = oy; y <= h; y += g.size) lines.add(new Konva.Line({ points: [0, y, w, y], stroke: g.color, strokeWidth: 1 }));
       layer.add(lines);
     }
-    if (scene.night) layer.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.55, listening: false }));
+    if (scene.night) layer.add(this.#nightOverlay(scene, w, h));
     layer.draw();
+  }
+
+  /**
+   * Nachtfilter mit Lichtern: Die Dunkelheit bekommt an den gemalten Stellen weiche Löcher,
+   * darüber liegt ein warmer, orangefarbener Schein wie von Feuer.
+   */
+  #nightOverlay(scene, w, h) {
+    const group = new Konva.Group({ listening: false });
+    group.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.62 }));
+    const lights = scene.lights || [];
+    if (!lights.length) return group;
+    // Punkte entlang der Pinselstriche, nicht zu dicht
+    const blobs = [];
+    for (const l of lights) {
+      const step = Math.max(8, l.r * 0.45);
+      let lx = null; let ly = null;
+      for (let i = 0; i + 1 < l.points.length; i += 2) {
+        const x = l.points[i]; const y = l.points[i + 1];
+        if (lx === null || Math.hypot(x - lx, y - ly) >= step || i + 2 >= l.points.length) { blobs.push([x, y, l.r]); lx = x; ly = y; }
+      }
+    }
+    const radial = (x, y, r, stops) => new Konva.Circle({ x, y, radius: r * 1.35,
+      fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+      fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r * 1.35, fillRadialGradientColorStops: stops });
+    for (const [x, y, r] of blobs) {
+      const hole = radial(x, y, r, [0, 'rgba(0,0,0,1)', 0.55, 'rgba(0,0,0,0.85)', 1, 'rgba(0,0,0,0)']);
+      hole.globalCompositeOperation('destination-out');
+      group.add(hole);
+    }
+    for (const [x, y, r] of blobs) {
+      group.add(radial(x, y, r, [0, 'rgba(255,140,30,0.38)', 0.55, 'rgba(240,90,20,0.18)', 1, 'rgba(220,70,10,0)']));
+    }
+    // Zwischenspeichern, damit die Löcher nur die Dunkelheit treffen und nicht die Karte
+    group.cache({ x: 0, y: 0, width: w, height: h, pixelRatio: Math.min(1, 2400 / Math.max(w, h)) });
+    return group;
   }
 
   // ------------------------------------------------------------ Zeichnungen, Objekte, Schablonen
@@ -577,11 +613,12 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
-      if (tool === 'line' || tool.startsWith('fog-brush')) {
+      if (tool === 'line' || tool.startsWith('fog-brush') || tool === 'light-brush') {
         const fog = tool.startsWith('fog');
-        const width = fog ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
+        const light = tool === 'light-brush';
+        const width = fog || light ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
-          stroke: fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
+          stroke: light ? 'rgba(255,170,60,0.45)' : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);
         return;
       }
@@ -639,6 +676,8 @@ export class Board {
         if (a.width > 4 && a.height > 4) this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'rect', x: a.x, y: a.y, w: a.width, h: a.height });
       } else if (d.kind.startsWith('fog-brush')) {
         this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
+      } else if (d.kind === 'light-brush') {
+        this.opts.onLight?.({ points: d.points, r: this.brushRadius });
       }
       this.uiLayer.batchDraw();
     };

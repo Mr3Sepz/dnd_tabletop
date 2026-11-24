@@ -102,6 +102,11 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Hintergrundfarbe hinter durchsichtigen PNGs | ✅ | Figur und Porträt |
 | — | Münzbilder | ✅ | Standardbilder, eigene Bilder (DM), nicht in der Bildersammlung |
 | — | Zweisprachig | ✅ | Deutsch mit englischen Fachbegriffen darunter; komplette englische Oberfläche (UK), umschaltbar pro Gerät; Infotexte in beiden Sprachen |
+| — | Attribut-Effekte | ✅ | +/− Wert auf ein Attribut für X Runden (Tränke, Zauber, Flüche), grün/rot im Bogen, abhängige Werte rechnen mit, laufen von selbst ab; mehrere gleichzeitig |
+| — | Bildersammlung als eigener Reiter mit Ordnern | ✅ | Charaktere/NPCs, Objekte, Karten, Sonstiges; Auswahllisten zeigen nur den passenden Ordner; nur für den DM |
+| — | Keine Figuren ohne Werte | ✅ | Jede Figur ist Spielercharakter oder NPC; NPCs haben Attribute, Fertigkeiten, Rettungswürfe |
+| — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
+| — | Darkmode | ✅ | Mitternachtsblau bis Dunkelrot, pro Gerät |
 | — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
 | — | Zuschauer-Bildschirm | ✅ | `/spectator`: Live-Szene wie bei Spielern, nur Karte und Leiste, belegt keinen Platz |
 | — | Bildersammlung: „Verwenden als“ | ✅ | Figur, NPC, Objekt, Szenenkarte, Weltkarte |

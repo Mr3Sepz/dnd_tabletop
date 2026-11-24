@@ -608,6 +608,100 @@ test('Infotexte: Deutsch und Englisch werden getrennt angepasst', async () => {
   dm.c.close();
 });
 
+test('Bildordner: Upload mit Ordner, verschieben; alte Bilder werden nach Verwendung einsortiert', async () => {
+  const dm = await joinDM();
+  const png = Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex');
+  const up = async (folder) => (await fetch(`${base}/api/assets?name=x&w=1&h=1${folder ? `&folder=${folder}` : ''}`, { method: 'POST', headers: { 'content-type': 'image/png', 'x-session': dm.session }, body: png })).json();
+  const a = await up('maps');
+  const b = await up('');
+  assert.equal(a.folder, 'maps');
+  assert.equal(b.folder, 'misc');
+  assert.equal((await act(dm.c, { type: 'asset.move', id: b.id, folder: 'objects' })).ok, true);
+  assert.equal(inst.getState().assets.find((x) => x.id === b.id).folder, 'objects');
+  assert.equal((await act(dm.c, { type: 'asset.move', id: b.id, folder: 'quatsch' })).ok, false);
+  const S = require('../server/state');
+  const raw = S.createInitialState();
+  raw.assets = [{ id: 'a1', file: 'a1.png', name: 'Karte' }, { id: 'a2', file: 'a2.png', name: 'Held' }, { id: 'a3', file: 'a3.png', name: 'Rest' }];
+  raw.scenes[0].background = { assetId: 'a1' };
+  raw.characters[0].portraitAssetId = 'a2';
+  const n = S.normalizeState(raw);
+  assert.deepEqual(n.assets.map((x) => x.folder), ['maps', 'characters', 'misc']);
+  dm.c.close();
+});
+
+test('Keine Figuren ohne Werte: jede Figur ist Spielercharakter oder NPC (mit Attributen)', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const before = st.npcs.length;
+  const r = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Pferd', x: 10, y: 10 } });
+  const t = sc.tokens.find((x) => x.id === r.result.id);
+  assert.equal(t.kind, 'npc');
+  const horse = st.npcs.find((x) => x.id === t.refId);
+  assert.equal(horse.name, 'Pferd');
+  assert.equal(st.npcs.length, before + 1);
+  assert.equal(horse.abilities.str, 10, 'auch ein Pferd hat Werte');
+  assert.equal((await act(dm.c, { type: 'npc.update', id: horse.id, patch: { abilities: { str: 18 }, skills: { athletics: 1 } } })).ok, true);
+  assert.equal(horse.abilities.str, 18);
+  // alter Spielstand mit Markierung
+  const S = require('../server/state');
+  const raw = S.createInitialState();
+  raw.scenes[0].tokens.push({ id: 't_old', name: 'Fass', kind: 'marker', refId: null, x: 0, y: 0, assetId: null });
+  const n = S.normalizeState(raw);
+  const old = n.scenes[0].tokens.find((x) => x.id === 't_old');
+  assert.equal(old.kind, 'npc');
+  assert.ok(n.npcs.some((x) => x.id === old.refId && x.name === 'Fass'));
+  await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [t.id] });
+  await act(dm.c, { type: 'npc.delete', id: horse.id });
+  dm.c.close();
+});
+
+test('Attribut-Effekte: Spieler nur für den eigenen Charakter, DM für alle, auch verdeckt', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const st = inst.getState();
+  const mine = st.characters.find((c) => c.seat === 4);
+  const other = st.characters.find((c) => c.seat === 5);
+  const ok = await act(p.c, { type: 'effect.add', name: '+8 Stärke', rounds: 8, target: { kind: 'character', id: mine.id }, ability: 'str', delta: 8 });
+  assert.equal(ok.ok, true, ok.error);
+  const e = st.effects.find((x) => x.id === ok.result.id);
+  assert.deepEqual(e.target, { kind: 'character', id: mine.id, ability: 'str', delta: 8 });
+  assert.equal((await act(p.c, { type: 'effect.add', name: 'x', rounds: 2, target: { kind: 'character', id: other.id }, ability: 'dex', delta: 2 })).ok, false);
+  const npcR = await act(dm.c, { type: 'npc.create', name: 'Oger' });
+  assert.equal((await act(p.c, { type: 'effect.add', name: 'x', rounds: 2, target: { kind: 'npc', id: npcR.result.id }, ability: 'str', delta: -2 })).ok, false);
+  const secret = await act(dm.c, { type: 'effect.add', name: '−2 Stärke', rounds: 3, target: { kind: 'npc', id: npcR.result.id }, ability: 'str', delta: -2, hidden: true });
+  assert.equal(secret.ok, true);
+  assert.equal((await act(dm.c, { type: 'effect.add', name: 'x', rounds: 3, target: { kind: 'npc', id: npcR.result.id }, ability: 'str', delta: 0 })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  const v = viewForPlayer(st, 4).effects;
+  assert.ok(v.some((x) => x.id === ok.result.id));
+  assert.ok(!v.some((x) => x.id === secret.result.id));
+  await act(dm.c, { type: 'initiative.clear' });
+  await act(dm.c, { type: 'npc.delete', id: npcR.result.id });
+  dm.c.close(); p.c.close();
+});
+
+test('Lichter im Nachtmodus: nur der DM malt; Spieler bekommen sie nur bei Nacht; drehen mit', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(4);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  assert.equal((await act(p.c, { type: 'light.add', sceneId: sc.id, light: { points: [1, 2], r: 50 } })).ok, false);
+  assert.equal((await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [100, 200, 120, 210], r: 80 } })).ok, true);
+  assert.equal((await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [], r: 80 } })).ok, false);
+  const { viewForPlayer } = require('../server/state');
+  assert.deepEqual(viewForPlayer(st, 4).scenes[0].lights, [], 'am Tag keine Lichter');
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { night: true } });
+  assert.equal(viewForPlayer(st, 4).scenes[0].lights.length, 1);
+  await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 });
+  assert.deepEqual(sc.lights[0].points.slice(0, 2), [70 * 20 - 200, 100]);
+  await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: -1 });
+  await act(dm.c, { type: 'light.undo', sceneId: sc.id });
+  assert.equal(sc.lights.length, 0);
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { night: false } });
+  dm.c.close(); p.c.close();
+});
+
 test('Chat: an alle, an einzelne; was nicht an den DM geht, sieht der DM nicht', async () => {
   const dm = await joinDM();
   const p4 = await joinPlayer(4);

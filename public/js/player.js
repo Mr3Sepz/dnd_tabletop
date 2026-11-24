@@ -170,7 +170,11 @@ function render() {
     sheet.update(me, state);
     if (!inv) inv = new InventoryEditor($('#inventory'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }), coinNames: () => state.coinNames, coinImage: (key) => coinImage(key, state) });
     inv.update(me);
-    if (!abilities) abilities = new AbilitySheet($('#abilities'), { onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }) });
+    if (!abilities) abilities = new AbilitySheet($('#abilities'), {
+      kind: 'character', isDM: false, act: (a) => conn.act(a),
+      effects: () => state.effects || [], round: () => state.initiative.round,
+      onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }),
+    });
     abilities.update(me);
   }
   renderParty();

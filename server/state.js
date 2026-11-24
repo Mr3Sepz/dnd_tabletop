@@ -126,6 +126,7 @@ function newNpc(name = L('npc')) {
     slots: emptySlots(),
     counters: [],
     sheetPrefs: { slots: true, counters: true },
+    ...newAbilitySheet(), // auch ein Pferd hat Werte
   };
 }
 
@@ -138,6 +139,7 @@ function newScene(name = L('scene')) {
     rotation: 0, // 0, 90, 180, 270: Karte samt Figuren, Zeichnungen und Nebel gedreht
     grid: { enabled: true, size: 70, offsetX: 0, offsetY: 0, color: '#000000', opacity: 0.35, feet: 5, snap: true },
     night: false,
+    lights: [], // im Nachtmodus von Hand gemalte, beleuchtete Stellen
     notes: '',
     fog: { enabled: false, shapes: [] },
     drawings: [],
@@ -184,6 +186,7 @@ function normalizeState(raw) {
     grid: { ...sceneDefaults.grid, ...(sc.grid || {}) },
     fog: { enabled: !!(sc.fog && sc.fog.enabled), shapes: Array.isArray(sc.fog && sc.fog.shapes) ? sc.fog.shapes : [] },
     drawings: Array.isArray(sc.drawings) ? sc.drawings : [],
+    lights: Array.isArray(sc.lights) ? sc.lights : [],
     tokens: (Array.isArray(sc.tokens) ? sc.tokens : []).map((t) => ({ ...t, visibleTo: t.visibleTo ?? null, conditions: Array.isArray(t.conditions) ? t.conditions : [] })),
   }));
   if (!s.scenes.some((sc) => sc.id === s.activeSceneId)) s.activeSceneId = s.scenes[0].id;
@@ -207,8 +210,15 @@ function normalizeState(raw) {
   s.npcs = (Array.isArray(raw.npcs) ? raw.npcs : []).map((n) => {
     const d = newNpc();
     return { ...d, ...n, slots: normalizeSlots(n.slots), deathSaves: { ...d.deathSaves, ...(n.deathSaves || {}) }, conditions: sanitizeConditions(n.conditions),
-      sheetPrefs: { ...d.sheetPrefs, ...(n.sheetPrefs || {}) } };
+      sheetPrefs: { ...d.sheetPrefs, ...(n.sheetPrefs || {}) },
+      abilities: { ...d.abilities, ...(n.abilities || {}) }, saveProf: { ...d.saveProf, ...(n.saveProf || {}) },
+      skills: { ...d.skills, ...(n.skills || {}) }, personal: { ...d.personal, ...(n.personal || {}) },
+      weapons: Array.isArray(n.weapons) ? n.weapons : [], spells: Array.isArray(n.spells) ? n.spells : [] };
   });
+  // Figuren ohne Werte gibt es nicht mehr: alte „Markierungen“ werden zu NPCs.
+  for (const sc of s.scenes) for (const t of sc.tokens) markerToNpc(s, t);
+  // Bildordner: ältere Bilder nach ihrer Verwendung einsortieren
+  for (const a of s.assets) if (!a.purpose && !FOLDERS.includes(a.folder)) a.folder = guessFolder(s, a.id);
   // Initiative: ältere Stände hatten einen Index statt einer Id.
   const ini = raw.initiative || {};
   const entries = (Array.isArray(ini.entries) ? ini.entries : []).map((e) => ({ value: null, visibility: 'auto', ...e }));
@@ -228,6 +238,28 @@ function normalizeState(raw) {
   return s;
 }
 
+// Ordner der Bildersammlung
+const FOLDERS = ['characters', 'objects', 'maps', 'misc'];
+
+function guessFolder(state, id) {
+  if (state.scenes.some((sc) => sc.background && sc.background.assetId === id) || (state.world && state.world.assetId === id)) return 'maps';
+  if (state.scenes.some((sc) => sc.drawings.some((d) => d.type === 'image' && d.assetId === id))) return 'objects';
+  if (state.characters.some((c) => c.portraitAssetId === id) || state.npcs.some((n) => n.portraitAssetId === id)
+    || state.scenes.some((sc) => sc.tokens.some((t) => t.assetId === id))) return 'characters';
+  return 'misc';
+}
+
+/** Eine Figur ohne Werte (alter Stand) bekommt einen NPC mit Werten. */
+function markerToNpc(state, t) {
+  if (t.kind === 'npc' && state.npcs.some((n) => n.id === t.refId)) return;
+  if (t.kind === 'player' && state.characters.some((c) => c.id === t.refId)) return;
+  const n = newNpc(t.name || L('npc'));
+  n.portraitAssetId = t.assetId || null;
+  state.npcs.push(n);
+  t.kind = 'npc';
+  t.refId = n.id;
+}
+
 /** Plätze im laufenden Spiel ändern. Belegte Plätze werden nie entfernt. */
 function changeSeatCount(state, wanted) {
   const n = Math.max(1, Math.min(MAX_SEATS, Math.round(Number(wanted) || 0)));
@@ -242,7 +274,7 @@ function changeSeatCount(state, wanted) {
     for (const sc of state.scenes) for (const t of sc.tokens) {
       if (t.ownerSeat > n) t.ownerSeat = null;
       if (Array.isArray(t.visibleTo)) t.visibleTo = t.visibleTo.filter((x) => x <= n);
-      if (removedChars.has(t.refId)) { t.refId = null; t.kind = 'marker'; }
+      if (removedChars.has(t.refId)) { t.refId = null; t.kind = 'marker'; markerToNpc(state, t); }
     }
     fixCurrent(state);
   }
@@ -299,6 +331,11 @@ function rotateScene(sc, state, dir) {
       for (let i = 0; i + 1 < f.points.length; i += 2) out.push(...pt(f.points[i], f.points[i + 1]));
       f.points = out;
     }
+  }
+  for (const l of sc.lights || []) {
+    const out = [];
+    for (let i = 0; i + 1 < l.points.length; i += 2) out.push(...pt(l.points[i], l.points[i + 1]));
+    l.points = out;
   }
   const g = sc.grid; const size = g.size || 70;
   const mod = (v) => ((v % size) + size) % size;
@@ -599,6 +636,13 @@ function applyAction(state, who, action) {
       }
       return {};
     }
+    case 'asset.move': {
+      if (!isDM) deny();
+      const a = state.assets.find((x) => x.id === action.id); must(a);
+      must(FOLDERS.includes(action.folder), 'Unbekannter Ordner');
+      a.folder = action.folder;
+      return {};
+    }
     case 'scene.rotate': {
       // Ganze Szene um 90° drehen: Karte, Raster, Figuren, Zeichnungen, Nebel.
       if (!isDM) deny();
@@ -680,6 +724,30 @@ function applyAction(state, who, action) {
       return {};
     }
 
+    // ---------- Lichter im Nachtmodus ----------
+    case 'light.add': {
+      if (!isDM) deny();
+      const sc = findScene(action.sceneId); must(sc);
+      if (sc.lights.length >= 500) throw new ActionError('Zu viele Lichter');
+      const sh = action.light || {};
+      const points = (Array.isArray(sh.points) ? sh.points : []).slice(0, 4000).map((v) => Math.round(num(v)));
+      must(points.length >= 2, 'Licht ohne Punkte');
+      sc.lights.push({ id: newId('l_'), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) });
+      return {};
+    }
+    case 'light.undo': {
+      if (!isDM) deny();
+      const sc = findScene(action.sceneId); must(sc);
+      sc.lights.pop();
+      return {};
+    }
+    case 'light.clear': {
+      if (!isDM) deny();
+      const sc = findScene(action.sceneId); must(sc);
+      sc.lights = [];
+      return {};
+    }
+
     // ---------- Figuren ----------
     case 'token.create': {
       if (!isDM) deny();
@@ -689,13 +757,15 @@ function applyAction(state, who, action) {
         ownerSeat: null, hidden: false, visibleTo: null, kind: 'marker', refId: null, color: '#8a6d3b', conditions: [],
         ...sanitizeTokenPatch(action.token || {}),
       };
+      markerToNpc(state, t); // jede Figur ist ein Spielercharakter oder ein NPC mit Werten
       sc.tokens.push(t);
-      return { id: t.id };
+      return { id: t.id, refId: t.refId };
     }
     case 'token.update': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); const t = findToken(sc, action.id); must(t);
       Object.assign(t, sanitizeTokenPatch(action.patch || {}));
+      markerToNpc(state, t);
       return {};
     }
     case 'token.updateMany': {
@@ -877,7 +947,7 @@ function applyAction(state, who, action) {
     case 'npc.update': {
       if (!isDM) deny();
       const n = state.npcs.find((x) => x.id === action.id); must(n);
-      applySheetPatch(n, action.patch || {}, { allowPrivateNotes: false, allowInventory: false, allowNote: true });
+      applySheetPatch(n, action.patch || {}, { allowPrivateNotes: false, allowInventory: false, allowNote: true, allowAbilities: true });
       return {};
     }
     case 'npc.duplicate': {
@@ -1004,7 +1074,19 @@ function applyAction(state, who, action) {
     case 'effect.add': {
       if (state.effects.length >= 50) throw new ActionError('Zu viele Effekte');
       const rounds = clampInt(action.rounds, 1, 9999, 1);
+      // Optional: Effekt auf ein Attribut eines Charakters/NPCs, z. B. +8 Stärke (Trank der Hügelriesenstärke)
+      let target = null;
+      if (action.target && ABILITIES.includes(action.ability)) {
+        const kind = action.target.kind === 'npc' ? 'npc' : 'character';
+        const ref = kind === 'npc' ? state.npcs.find((x) => x.id === action.target.id) : state.characters.find((x) => x.id === action.target.id);
+        must(ref, 'Ziel nicht gefunden');
+        if (!isDM && (kind === 'npc' || ref.seat !== who.seat)) deny('Nur für den eigenen Charakter');
+        const delta = clampInt(action.delta, -30, 30, 0);
+        must(delta !== 0, 'Wert fehlt');
+        target = { kind, id: ref.id, ability: action.ability, delta };
+      }
       const e = {
+        ...(target ? { target } : {}),
         id: newId('e_'), name: str(action.name, 60).trim() || 'Effekt',
         endRound: state.initiative.round + rounds - 1, // läuft in dieser und den nächsten Runden
         hidden: isDM ? bool(action.hidden) : false,
@@ -1263,7 +1345,7 @@ function viewForPlayer(state, seatNo) {
     activeSceneId: scene.id,
     scenes: [{
       id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale, rotation: scene.rotation || 0,
-      grid: scene.grid, night: scene.night, tokens, drawings,
+      grid: scene.grid, night: scene.night, lights: scene.night ? scene.lights : [], tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
     seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken })),

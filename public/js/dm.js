@@ -25,8 +25,50 @@ let placing = null;      // nächste Figur (F1: von Hand setzen)
 let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bogen / Inventar
 let invEditor = null;
 let selection = [];      // markierte Figuren (Mehrfachauswahl)
-/** Bilder der Bildersammlung (ohne Münzbilder). */
-const galleryAssets = () => state.assets.filter((a) => !a.purpose);
+/** Ordner der Bildersammlung */
+const FOLDERS = [
+  { key: 'characters', label: 'Charaktere/NPCs', icon: '👤' },
+  { key: 'objects', label: 'Objekte', icon: '🧱' },
+  { key: 'maps', label: 'Karten', icon: '🗺' },
+  { key: 'misc', label: 'Sonstiges', icon: '📁' },
+];
+const folderLabel = (k) => FOLDERS.find((f) => f.key === k)?.label || 'Sonstiges';
+/** Bilder der Bildersammlung (ohne Münzbilder), auf Wunsch nur aus einem Ordner. */
+const galleryAssets = (folder) => state.assets.filter((a) => !a.purpose && (!folder || (a.folder || 'misc') === folder));
+let imageFolder = 'characters';
+
+/** Beim Hochladen fragen, in welchen Ordner die Bilder gehören. */
+async function askFolder(count) {
+  const r = await dialog({
+    title: count > 1 ? `${count} Bilder: In welchen Ordner?` : 'In welchen Ordner?',
+    body: 'Später zeigt jede Auswahl nur die passenden Bilder: Porträts aus „Charaktere/NPCs“, Objekte aus „Objekte“, Szenen- und Weltkarten aus „Karten“.',
+    fields: [{ name: 'folder', label: 'Ordner', type: 'select', value: imageFolder, options: FOLDERS.map((f) => ({ value: f.key, label: `${f.icon} ${f.label}` })) }],
+    okText: 'Hochladen',
+  });
+  return r ? r.folder : null;
+}
+
+async function uploadToFolder(files) {
+  const imgs = [...files].filter((f) => f.type.startsWith('image/'));
+  if (!imgs.length) return;
+  const folder = await askFolder(imgs.length);
+  if (!folder) return;
+  for (const f of imgs) {
+    try { await uploadImage(conn.session, f, 4096, '', folder); } catch (err) { toast(err.message, 'error'); }
+  }
+  imageFolder = folder;
+  toast(`${imgs.length} Bild(er) in „${folderLabel(folder)}“ geladen`);
+  tab = 'images'; renderPanel(true);
+}
+
+function pickFiles(multiple = true) {
+  return new Promise((resolve) => {
+    const input = h('input', { type: 'file', accept: 'image/*', multiple, style: { display: 'none' } });
+    input.onchange = () => { resolve([...input.files]); input.remove(); };
+    document.body.append(input);
+    input.click();
+  });
+}
 const sheets = new Map();
 const abilitySheets = new Map();
 let panelDirty = false;
@@ -156,6 +198,7 @@ const board = new Board($('#board'), {
   onDrawingContext: (d, x, y) => { if (!previewSeat) drawingMenu(d, x, y); },
   onCreateDrawing: (d) => act({ type: 'drawing.create', sceneId: editScene().id, drawing: d }),
   onFogShape: (shape) => act({ type: 'fog.add', sceneId: editScene().id, shape }),
+  onLight: (light) => act({ type: 'light.add', sceneId: editScene().id, light }),
   onToolDone: () => renderToolbar(),
   onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'tokens') renderPanel(); },
 });
@@ -167,9 +210,26 @@ $('#board').addEventListener('drop', (e) => {
   if (!assetId) return;
   e.preventDefault();
   const a = state.assets.find((x) => x.id === assetId);
-  placing = { kind: 'token', token: { assetId, name: a ? a.name : '', kind: 'marker' } };
-  placeAt(board.worldFromClient(e.clientX, e.clientY));
+  if (!a) return;
+  const pos = board.worldFromClient(e.clientX, e.clientY);
+  if (a.folder === 'objects') { placing = { kind: 'object', assetId: a.id }; placeAt(pos); return; }
+  if (a.folder === 'maps') { toast('Karten setzt du über „⋯“ → „Als Karte von …“.', 'error'); return; }
+  npcFromImage(a, pos);
 });
+
+/** Bild → neuer NPC mit Werten; mit pos gleich auf die Karte setzen. */
+async function npcFromImage(a, pos) {
+  const r = await act({ type: 'npc.create', name: a.name });
+  if (!r || !r.id) return;
+  await act({ type: 'npc.update', id: r.id, patch: { portraitAssetId: a.id } });
+  if (pos) {
+    await act({ type: 'npc.spawn', sceneId: editScene().id, npcId: r.id, labels: [''], hidden: false, size: 1, ...board.snap(pos, 1) });
+    toast(`„${a.name}“ ist jetzt ein NPC mit Werten (Reiter NPCs).`);
+  } else {
+    openSheet('npcs', r.id);
+    toast(`NPC „${a.name}“ angelegt. Mit „Auf Karte setzen …“ kommt er auf die Karte.`);
+  }
+}
 
 async function placeAt(pos) {
   const sc = editScene();
@@ -178,6 +238,14 @@ async function placeAt(pos) {
   updateBanner();
   if (p.kind === 'spawn') {
     await act({ type: 'npc.spawn', sceneId: sc.id, npcId: p.npcId, labels: p.labels, hidden: p.hidden, size: p.size, ...board.snap(pos, p.size || 1) });
+  } else if (p.kind === 'npcImage') {
+    const a = state.assets.find((x) => x.id === p.assetId);
+    if (a) await npcFromImage(a, pos);
+  } else if (p.kind === 'object') {
+    const a = state.assets.find((x) => x.id === p.assetId);
+    const w = 2 * sc.grid.size;
+    const q = board.snap(pos, 2);
+    if (a) await act({ type: 'drawing.create', sceneId: sc.id, drawing: { type: 'image', assetId: a.id, x: q.x, y: q.y, w, h: w * (a.height / a.width), label: '' } });
   } else {
     const q = board.snap(pos, p.token.size || 1);
     await act({ type: 'token.create', sceneId: sc.id, token: { ...p.token, x: q.x, y: q.y } });
@@ -216,7 +284,7 @@ document.addEventListener('keydown', (e) => {
 
 const TOOL_ICONS = {
   select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎',
+  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️',
 };
 
 function renderToolbar() {
@@ -232,20 +300,21 @@ function renderToolbar() {
     h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', onclick: () => placeTemplate() }, '🔥'),
     h('span.tb-sep'),
     btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
+    state && editScene().night ? btn('light-brush') : null,
     ['rect', 'ellipse', 'line'].includes(tool) ? h('div.tb-style', {},
       h('label', { title: 'Linienfarbe' }, h('input', { type: 'color', value: style.stroke, onchange: (e) => { style.stroke = e.target.value; } })),
       h('label', { title: 'Füllung' }, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderToolbar(); } }),
         style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
-    tool.startsWith('fog-brush') ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
+    tool.startsWith('fog-brush') || tool === 'light-brush' ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
       h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
   ].filter(Boolean));
 }
 
 async function placeObject(assetId) {
-  if (!galleryAssets().length) return toast('Erst Bilder in die Sammlung laden (Reiter Figuren).', 'error');
+  if (!galleryAssets('objects').length) return toast('Erst Bilder in den Ordner „Objekte“ laden (Reiter Bilder).', 'error');
   const r = await dialog({ title: 'Objekt setzen', body: 'Ein Bild als eckiges, drehbares Objekt auf die Karte legen, z. B. Wagen, Tür, Tisch.',
-    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : galleryAssets()[0].id, options: galleryAssets().map((a) => ({ value: a.id, label: a.name })) },
+    fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : galleryAssets('objects')[0].id, options: galleryAssets('objects').map((a) => ({ value: a.id, label: a.name })) },
       { name: 'cells', label: 'Breite in Feldern', type: 'number', value: 2, step: 0.5, min: 0.5 }], okText: 'Auf die Karte tippen …' });
   if (!r) return;
   const a = state.assets.find((x) => x.id === r.asset);
@@ -413,10 +482,10 @@ function drawingMenu(d, x, y) {
 async function editToken(t) {
   const sc = editScene();
   const seatOpts = [{ value: '', label: 'niemand (nur DM bewegt)' }, ...state.seats.map((s) => ({ value: String(s.seat), label: seatLabel(s) }))];
-  const linkOpts = [{ value: '', label: 'nichts' },
+  const linkOpts = [
     ...state.characters.map((c) => ({ value: `player:${c.id}`, label: `Spieler: ${c.name}` })),
     ...state.npcs.map((n) => ({ value: `npc:${n.id}`, label: `NPC: ${n.name}` }))];
-  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...galleryAssets().map((a) => ({ value: a.id, label: a.name }))];
+  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...galleryAssets('characters').map((a) => ({ value: a.id, label: a.name }))];
   const res = await dialog({
     title: 'Figur bearbeiten',
     fields: [
@@ -431,7 +500,7 @@ async function editToken(t) {
     okText: 'Speichern',
   });
   if (!res) return;
-  const [kind, refId] = res.link ? res.link.split(':') : ['marker', null];
+  const [kind, refId] = (res.link || `${t.kind}:${t.refId}`).split(':');
   act({ type: 'token.update', sceneId: sc.id, id: t.id, patch: {
     name: res.name, label: res.label, assetId: res.assetId || null, size: res.size, kind, refId,
     ownerSeat: res.ownerSeat ? Number(res.ownerSeat) : null, color: res.color,
@@ -524,6 +593,7 @@ function renderTopbar() {
 
 // ================================================================ Gesamtdarstellung
 
+let lastNight = null;
 async function render() {
   if (!state) return;
   // Eine gerade angelegte Szene ist evtl. noch nicht im Stand (Antwort kommt vor dem Update):
@@ -532,6 +602,9 @@ async function render() {
   if (previewSeat > state.seats.length) previewSeat = 0;
   renderTopbar();
   updateBanner();
+  // Kerzen-Werkzeug nur bei Nacht: Werkzeugleiste anpassen, wenn sich das ändert
+  const night = !!editScene().night;
+  if (night !== lastNight) { lastNight = night; if (!night && board.tool === 'light-brush') board.setTool('select'); renderToolbar(); }
   if (previewSeat) {
     await refreshPreview();
     if (previewView) board.setData(previewView, previewView.scenes[0]);
@@ -578,7 +651,8 @@ function renderInitiativeBar() {
 
 function panelFocused() {
   const a = document.activeElement;
-  return $('#tabBody').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName);
+  // Kästchen und Regler blockieren das Neuzeichnen nicht, nur Textfelder und Auswahllisten
+  return $('#tabBody').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && !['checkbox', 'radio', 'range', 'color'].includes(a.type);
 }
 
 function renderPanel(force = false) {
@@ -589,15 +663,15 @@ function renderPanel(force = false) {
     if (src) entry.sheet.update(src, state);
   }
   if (invEditor && selected.inventory && character(selected.inventory)) invEditor.update(character(selected.inventory));
-  for (const [id, ab] of abilitySheets) { const c = character(id); if (c) ab.update(c); }
+  for (const [id, ab] of abilitySheets) { const c = character(id) || npc(id); if (c) ab.update(c); }
   questLog.update(state.quests || []);
   if (!force && panelFocused()) { panelDirty = true; return; }
   panelDirty = false;
   const body = $('#tabBody');
   const scroll = body.scrollTop;
   body.replaceChildren(...({
-    scenes: tabScenes, tokens: tabTokens, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, notes: tabNotes, game: tabGame,
-  }[tab])());
+    scenes: tabScenes, tokens: tabTokens, images: tabImages, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, notes: tabNotes, game: tabGame,
+  }[tab])().filter((x) => x !== null && x !== undefined && x !== false));
   body.scrollTop = scroll;
 }
 
@@ -636,11 +710,11 @@ function tabScenes() {
       h('div.row', {},
         bgAsset ? h('img.thumb', { src: assetUrl(state, bgAsset.id), alt: '' }) : h('em', {}, 'kein Bild'),
         h('button.small', { onclick: async () => {
-          const [a] = await pickAndUploadImages(conn.session, { multiple: false }).catch((e) => { toast(e.message, 'error'); return []; });
+          const [a] = await pickAndUploadImages(conn.session, { multiple: false, folder: 'maps' }).catch((e) => { toast(e.message, 'error'); return []; });
           if (a) { await update({ background: { assetId: a.id }, mapScale: 1 }); board.fittedSceneId = null; }
         } }, 'Bild hochladen'),
-        galleryAssets().length ? h('select', { onchange: (e) => { if (e.target.value) { update({ background: { assetId: e.target.value } }); board.fittedSceneId = null; } } },
-          h('option', { value: '' }, 'aus Sammlung …'), ...galleryAssets().map((a) => h('option', { value: a.id }, a.name))) : null,
+        galleryAssets('maps').length ? h('select', { onchange: (e) => { if (e.target.value) { update({ background: { assetId: e.target.value } }); board.fittedSceneId = null; } } },
+          h('option', { value: '' }, 'aus „Karten“ …'), ...galleryAssets('maps').map((a) => h('option', { value: a.id }, a.name))) : null,
         bgAsset ? h('button.small', { onclick: () => update({ background: null }) }, 'Entfernen') : null)),
     h('div.field', {}, h('span', {}, `Karte drehen${sc.rotation ? ` (gedreht um ${sc.rotation}°)` : ''}`),
       h('div.row', {},
@@ -667,7 +741,16 @@ function tabScenes() {
         h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'revealAll' }) }, 'Alles aufdecken'),
         h('button.small', { disabled: !sc.fog.shapes.length, onclick: () => act({ type: 'fog.undo', sceneId: sc.id }) }, 'Rückgängig')),
       h('p.hint', {}, 'Aufdecken und Verdecken mit den Nebel-Werkzeugen links auf der Karte (☀ = aufdecken, ☁ = verdecken). Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
-    h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: (e) => update({ night: e.target.checked }) }), 'Nachtfilter (S8)'),
+    h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: async (e) => { await update({ night: e.target.checked }); renderToolbar(); } }), 'Nachtfilter (S8)'),
+    sc.night ? h('div.lights-box', {},
+      h('p.hint', {}, '🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis.'),
+      h('div.row', {},
+        h('button.small', { onclick: () => { board.setTool('light-brush'); renderToolbar(); } }, '🕯️ Licht malen'),
+        h('button.small', { disabled: !(sc.lights || []).length, onclick: () => act({ type: 'light.undo', sceneId: sc.id }) }, 'Rückgängig'),
+        h('button.small', { disabled: !(sc.lights || []).length, onclick: async () => {
+          if (await dialog({ title: 'Alle Lichter löschen?', okText: 'Löschen', danger: true })) act({ type: 'light.clear', sceneId: sc.id });
+        } }, 'Alle Lichter löschen'),
+        h('span.hint', {}, `${(sc.lights || []).length} Licht(er)`))) : null,
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
   ];
@@ -684,17 +767,6 @@ function moveScene(i, dir) {
 
 function tabTokens() {
   const sc = editScene();
-  const gallery = h('div.gallery', {}, ...galleryAssets().map((a) => h('div.asset', {
-    draggable: true,
-    title: 'Auf die Karte ziehen oder antippen',
-    ondragstart: (e) => { e.dataTransfer.setData('text/asset', a.id); e.dataTransfer.effectAllowed = 'copy'; },
-  },
-  h('button.asset-img', { onclick: () => startPlacing({ kind: 'token', token: { assetId: a.id, name: a.name, kind: 'marker' } }, `„${a.name}“`) },
-    h('img', { src: assetUrl(state, a.id), alt: a.name, loading: 'lazy' })),
-  h('div.asset-name', {}, a.name),
-  h('div.asset-tools', {},
-    h('button.small.asset-more', { title: 'Was soll das Bild werden? Figur, NPC, Objekt, Karte …', onclick: (e) => assetMenu(a, e.clientX, e.clientY) }, '⋯ Verwenden')))));
-
   const tokens = h('ul.list', {}, ...sc.tokens.map((t) => h(`li${selection.includes(t.id) ? '.selected' : ''}`, {},
     h('span.token-dot', { style: { background: t.color || '#8a6d3b' } }, t.label || ''),
     h('button.link', { onclick: () => editToken(t) }, t.name || '(ohne Name)'),
@@ -706,18 +778,11 @@ function tabTokens() {
     h('button.icon', { title: 'Löschen', onclick: () => act({ type: 'token.delete', sceneId: sc.id, id: t.id }) }, '🗑'))));
 
   return [
-    h('div.section-head', {}, h('h3', {}, 'Bildersammlung'),
-      h('button.small.primary', { onclick: async () => {
-        try { const list = await pickAndUploadImages(conn.session); if (list.length) toast(`${list.length} Bild(er) hochgeladen`); } catch (e) { toast(e.message, 'error'); }
-      } }, '+ Bilder')),
-    h('p.hint', {}, 'Bild antippen oder auf die Karte ziehen = Figur. Mit „⋯ Verwenden“ machst du daraus einen NPC, ein Objekt, die Karte der Szene oder die Weltkarte. Dateien kannst du auch direkt ins Fenster ziehen.'),
-    galleryAssets().length ? gallery : h('p.hint', {}, 'Noch keine Bilder.'),
-    h('div.row', {},
-      h('button.small', { onclick: () => startPlacing({ kind: 'token', token: { kind: 'marker', name: '', label: '' } }, 'eine Markierung') }, 'Figur ohne Bild setzen'),
-      h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
     h('h3', {}, `Figuren in „${sc.name}“`),
+    h('p.hint', {}, 'Jede Figur ist ein Spielercharakter oder ein NPC mit Werten. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild aus „Charaktere/NPCs“ auf die Karte ziehen.'),
     h('p.hint', {}, 'Mehrere markieren: Umschalt + Klick auf Figuren, Umschalt + Rahmen ziehen oder ☐ in der Liste. Rechtsklick (lange drücken) öffnet das Menü.'),
     sc.tokens.length ? tokens : h('p.hint', {}, 'Noch keine Figuren.'),
+    h('div.row', {}, h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
     h('h3', {}, `Zeichnungen und Objekte (${sc.drawings.length})`),
     sc.drawings.length ? h('ul.list', {}, ...sc.drawings.map((d) => h('li', {},
       h('span', {}, { rect: '▭', ellipse: '◯', line: '✎', image: '🧱', template: '🔥' }[d.type]),
@@ -729,26 +794,66 @@ function tabTokens() {
   ];
 }
 
-/** Menü an einem Bild der Sammlung: Wofür soll es benutzt werden? */
+// ================================================================ Tab: Bilder (Bildersammlung mit Ordnern, nur DM)
+
+function tabImages() {
+  const list = galleryAssets(imageFolder);
+  const gallery = h('div.gallery', {}, ...list.map((a) => h('div.asset', {
+    draggable: imageFolder === 'characters' || imageFolder === 'objects',
+    title: imageFolder === 'characters' ? 'Auf die Karte ziehen = neuer NPC mit Werten' : imageFolder === 'objects' ? 'Auf die Karte ziehen = Objekt' : '',
+    ondragstart: (e) => { e.dataTransfer.setData('text/asset', a.id); e.dataTransfer.effectAllowed = 'copy'; },
+  },
+  h('button.asset-img', { title: 'Was soll mit dem Bild passieren?', onclick: (e) => assetMenu(a, e.clientX, e.clientY) },
+    h('img', { src: assetUrl(state, a.id), alt: a.name, loading: 'lazy' })),
+  h('div.asset-name', { 'data-raw': '' }, a.name),
+  h('div.asset-tools', {},
+    h('button.small.asset-more', { title: 'Was soll mit dem Bild passieren?', onclick: (e) => assetMenu(a, e.clientX, e.clientY) }, '⋯ Verwenden')))));
+  const hints = {
+    characters: 'Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = neuer NPC mit Werten.',
+    objects: 'Wagen, Türen, Tische … Antippen → „Als Objekt setzen“, oder auf die Karte ziehen.',
+    maps: 'Szenenkarten und die Weltkarte. Antippen → „Als Karte von …“ oder „Als Weltkarte“.',
+    misc: 'Alles andere. Bilder hier tauchen in keiner Auswahl auf; bei Bedarf in einen anderen Ordner verschieben.',
+  };
+  return [
+    h('div.section-head', {}, h('h3', {}, 'Bildersammlung'),
+      h('button.small.primary', { onclick: async () => uploadToFolder(await pickFiles(true)) }, '+ Bilder')),
+    h('div.folder-tabs', {}, ...FOLDERS.map((f) => h(`button.folder-tab${f.key === imageFolder ? '.on' : ''}`, {
+      onclick: () => { imageFolder = f.key; renderPanel(true); },
+    }, `${f.icon} `, f.label, h('span.count', {}, String(galleryAssets(f.key).length))))),
+    h('p.hint', {}, hints[imageFolder]),
+    list.length ? gallery : h('p.hint', {}, 'Dieser Ordner ist leer. „+ Bilder“ oder Dateien ins Fenster ziehen.'),
+    h('p.hint', {}, 'Nur du siehst die Bildersammlung. Spieler schicken dir ihre Charakterbilder, du lädst sie hier hoch und gibst sie den Charakteren.'),
+  ];
+}
+
+/** Menü an einem Bild der Sammlung: je nach Ordner die passenden Verwendungen. */
 function assetMenu(a, x, y) {
   const sc = editScene();
-  showMenu(a.name, [
-    ['🙂 Als Figur setzen (rund)', () => startPlacing({ kind: 'token', token: { assetId: a.id, name: a.name, kind: 'marker' } }, `„${a.name}“`)],
-    ['👹 Als NPC anlegen (mit Werten)', async () => {
-      const r = await act({ type: 'npc.create', name: a.name });
-      if (r && r.id) { await act({ type: 'npc.update', id: r.id, patch: { portraitAssetId: a.id } }); openSheet('npcs', r.id); toast(`NPC „${a.name}“ angelegt. Mit „Auf Karte setzen …“ kommt er auf die Karte.`); }
-    }],
-    ['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)],
-    [`🗺 Als Karte von „${sc.name}“`, async () => { await act({ type: 'scene.update', id: sc.id, patch: { background: { assetId: a.id }, mapScale: 1 } }); board.fittedSceneId = null; }],
-    ['🌍 Als Weltkarte', async () => { await act({ type: 'world.setMap', assetId: a.id }); world.update(state); world.open(); }],
-    ['✎ Umbenennen', async () => {
-      const r = await dialog({ title: 'Bild umbenennen', fields: [{ name: 'name', label: 'Name', value: a.name }] });
-      if (r) act({ type: 'asset.rename', id: a.id, name: r.name });
-    }],
-    ['🗑 Löschen', async () => {
-      if (await dialog({ title: 'Bild löschen?', body: a.name, okText: 'Löschen', danger: true })) act({ type: 'asset.delete', id: a.id });
-    }, 'danger'],
-  ], x, y);
+  const folder = a.folder || 'misc';
+  const items = [];
+  if (folder === 'characters') {
+    items.push(['👹 Als NPC anlegen (mit Werten)', () => npcFromImage(a, null)]);
+    items.push(['📍 Als NPC auf die Karte setzen', () => startPlacing({ kind: 'npcImage', assetId: a.id }, `„${a.name}“`)]);
+    for (const c of state.characters) items.push([`🙂 Porträt für ${c.name}`, () => { const e = sheets.get(c.id); if (e) e.sheet.signature = ''; act({ type: 'character.update', id: c.id, patch: { portraitAssetId: a.id } }); }]);
+  }
+  if (folder === 'objects') items.push(['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)]);
+  if (folder === 'maps') {
+    items.push([`🗺 Als Karte von „${sc.name}“`, async () => { await act({ type: 'scene.update', id: sc.id, patch: { background: { assetId: a.id }, mapScale: 1 } }); board.fittedSceneId = null; }]);
+    items.push(['🌍 Als Weltkarte', async () => { await act({ type: 'world.setMap', assetId: a.id }); world.update(state); world.open(); }]);
+  }
+  items.push(['📂 In Ordner verschieben …', async () => {
+    const r = await dialog({ title: `„${a.name}“ verschieben`, fields: [{ name: 'folder', label: 'Ordner', type: 'select', value: folder,
+      options: FOLDERS.map((f) => ({ value: f.key, label: `${f.icon} ${f.label}` })) }], okText: 'Verschieben' });
+    if (r) act({ type: 'asset.move', id: a.id, folder: r.folder });
+  }]);
+  items.push(['✎ Umbenennen', async () => {
+    const r = await dialog({ title: 'Bild umbenennen', fields: [{ name: 'name', label: 'Name', value: a.name }] });
+    if (r) act({ type: 'asset.rename', id: a.id, name: r.name });
+  }]);
+  items.push(['🗑 Löschen', async () => {
+    if (await dialog({ title: 'Bild löschen?', body: a.name, okText: 'Löschen', danger: true })) act({ type: 'asset.delete', id: a.id });
+  }, 'danger']);
+  showMenu(a.name, items, x, y);
 }
 
 // ================================================================ Tab: Spieler (V8, V10, C1–C7, A5, Szene pro Spieler)
@@ -797,11 +902,7 @@ function tabPlayers() {
   const c = selected.players && character(selected.players);
   if (c) {
     out.push(sheetFor('players', c));
-    let ab = abilitySheets.get(c.id);
-    if (!ab) { ab = new AbilitySheet(h('div.ability-wrap'), { onPatch: (patch) => act({ type: 'character.update', id: c.id, patch }) }); abilitySheets.set(c.id, ab); }
-    ab.update(c);
-    out.push(h('details.dm-abilities', { open: !!ab.open, ontoggle: (e) => { ab.open = e.target.open; } },
-      h('summary', {}, 'Attribute und Fertigkeiten (Reiter „Attribute“ beim Spieler)'), ab.container));
+    out.push(abilityDetails('character', c));
   }
   return out;
 }
@@ -830,7 +931,10 @@ function tabNpcs() {
     state.npcs.length ? list : h('p.hint', {}, 'Noch keine NPCs. Spieler sehen nie die genauen Werte, nur einen groben Zustand.'),
   ];
   const n = selected.npcs && npc(selected.npcs);
-  if (n) out.push(sheetFor('npcs', n));
+  if (n) {
+    out.push(sheetFor('npcs', n));
+    out.push(abilityDetails('npc', n));
+  }
   return out;
 }
 
@@ -913,19 +1017,36 @@ function sheetActions(kind, id) {
 }
 
 async function pickPortrait(kind, id) {
-  const opts = [{ value: '', label: 'kein Bild' }, { value: '__upload', label: 'Neues Bild hochladen …' }, ...galleryAssets().map((a) => ({ value: a.id, label: a.name }))];
+  const opts = [{ value: '', label: 'kein Bild' }, { value: '__upload', label: 'Neues Bild hochladen …' }, ...galleryAssets('characters').map((a) => ({ value: a.id, label: a.name }))];
   const src = kind === 'npc' ? npc(id) : character(id);
   const r = await dialog({ title: 'Porträt wählen', fields: [{ name: 'asset', label: 'Bild', type: 'select', value: src.portraitAssetId || '', options: opts }] });
   if (!r) return;
   let assetId = r.asset || null;
   if (assetId === '__upload') {
-    const [a] = await pickAndUploadImages(conn.session, { multiple: false }).catch((e) => { toast(e.message, 'error'); return []; });
+    const [a] = await pickAndUploadImages(conn.session, { multiple: false, folder: 'characters' }).catch((e) => { toast(e.message, 'error'); return []; });
     if (!a) return;
     assetId = a.id;
   }
   const entry = sheets.get(id);
   if (entry) entry.sheet.signature = '';
   act({ type: kind === 'npc' ? 'npc.update' : 'character.update', id, patch: { portraitAssetId: assetId } });
+}
+
+/** Attribute, Fertigkeiten und Attribut-Effekte eines Charakters oder NPCs (aufklappbar). */
+function abilityDetails(kind, src) {
+  let ab = abilitySheets.get(src.id);
+  if (!ab) {
+    ab = new AbilitySheet(h('div.ability-wrap'), {
+      kind, isDM: true, act: (a) => act(a),
+      effects: () => state.effects, round: () => state.initiative.round,
+      onPatch: (patch) => act({ type: kind === 'npc' ? 'npc.update' : 'character.update', id: src.id, patch }),
+    });
+    ab.open = kind === 'npc';
+    abilitySheets.set(src.id, ab);
+  }
+  ab.update(src);
+  return h('details.dm-abilities', { open: !!ab.open, ontoggle: (e) => { ab.open = e.target.open; } },
+    h('summary', {}, kind === 'npc' ? 'Attribute, Fertigkeiten und Effekte' : 'Attribute, Fertigkeiten und Effekte (Reiter „Attribute“ beim Spieler)'), ab.container);
 }
 
 // ================================================================ Tab: Inventar (pro Charakter, C5)
@@ -1067,11 +1188,7 @@ document.addEventListener('dragover', (e) => { if (e.dataTransfer.types.includes
 document.addEventListener('drop', async (e) => {
   if (!e.dataTransfer.files.length) return;
   e.preventDefault();
-  const imgs = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'));
-  for (const f of imgs) {
-    try { await uploadImage(conn.session, f); } catch (err) { toast(err.message, 'error'); }
-  }
-  if (imgs.length) { toast(`${imgs.length} Bild(er) in die Sammlung geladen`); tab = 'tokens'; renderPanel(true); }
+  await uploadToFolder(e.dataTransfer.files);
 });
 
 renderToolbar();

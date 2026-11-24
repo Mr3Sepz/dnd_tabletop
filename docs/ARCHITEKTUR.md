@@ -53,6 +53,7 @@ public/
   js/lock.js      Sperre „✎ Bearbeiten“ gegen versehentliches Ändern
   js/i18n.js      Sprache: Glossar-Begriffe zweisprachig, englische Oberfläche per Wörterbuch
   js/glossary.js  DnD-Fachbegriffe Deutsch/Englisch
+  js/theme.js     Darkmode-Umschalter
   js/quests.js    Tagebuch / Questlog
   js/chat.js      Direktchat
   js/worldmap.js  Weltkarte mit Pins
@@ -86,7 +87,7 @@ state
 │                             weapons[{name, attack, damage, ammo{cur,max,name}|null}], spells[{name, attack, damage, range}]
 ├─ npcs[]                     wie characters + dead, note (ohne Münzen/Inventar/Notizbuch)
 ├─ initiative                 entries[{kind: character|npc|group, refId | refIds, name, value, visibility}], currentId, round
-├─ effects[]                  name, endRound, hidden, ownerSeat (verbleibend = endRound − round + 1)
+├─ effects[]                  name, endRound, hidden, ownerSeat, target{kind, id, ability, delta}? (verbleibend = endRound − round + 1)
 ├─ party                      notes
 ├─ quests[]                   title, text, done, by
 ├─ world                      assetId, pins[{x, y (0..1), name, by: 'dm'|Platz, sceneId}]
@@ -114,6 +115,12 @@ Der **Zuschauer-Bildschirm** ist „Platz 0“: `viewForSpectator` nutzt dieselb
 **Chat** (`server/index.js`): Nachrichten gehen nur an die Socket-Räume von Absender und Empfängern und liegen nur im Arbeitsspeicher (höchstens 300). Sie stehen nicht in `state` und damit weder in `state.json` noch im Export.
 
 **Sprache** (`public/js/i18n.js`): Der Code ist einsprachig deutsch. Im deutschen Modus zeigen `term()` und `bi()` Fachbegriffe aus `glossary.js` mit dem englischen Begriff darunter. Im englischen Modus übersetzt ein `MutationObserver` jeden neu erscheinenden Text, Titel und Platzhalter mit `shared/i18n-en.json` (feste Texte und reguläre Ausdrücke für Texte mit Namen oder Zahlen). Nutzerinhalte tragen `data-raw` und bleiben unberührt. Neue Texte in der Oberfläche brauchen einen Eintrag im Wörterbuch. Der Browser-Rundgang meldet deutsche Reste in der englischen Ansicht.
+
+**Attribut-Effekte**: Ein Effekt mit `target` ändert ein Attribut, solange er läuft. Der Server speichert nur den Effekt; `effectiveAbilities()` in `charsheet.js` rechnet die wirksamen Werte aus, alle abhängigen Werte nutzen sie.
+
+**Bildordner**: `asset.folder` (characters, objects, maps, misc). Ältere Bilder werden beim Laden nach ihrer Verwendung einsortiert. Figuren ohne Werte (`kind: 'marker'`) gibt es nicht mehr: `markerToNpc()` legt für sie NPCs an.
+
+**Lichter**: `scene.lights` (Pinselstriche mit Radius). Der Browser zeichnet den Nachtfilter als zwischengespeicherte Gruppe, stanzt weiche Löcher hinein und legt einen orangefarbenen Schein darüber.
 
 **Szene drehen** (`rotateScene` in `server/state.js`): Der Server rechnet alle Koordinaten um (Figuren, Zeichnungen samt Drehwinkel, Nebelformen, Rasterversatz) und merkt sich `scene.rotation`; der Browser zeichnet das Kartenbild entsprechend gedreht.
 

@@ -22,10 +22,10 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 
 - [Loslegen](#loslegen)
 - [Die DM-Ansicht im Überblick](#die-dm-ansicht-im-überblick) · [Ohne Karte spielen](#ohne-karte-spielen)
-- [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Figuren und NPCs](#3-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
+- [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Bilder, Figuren und NPCs](#3-bilder-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
 - [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative, Runden, Effekte](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Charakterbogen und Attribute](#9-der-charakterbogen) · [Inventar, Waffen, Zauber](#10-inventar) · [Fog of War](#11-fog-of-war) · [Getrennte Gruppen](#12-getrennte-gruppen) · [Sicht pro Spieler](#13-sicht-pro-spieler) · [Messen](#14-entfernungen-messen) · [Würfel und Fuß ↔ Meter](#15-würfeln) · [Vorschau](#16-als-spieler-ansehen)
 - [Alle zusammen](#alle-zusammen): [Tagebuch und Quests](#17-tagebuch-und-quests) · [Chat](#18-chat) · [Weltkarte](#19-weltkarte) · [Zuschauer-Bildschirm](#20-zuschauer-bildschirm)
-- [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
+- [Darkmode](#darkmode) · [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
 - [Notizen, Speichern, Beenden](#notizen-speichern-beenden)
 - [Was deine Spieler sehen](#was-deine-spieler-sehen)
 - [Spickzettel](#spickzettel)
@@ -84,11 +84,11 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🌙** Darkmode · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
-| **Seitenleiste** (rechts) | Reiter *Szenen · Figuren · Spieler · NPCs · Inventar · Notizen · Spiel* |
+| **Seitenleiste** (rechts) | Reiter *Szenen · Figuren · Bilder · Spieler · NPCs · Inventar · Notizen · Spiel* |
 | **🎲 💬** (unten links) | Würfel mit Protokoll und Fuß-↔-Meter-Rechner · Chat |
 
 Auf dem Tablet oder Handy klappt die Seitenleiste mit **☰** auf und zu.
@@ -143,6 +143,7 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
+- **Licht malen** (nur bei Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort wird es für alle hell, mit warmem, orangefarbenem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. *Rückgängig* und *Alle Lichter löschen* stehen unter dem Nachtfilter.
 - **Notiz zur Szene:** Raumbeschreibung, Fallen, Schätze. Nur du siehst sie.
 
 **Im Hintergrund vorbereiten:** Oben bei *Bearbeite* wählst du eine andere Szene aus. Die Spieler sehen weiter die alte, bis du **Live schalten** drückst.
@@ -151,31 +152,41 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 
 <img src="docs/img/35-szene-gedreht.webp" alt="Waldweg um 90° gedreht: Karte, Figuren, Schablone und Zeichnungen sind mitgedreht">
 
-### 3. Figuren und NPCs
+<img src="docs/img/40-nacht-licht.webp" alt="Nachtfilter mit gemaltem Licht: Lagerfeuer am Wagen und Licht beim Wolf leuchten orange">
 
-<img src="docs/img/19-figuren-reiter.webp" width="300" align="right" alt="Reiter Figuren mit Knopf + Bilder und Bildersammlung">
+### 3. Bilder, Figuren und NPCs
 
-**Bildersammlung:** Reiter **Figuren** → oben rechts der rote Knopf **+ Bilder**. Lade Porträts, Monster, Objekte und Karten hoch oder ziehe Bilddateien einfach ins Browserfenster. Ein Bild antippen und dann auf die Karte tippen (oder es auf die Karte ziehen) setzt es als runde **Figur**.
+<img src="docs/img/19-bilder.webp" width="300" align="right" alt="Reiter Bilder mit Ordnern Charaktere/NPCs, Objekte, Karten, Sonstiges">
 
-**Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
+**Bildersammlung** (Reiter **Bilder**, nur für dich): **+ Bilder** oder Dateien ins Browserfenster ziehen. Danach fragt die App, in welchen **Ordner** sie gehören:
 
-**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …**
+| Ordner | Wofür | Wo es auftaucht |
+| --- | --- | --- |
+| 👤 Charaktere/NPCs | Porträts von Helden, Monstern, Tieren | Porträt-Auswahl, Bild einer Figur |
+| 🧱 Objekte | Wagen, Türen, Tische, Kisten | „Objekt setzen“ |
+| 🗺 Karten | Szenenkarten, Weltkarte | Hintergrund einer Szene, Weltkarte |
+| 📁 Sonstiges | alles andere | in keiner Auswahl |
 
-**Durchsichtige PNGs:** Hat ein Bild einen durchsichtigen Hintergrund, füllt die **Hintergrundfarbe** der Figur die Lücke (Rechtsklick → *Bearbeiten …* → *Hintergrundfarbe*). Die Farbe gilt auch für das Porträt in der Leiste.
+Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet die passenden Möglichkeiten, z. B. **In Ordner verschieben …**. Die Spieler sehen die Sammlung nicht: Sie schicken dir ihre Charakterbilder, du lädst sie hoch und wählst bei einem Bild **🙂 Porträt für Aria**.
 
 <br clear="right">
 
-**Woher weiß die App, was ein Bild sein soll?** Ein Bild ist erst einmal nur ein Bild. Was daraus wird, sagst du beim Benutzen. Am einfachsten über **⋯ Verwenden** unter jedem Bild:
+**Jede Figur hat Werte.** Auf der Karte stehen nur noch **Spielercharaktere** und **NPCs**. Auch ein Pferd oder ein Fass ist ein NPC mit HP und Attributen. Figuren ohne Werte aus älteren Spielständen werden beim Laden automatisch zu NPCs.
 
-<img src="docs/img/27-bild-verwenden.webp" width="420" alt="Menü „Verwenden“ an einem Bild: Figur, NPC, Objekt, Karte, Weltkarte">
+**Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
 
-| Eintrag | Ergebnis |
+**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: im Reiter *Bilder* ein Bild aus *Charaktere/NPCs* auf die Karte ziehen. Das legt gleich einen NPC mit diesem Porträt an.
+
+**Durchsichtige PNGs:** Hat ein Bild einen durchsichtigen Hintergrund, füllt die **Hintergrundfarbe** der Figur die Lücke (Rechtsklick → *Bearbeiten …* → *Hintergrundfarbe*). Die Farbe gilt auch für das Porträt in der Leiste.
+
+<img src="docs/img/27-bild-verwenden.webp" width="420" alt="Menü an einem Bild aus dem Ordner Karten: Als Karte von, Als Weltkarte, In Ordner verschieben">
+
+| Ordner des Bildes | Möglichkeiten beim Antippen |
 | --- | --- |
-| 🙂 Als Figur setzen | Runde Figur ohne Werte, z. B. ein Pferd oder eine Markierung |
-| 👹 Als NPC anlegen | Neuer NPC mit diesem Porträt im Reiter *NPCs*, mit HP und Werten. Danach *Auf Karte setzen …* |
-| 🧱 Als Objekt setzen | Eckiges, drehbares Objekt, z. B. Wagen oder Tür |
-| 🗺 Als Karte von „…“ | Hintergrund der Szene, die du gerade bearbeitest |
-| 🌍 Als Weltkarte | Die [Weltkarte](#19-weltkarte) für alle |
+| Charaktere/NPCs | 👹 Als NPC anlegen · 📍 Als NPC auf die Karte setzen · 🙂 Porträt für … (jeder Spielercharakter) |
+| Objekte | 🧱 Als Objekt setzen |
+| Karten | 🗺 Als Karte von „…“ · 🌍 Als Weltkarte |
+| alle | 📂 In Ordner verschieben · ✎ Umbenennen · 🗑 Löschen |
 
 <img src="docs/img/06-mehrfach-setzen.webp" alt="Dialog: Goblin 4× versteckt setzen">
 
@@ -327,8 +338,29 @@ Ein **optionaler** digitaler Charakterbogen, eigener Reiter beim Spieler. Du fin
 - **Initiative** und **passive Wahrnehmung** rechnet die App mit aus.
 - **Angaben:** Alter, Geschlecht, Glaube, Größe, Größenkategorie, Gewicht, Gesinnung.
 - Überall **ⓘ** mit Erklärung.
+- **Auch NPCs haben Attribute**, Fertigkeiten und Rettungswürfe: im Reiter *NPCs* unter dem Bogen.
 
 <br clear="right">
+
+#### Effekte auf Attribute (Tränke, Zauber, Flüche)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/img/38-effekt-dialog.webp" alt="Dialog: Effekt hinzufügen mit erhöhen/senken, Wert, Attribut, Runden"></td>
+<td width="50%"><img src="docs/img/39-effekt-attribute.webp" alt="Stärke 8 wird durch +8 zu 16, grün markiert"></td>
+</tr>
+</table>
+
+**+ Effekt hinzufügen** im Attribut-Bogen (Spieler für den eigenen Charakter, du für alle Charaktere und NPCs):
+
+1. **Erhöhen oder senken** wählen,
+2. **um wie viel** (z. B. 8),
+3. welches **Attribut** (Stärke, Geschicklichkeit …),
+4. **wie viele Runden** (frei eintragbar, 1 Minute = 10 Runden).
+
+Der Wert ändert sich sofort: **grün** = erhöht, **rot** = gesenkt, der Grundwert steht klein darunter. **Alles, was davon abhängt, rechnet mit:** Modifikator, Rettungswurf, Fertigkeiten, Initiative, passive Wahrnehmung. Der Effekt steht auch als Timer in der Porträtleiste (⬆ / ⬇) und zählt mit jeder Kampfrunde herunter. **Bei 0 springt der Wert von selbst zurück.**
+
+Mehrere Effekte gleichzeitig sind möglich, die App zählt sie zusammen. Ob sie sich laut Regeln stapeln, entscheidet ihr am Tisch. Setzt ein Trank einen festen Wert (Trank der Hügelriesenstärke: Stärke 21), trägst du den Unterschied ein, z. B. +5 bei Stärke 16. Effekte auf NPCs kannst du auch nur für dich sichtbar anlegen.
 
 ### 10. Inventar
 
@@ -475,6 +507,19 @@ Für einen Fernseher oder zweiten Bildschirm am Tisch: **nur die Karte und die P
 
 ---
 
+## Darkmode
+
+<table>
+<tr>
+<td width="70%"><img src="docs/img/41-darkmode-dm.webp" alt="DM-Ansicht im Darkmode"></td>
+<td width="30%"><img src="docs/img/42-darkmode-handy.webp" alt="Spieleransicht am Handy im Darkmode"></td>
+</tr>
+</table>
+
+**🌙** oben in der Kopfzeile schaltet auf den Darkmode, in Farben zwischen Mitternachtsblau und Dunkelrot. **☀** schaltet zurück. Die Wahl gilt pro Gerät. Die Karte selbst bleibt unverändert.
+
+---
+
 ## Deutsch und Englisch
 
 <table>
@@ -560,8 +605,12 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Karte ausblenden | 🗺 oben (merkt sich das Gerät) |
 | Vollbild | F11 oder ⛶ |
 | Raster an die Karte anpassen | *Szenen* → Raster → Schieberegler *Feldgröße* (oder *Kartengröße*) |
-| Bilder hochladen | *Figuren* → **+ Bilder** oben rechts, oder Datei ins Fenster ziehen |
-| Bild als NPC, Objekt, Karte, Weltkarte | *Figuren* → beim Bild **⋯ Verwenden** |
+| Bilder hochladen | *Bilder* → **+ Bilder**, oder Datei ins Fenster ziehen → Ordner wählen |
+| Bild als NPC, Objekt, Karte, Weltkarte | *Bilder* → Bild antippen |
+| Spielerbild zuordnen | *Bilder* → *Charaktere/NPCs* → Bild antippen → **Porträt für …** |
+| Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
+| Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** |
+| Darkmode | **🌙** oben |
 | Felder im Bogen ändern | **✎ Bearbeiten**, danach **✓ Fertig** |
 | Menü einer Figur | Rechtsklick oder lange drücken |
 | Mehrere Figuren markieren | **Umschalt + einzelne Figuren anklicken** · Umschalt + Rahmen ziehen · ☐ in der Liste |

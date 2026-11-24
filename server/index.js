@@ -108,6 +108,7 @@ function createApp(overrides = {}) {
     };
     // Bilder für Münzen landen nicht in der Bildersammlung
     if (req.query.purpose === 'coin') asset.purpose = 'coin';
+    else asset.folder = ['characters', 'objects', 'maps', 'misc'].includes(req.query.folder) ? req.query.folder : 'misc';
     state.assets.push(asset);
     changed();
     res.json(asset);

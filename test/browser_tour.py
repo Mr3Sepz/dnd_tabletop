@@ -90,6 +90,26 @@ def upload(page, button_text, files):
     time.sleep(0.8)
 
 
+def upload_folder(page, files, folder):
+    """+ Bilder im Reiter Bilder: Dateien wählen, dann den Ordner."""
+    with page.expect_file_chooser() as fc:
+        page.get_by_role('button', name='+ Bilder').click()
+    fc.value.set_files(files)
+    page.wait_for_selector('.dialog select[name=folder]')
+    page.select_option('.dialog select[name=folder]', folder)
+    page.click('.dialog .dialog-buttons button[type=submit]:last-child')
+    time.sleep(1.0)
+
+
+def folder_tab(page, label):
+    page.locator('.folder-tab', has_text=label).click(); time.sleep(0.3)
+
+
+def asset_action(page, alt, label):
+    page.click(f'.gallery .asset:has(img[alt="{alt}"]) .asset-more'); time.sleep(0.2)
+    page.get_by_role('button', name=label).click(); time.sleep(0.2)
+
+
 try:
     with sync_playwright() as p:
         chrome = os.environ.get('CHROME')
@@ -104,14 +124,21 @@ try:
         upload(dm, 'Bild hochladen', art('waldweg.jpg'))
         dm.wait_for_selector('#tabBody img.thumb')
 
-        step('Bildersammlung füllen')
-        dm.click('#tabs button[data-tab=tokens]')
-        upload(dm, '+ Bilder', [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wagen.png', 'weltkarte.jpg', 'wolf.png']])
-        dm.wait_for_selector('.gallery .asset >> nth=6')
+        step('Bildersammlung mit Ordnern füllen')
+        dm.click('#tabs button[data-tab=images]')
+        upload_folder(dm, [art('wagen.png')], 'objects')
+        upload_folder(dm, [art('weltkarte.jpg')], 'maps')
+        upload_folder(dm, [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wolf.png']], 'characters')
+        dm.wait_for_selector('.gallery .asset >> nth=4')
+        assert dm.locator('.gallery .asset').count() == 5, 'nur der Ordner Charaktere/NPCs'
+        folder_tab(dm, 'Karten')
+        assert dm.locator('.gallery .asset').count() == 2, 'Karten: Waldweg und Weltkarte'
+        folder_tab(dm, 'Charaktere')
         dm.evaluate("window.scrollTo(0, 0); document.scrollingElement.scrollTop = 0; document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.3)
-        panel_shot(dm, '19-figuren-reiter.png', 560)
+        panel_shot(dm, '19-bilder.png', 560)
 
         step('Bild verwenden als … Weltkarte')
+        folder_tab(dm, 'Karten')
         dm.click('.gallery .asset:has(img[alt="weltkarte"]) .asset-more'); time.sleep(0.3)
         box = dm.locator('#panel').bounding_box()
         shot(dm, '27-bild-verwenden.png', clip={'x': box['x'] - 160, 'y': box['y'], 'width': box['width'] + 160, 'height': box['height']})
@@ -220,11 +247,12 @@ try:
         assert dm.locator('.round-num b').inner_text() == '2'
         assert dm.locator('.effect.over').count() == 1, 'Netz ist abgelaufen'
 
-        step('Wolf (durchsichtiges PNG) mit Hintergrundfarbe')
-        dm.click('#tabs button[data-tab=tokens]'); time.sleep(0.2)
-        dm.click('.gallery .asset:has(img[alt="wolf"]) .asset-more'); time.sleep(0.2)
-        dm.get_by_role('button', name='🙂 Als Figur setzen (rund)').click(); time.sleep(0.2)
-        click_world(dm, G * 15.5, G * 9.5); time.sleep(0.4)
+        step('Wolf (durchsichtiges PNG) als NPC mit Hintergrundfarbe')
+        dm.click('#tabs button[data-tab=images]'); time.sleep(0.2)
+        folder_tab(dm, 'Charaktere')
+        asset_action(dm, 'wolf', '📍 Als NPC auf die Karte setzen')
+        click_world(dm, G * 15.5, G * 9.5); time.sleep(0.6)
+        assert dm.evaluate("window.dnd.board.state.npcs.some(n => n.name === 'wolf' && n.abilities)"), 'Wolf ist ein NPC mit Werten'
         wx, wy = token_pos(dm, 'wolf')
         click_world(dm, wx, wy, button='right')
         dm.get_by_role('button', name='Bearbeiten …').click(); time.sleep(0.2)
@@ -311,6 +339,18 @@ try:
         mia.click('#abilities .lock-toggle'); time.sleep(0.2)
         mia.evaluate("document.getElementById('abilities').scrollTop = 0"); time.sleep(0.2)
         shot(mia, '28-attribute-handy.png')
+        step('Mia trinkt einen Trank: +8 Stärke für 8 Runden')
+        mia.get_by_role('button', name='+ Effekt hinzufügen').click(); time.sleep(0.3)
+        shot(mia, '38-effekt-dialog.png')
+        mia.select_option('.dialog select[name=dir]', '+')
+        mia.fill('.dialog input[name=value]', '8')
+        mia.select_option('.dialog select[name=ability]', 'str')
+        mia.fill('.dialog input[name=rounds]', '8'); dialog_ok(mia); time.sleep(0.6)
+        assert mia.locator('.cs-ability >> nth=0').locator('.cs-eff').inner_text() == '16', 'Stärke 8 + 8'
+        assert mia.locator('.cs-ability >> nth=0').locator('.cs-mod').inner_text() == '+3'
+        assert mia.locator('.cs-skill', has_text='Athletik').locator('.cs-skill-val.buff-up').inner_text() == '+3'
+        mia.evaluate("document.getElementById('abilities').scrollTop = 0"); time.sleep(0.2)
+        shot(mia, '39-effekt-attribute.png')
         mia.click('#mapToggle'); time.sleep(0.3)
         step('Mia blendet die Karte aus (Handy ohne Karte)')
         mia.click('#mapToggle'); time.sleep(0.4)
@@ -379,6 +419,24 @@ try:
         shot(dm, '32-weltkarte.png')
         dm.locator('.wm-pin', has_text='Phandalin').locator('span').click(); time.sleep(0.3)
         dm.click('.dialog button[value=go]'); time.sleep(0.5)
+
+        step('Nacht mit Licht: Lagerfeuer am Wagen')
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        dm.locator('label.check', has_text='Nachtfilter').locator('input').check(); time.sleep(0.6)
+        dm.get_by_role('button', name='🕯️ Licht malen').click(); time.sleep(0.2)
+        drag_world(dm, (G * 7.5, G * 10.5), (G * 10, G * 10.5))
+        click_world(dm, G * 15.5, G * 9.5); time.sleep(0.6)
+        assert dm.evaluate("window.dnd.board.scene.lights.length") == 2
+        dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
+        shot(dm, '40-nacht-licht.png')
+        assert mia.evaluate("window.dnd.board.scene.lights.length") == 2, 'Spieler sehen das Licht'
+        dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
+
+        step('Darkmode')
+        dm.click('.theme-switch'); mia.click('.theme-switch'); time.sleep(0.5)
+        shot(dm, '41-darkmode-dm.png')
+        shot(mia, '42-darkmode-handy.png')
+        dm.click('.theme-switch'); mia.click('.theme-switch'); time.sleep(0.3)
 
         step('Szene drehen')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
@@ -458,9 +516,9 @@ try:
         dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
         dm.locator('#tabBody li button.link', has_text='Goblin B').click(); time.sleep(0.3)
         # Ein Wolf im Nebel (soll bei Tom nicht ankommen)
-        dm.click('#tabs button[data-tab=tokens]')
-        dm.click('.gallery .asset-img:has(img[alt="goblin"])')
-        click_world(dm, G * 12, G * 3)
+        dm.click('#tabs button[data-tab=images]'); time.sleep(0.2)
+        asset_action(dm, 'goblin', '📍 Als NPC auf die Karte setzen')
+        click_world(dm, G * 12, G * 3); time.sleep(0.4)
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
         shot(dm, '07-nebel-dm.png')
         time.sleep(0.6)

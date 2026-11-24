@@ -6,6 +6,10 @@
 import { h, assetUrl, initials, HEALTH_COLORS, dialog } from './util.js';
 import { info, helpLines } from './help.js';
 import { term } from './i18n.js';
+import { abilityEffectName } from './charsheet.js';
+
+/** Anzeigename eines Effekts; Attribut-Effekte in der Sprache der Oberfläche. */
+const effectLabel = (e) => (e.target ? `${abilityEffectName(e.target)} · ${String(e.name).split(' · ').slice(1).join(' · ')}` : e.name);
 
 const VIS = { auto: '👁 automatisch', show: '👁 immer zeigen', hide: '🚫 verborgen' };
 
@@ -26,17 +30,17 @@ const remaining = (e, round) => e.endRound - round + 1;
 
 async function effectDialog(opts, e) {
   const fields = [
-    { name: 'name', label: 'Effekt', value: e ? e.name : '', placeholder: 'z. B. Segen auf Borin' },
+    e && e.target ? null : { name: 'name', label: 'Effekt', value: e ? e.name : '', placeholder: 'z. B. Segen auf Borin' },
     { name: 'rounds', label: e ? 'Noch Runden' : 'Dauer in Runden (1 Minute = 10)', type: 'number', min: 0, value: e ? Math.max(0, remaining(e, opts.round)) : 10 },
-  ];
+  ].filter(Boolean);
   if (opts.isDM) fields.push({ name: 'hidden', label: 'Nur ich sehe ihn (Spieler nicht)', type: 'checkbox', value: e ? !!e.hidden : false });
   const r = await dialog({
-    title: e ? `Effekt: ${e.name}` : 'Neuer Effekttimer', body: helpLines('effects').slice(0, 2), fields,
+    title: e ? `Effekt: ${effectLabel(e)}` : 'Neuer Effekttimer', body: helpLines('effects').slice(0, 2), fields,
     buttons: e ? [{ label: 'Entfernen', value: 'delete', cls: 'danger' }, { label: 'Speichern', value: 'save' }] : [{ label: 'Starten', value: 'save' }],
   });
   if (!r) return;
   if (r._button === 'delete') return opts.onEffectDelete(e.id);
-  if (e) opts.onEffectUpdate(e.id, { name: r.name, remaining: r.rounds ?? 0, ...(opts.isDM ? { hidden: r.hidden } : {}) });
+  if (e) opts.onEffectUpdate(e.id, { ...(e.target ? {} : { name: r.name }), remaining: r.rounds ?? 0, ...(opts.isDM ? { hidden: r.hidden } : {}) });
   else opts.onEffectAdd({ name: r.name, rounds: r.rounds || 1, hidden: !!r.hidden });
 }
 
@@ -55,9 +59,9 @@ function roundBox(opts) {
       const left = remaining(e, round);
       const mine = opts.isDM || (opts.mySeat && e.ownerSeat === opts.mySeat);
       return h(`button.effect${left <= 0 ? '.over' : ''}${e.hidden ? '.secret' : ''}`, {
-        title: `${e.name}: ${left > 0 ? `noch ${left} Runde${left === 1 ? '' : 'n'}` : 'vorbei'}${e.hidden ? ' · nur du siehst ihn' : ''}${mine ? ' (antippen zum Ändern)' : ''}`,
+        title: `${effectLabel(e)}: ${left > 0 ? `noch ${left} Runde${left === 1 ? '' : 'n'}` : 'vorbei'}${e.hidden ? ' · nur du siehst ihn' : ''}${mine ? ' (antippen zum Ändern)' : ''}`,
         disabled: !mine, onclick: () => effectDialog(opts, e),
-      }, h('span', {}, '⏳ ', e.name), h('b', {}, left > 0 ? String(left) : 'vorbei'));
+      }, h(`span${e.target ? '.ab-eff' : ''}`, { 'data-raw': '' }, e.target ? (e.target.delta > 0 ? '⬆ ' : '⬇ ') : '⏳ ', effectLabel(e)), h('b', {}, left > 0 ? String(left) : 'vorbei'));
     }),
     opts.onEffectAdd ? h('button.effect.add', { title: 'Effekttimer starten (zählt pro Runde herunter)', onclick: () => effectDialog(opts, null) }, '+ ⏳') : null);
   box.append(effects);

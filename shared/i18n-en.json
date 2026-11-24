@@ -540,9 +540,99 @@
   "Charaktere": "Characters",
   "Bogen": "Sheet",
   "Gruppe teilt sich": "Party splits",
-  "Ort:": "Location:"
+  "Ort:": "Location:",
+  "Heller Modus": "Light mode",
+  "Darkmode": "Dark mode",
+  "Charaktere/NPCs": "Characters/NPCs",
+  "Objekte": "Objects",
+  "Karten": "Maps",
+  "Sonstiges": "Other",
+  "Bilder": "Images",
+  "In welchen Ordner?": "Which folder?",
+  "Ordner": "Folder",
+  "Hochladen": "Upload",
+  "Später zeigt jede Auswahl nur die passenden Bilder: Porträts aus „Charaktere/NPCs“, Objekte aus „Objekte“, Szenen- und Weltkarten aus „Karten“.": "Later every picker only shows matching images: portraits from “Characters/NPCs”, objects from “Objects”, scene and world maps from “Maps”.",
+  "Karten setzt du über „⋯“ → „Als Karte von …“.": "Set maps via “⋯” → “As map of …”.",
+  "Erst Bilder in den Ordner „Objekte“ laden (Reiter Bilder).": "Upload images to the “Objects” folder first (Images tab).",
+  "aus „Karten“ …": "from “Maps” …",
+  "Jede Figur ist ein Spielercharakter oder ein NPC mit Werten. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild aus „Charaktere/NPCs“ auf die Karte ziehen.": "Every token is a player character or an NPC with stats. New tokens: “NPCs” tab → “Place on map …”, or drag an image from “Characters/NPCs” in the “Images” tab onto the map.",
+  "Auf die Karte ziehen = neuer NPC mit Werten": "Drag onto the map = new NPC with stats",
+  "Auf die Karte ziehen = Objekt": "Drag onto the map = object",
+  "Was soll mit dem Bild passieren?": "What should happen with this image?",
+  "Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = neuer NPC mit Werten.": "Portraits for player characters and NPCs. Tap → “Create NPC” or “Portrait for …”. Drag onto the map = new NPC with stats.",
+  "Wagen, Türen, Tische … Antippen → „Als Objekt setzen“, oder auf die Karte ziehen.": "Carts, doors, tables … Tap → “Place as object”, or drag onto the map.",
+  "Szenenkarten und die Weltkarte. Antippen → „Als Karte von …“ oder „Als Weltkarte“.": "Scene maps and the world map. Tap → “As map of …” or “As world map”.",
+  "Alles andere. Bilder hier tauchen in keiner Auswahl auf; bei Bedarf in einen anderen Ordner verschieben.": "Everything else. Images here don't appear in any picker; move them to another folder if needed.",
+  "Dieser Ordner ist leer. „+ Bilder“ oder Dateien ins Fenster ziehen.": "This folder is empty. “+ Images” or drag files into the window.",
+  "Nur du siehst die Bildersammlung. Spieler schicken dir ihre Charakterbilder, du lädst sie hier hoch und gibst sie den Charakteren.": "Only you can see the image library. Players send you their character pictures; you upload them here and assign them to the characters.",
+  "📍 Als NPC auf die Karte setzen": "📍 Place on map as NPC",
+  "📂 In Ordner verschieben …": "📂 Move to folder …",
+  "Verschieben": "Move",
+  "Attribute, Fertigkeiten und Effekte": "Abilities, skills and effects",
+  "Attribute, Fertigkeiten und Effekte (Reiter „Attribute“ beim Spieler)": "Abilities, skills and effects (players' “Abilities” tab)",
+  "Erhöhen oder senken": "Raise or lower",
+  "+ erhöhen": "+ raise",
+  "− senken": "− lower",
+  "Um wie viel?": "By how much?",
+  "Wie viele Runden? (1 Minute = 10)": "How many rounds? (1 minute = 10)",
+  "Nur ich sehe den Effekt (Spieler nicht)": "Only I can see the effect (not the players)",
+  "Zum Beispiel ein Trank der Riesenstärke oder ein Fluch. Der Wert ändert sich sofort im Bogen und springt nach Ablauf der Runden von selbst zurück. Ob sich mehrere Effekte stapeln, entscheidet ihr am Tisch: Die App zählt alle zusammen.": "For example a potion of giant strength or a curse. The score changes on the sheet immediately and returns to normal by itself when the rounds run out. Whether several effects stack is up to your table: the app adds them all together.",
+  "Effekt starten": "Start effect",
+  "Effekte auf Attribute": "Ability effects",
+  "+ Effekt hinzufügen": "+ Add effect",
+  "Effekt beenden": "End effect",
+  "nur DM": "DM only",
+  "Keine. Zum Beispiel ein Trank: „+ Effekt hinzufügen“ → + 8 Stärke für 10 Runden.": "None. For example a potion: “+ Add effect” → + 8 Strength for 10 rounds.",
+  "Grundwert (ohne Effekt)": "Base score (without effect)",
+  "Licht malen (Nachtmodus)": "Paint light (night mode)",
+  "🕯️ Licht malen": "🕯️ Paint light",
+  "Alle Lichter löschen": "Delete all lights",
+  "Alle Lichter löschen?": "Delete all lights?",
+  "🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis.": "🕯️ Paint light: choose the candle tool in the toolbar on the left and paint over torches, campfires or windows. Those areas are lit for everyone, with a warm firelight glow. Tap without dragging = round pool of light.",
+  "Zu viele Lichter": "Too many lights",
+  "Licht ohne Punkte": "Light without points",
+  "Unbekannter Ordner": "Unknown folder",
+  "Ziel nicht gefunden": "Target not found",
+  "Nur für den eigenen Charakter": "Only for your own character",
+  "Wert fehlt": "Value missing"
  },
  "patterns": [
+  [
+   "(\\d+) Bilder: In welchen Ordner\\?",
+   "$1 images: which folder?"
+  ],
+  [
+   "(\\d+) Bild\\(er\\) in „(.+)“ geladen",
+   "$1 image(s) added to “$2”"
+  ],
+  [
+   "„(.+)“ ist jetzt ein NPC mit Werten \\(Reiter NPCs\\)\\.",
+   "“$1” is now an NPC with stats (NPCs tab)."
+  ],
+  [
+   "🙂 Porträt für (.+)",
+   "🙂 Portrait for $1"
+  ],
+  [
+   "„(.+)“ verschieben",
+   "Move “$1”"
+  ],
+  [
+   "Effekt für (.+)",
+   "Effect for $1"
+  ],
+  [
+   "noch (\\d+) Runden?",
+   "$1 rounds left"
+  ],
+  [
+   "Grundwert (\\d+), durch Effekt ([+−]\\d+)",
+   "Base score $1, effect $2"
+  ],
+  [
+   "(\\d+) Licht\\(er\\)",
+   "$1 light(s)"
+  ],
   [
    "„(.+)“ löschen\\?",
    "Delete “$1”?"
