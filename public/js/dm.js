@@ -195,6 +195,8 @@ const board = new Board($('#board'), {
   },
   canEditDrawing: () => !previewSeat,
   onDrawingChange: (d, patch) => act({ type: 'drawing.update', sceneId: boardSceneId(), id: d.id, patch }),
+  onDrawingDelete: (d) => act({ type: 'drawing.delete', sceneId: boardSceneId(), id: d.id }),
+  onErase: (d, pieces) => act({ type: 'drawing.erase', sceneId: boardSceneId(), id: d.id, pieces }),
   onDrawingContext: (d, x, y) => { if (!previewSeat) drawingMenu(d, x, y); },
   onCreateDrawing: (d) => act({ type: 'drawing.create', sceneId: editScene().id, drawing: d }),
   onFogShape: (shape) => act({ type: 'fog.add', sceneId: editScene().id, shape }),
@@ -214,7 +216,8 @@ $('#board').addEventListener('drop', (e) => {
   const pos = board.worldFromClient(e.clientX, e.clientY);
   if (a.folder === 'objects') { placing = { kind: 'object', assetId: a.id }; placeAt(pos); return; }
   if (a.folder === 'maps') { toast('Karten setzt du über „⋯“ → „Als Karte von …“.', 'error'); return; }
-  npcFromImage(a, pos);
+  placing = { kind: 'token', token: { assetId: a.id, name: a.name, kind: 'marker' } };
+  placeAt(pos);
 });
 
 /** Bild → neuer NPC mit Werten; mit pos gleich auf die Karte setzen. */
@@ -237,7 +240,7 @@ async function placeAt(pos) {
   placing = null;
   updateBanner();
   if (p.kind === 'spawn') {
-    await act({ type: 'npc.spawn', sceneId: sc.id, npcId: p.npcId, labels: p.labels, hidden: p.hidden, size: p.size, ...board.snap(pos, p.size || 1) });
+    await act({ type: 'npc.spawn', sceneId: sc.id, npcId: p.npcId, labels: p.labels, style: p.style, hidden: p.hidden, size: p.size, ...board.snap(pos, p.size || 1) });
   } else if (p.kind === 'npcImage') {
     const a = state.assets.find((x) => x.id === p.assetId);
     if (a) await npcFromImage(a, pos);
@@ -284,7 +287,7 @@ document.addEventListener('keydown', (e) => {
 
 const TOOL_ICONS = {
   select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️',
+  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', eraser: '🧽',
 };
 
 function renderToolbar() {
@@ -295,7 +298,7 @@ function renderToolbar() {
   tb.replaceChildren(...[
     btn('select'), btn('measure'),
     h('span.tb-sep'),
-    btn('rect'), btn('ellipse'), btn('line'),
+    btn('rect'), btn('ellipse'), btn('line'), btn('eraser'),
     h('button.tool', { title: 'Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)', onclick: placeObject }, '🧱'),
     h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', onclick: () => placeTemplate() }, '🔥'),
     h('span.tb-sep'),
@@ -308,6 +311,8 @@ function renderToolbar() {
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
     tool.startsWith('fog-brush') || tool === 'light-brush' ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
       h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
+    tool === 'eraser' ? h('div.tb-style', {}, h('label', { title: 'Größe des Radierers' }, 'Größe',
+      h('input', { type: 'range', min: 5, max: 120, value: board.eraserRadius, onchange: (e) => { board.eraserRadius = Number(e.target.value); } }))) : null,
   ].filter(Boolean));
 }
 
@@ -482,10 +487,10 @@ function drawingMenu(d, x, y) {
 async function editToken(t) {
   const sc = editScene();
   const seatOpts = [{ value: '', label: 'niemand (nur DM bewegt)' }, ...state.seats.map((s) => ({ value: String(s.seat), label: seatLabel(s) }))];
-  const linkOpts = [
+  const linkOpts = [{ value: '', label: 'nichts (reine Figur)' },
     ...state.characters.map((c) => ({ value: `player:${c.id}`, label: `Spieler: ${c.name}` })),
     ...state.npcs.map((n) => ({ value: `npc:${n.id}`, label: `NPC: ${n.name}` }))];
-  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...galleryAssets('characters').map((a) => ({ value: a.id, label: a.name }))];
+  const assetOpts = [{ value: '', label: 'kein Bild (Farbe)' }, ...[...galleryAssets('characters'), ...galleryAssets('objects')].map((a) => ({ value: a.id, label: a.name }))];
   const res = await dialog({
     title: 'Figur bearbeiten',
     fields: [
@@ -496,14 +501,16 @@ async function editToken(t) {
       { name: 'link', label: 'Verknüpft mit (F12)', type: 'select', value: t.refId ? `${t.kind === 'npc' ? 'npc' : 'player'}:${t.refId}` : '', options: linkOpts },
       { name: 'ownerSeat', label: 'Darf bewegen (F7)', type: 'select', value: t.ownerSeat ? String(t.ownerSeat) : '', options: seatOpts },
       { name: 'color', label: 'Hintergrundfarbe (ohne Bild oder hinter durchsichtigen PNGs)', type: 'color', value: t.color || '#8a6d3b' },
+      { name: 'badgeOn', label: 'Farbmarker (farbiger Kreis statt Kennung)', type: 'checkbox', value: !!t.badgeColor },
+      { name: 'badgeColor', label: 'Farbe des Markers', type: 'color', value: t.badgeColor || '#e53935' },
     ],
     okText: 'Speichern',
   });
   if (!res) return;
-  const [kind, refId] = (res.link || `${t.kind}:${t.refId}`).split(':');
+  const [kind, refId] = res.link ? res.link.split(':') : ['marker', null];
   act({ type: 'token.update', sceneId: sc.id, id: t.id, patch: {
     name: res.name, label: res.label, assetId: res.assetId || null, size: res.size, kind, refId,
-    ownerSeat: res.ownerSeat ? Number(res.ownerSeat) : null, color: res.color,
+    ownerSeat: res.ownerSeat ? Number(res.ownerSeat) : null, color: res.color, badgeColor: res.badgeOn ? res.badgeColor : null,
   } });
 }
 
@@ -629,6 +636,7 @@ function renderInitiativeBar() {
     return { ...e, name: src ? src.name : '?', portraitAssetId: src ? src.portraitAssetId : null,
       condition: e.kind === 'npc' && src ? src.condition : undefined, conditions: src ? src.conditions : [],
       color: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.color)?.color || null,
+      badgeColor: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.badgeColor)?.badgeColor || null,
       hiddenNow: e.kind !== 'character' && !e.visibleSeats.length };
   });
   renderInitiative($('#initiative'), entries, {
@@ -639,6 +647,11 @@ function renderInitiativeBar() {
     onEffectDelete: (id) => act({ type: 'effect.delete', id }),
     onReorder: (ids) => act({ type: 'initiative.reorder', ids }),
     onSetCurrent: (id) => act({ type: 'initiative.setCurrent', id }),
+    onOpen: (e) => {
+      if (e.kind === 'character') return openSheet('players', e.refId);
+      const id = e.kind === 'group' ? (e.refIds || []).find((r) => npc(r)) : e.refId;
+      if (id && npc(id)) openSheet('npcs', id);
+    },
     onRemove: (id) => act({ type: 'initiative.remove', id }),
     onNext: () => act({ type: 'initiative.next' }),
     onPrev: () => act({ type: 'initiative.prev' }),
@@ -779,10 +792,12 @@ function tabTokens() {
 
   return [
     h('h3', {}, `Figuren in „${sc.name}“`),
-    h('p.hint', {}, 'Jede Figur ist ein Spielercharakter oder ein NPC mit Werten. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild aus „Charaktere/NPCs“ auf die Karte ziehen.'),
+    h('p.hint', {}, 'Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild auf die Karte ziehen.'),
     h('p.hint', {}, 'Mehrere markieren: Umschalt + Klick auf Figuren, Umschalt + Rahmen ziehen oder ☐ in der Liste. Rechtsklick (lange drücken) öffnet das Menü.'),
     sc.tokens.length ? tokens : h('p.hint', {}, 'Noch keine Figuren.'),
-    h('div.row', {}, h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
+    h('div.row', {},
+      h('button.small', { onclick: () => startPlacing({ kind: 'token', token: { kind: 'marker', name: '', label: '' } }, 'eine Markierung') }, 'Figur ohne Bild setzen'),
+      h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
     h('h3', {}, `Zeichnungen und Objekte (${sc.drawings.length})`),
     sc.drawings.length ? h('ul.list', {}, ...sc.drawings.map((d) => h('li', {},
       h('span', {}, { rect: '▭', ellipse: '◯', line: '✎', image: '🧱', template: '🔥' }[d.type]),
@@ -800,7 +815,7 @@ function tabImages() {
   const list = galleryAssets(imageFolder);
   const gallery = h('div.gallery', {}, ...list.map((a) => h('div.asset', {
     draggable: imageFolder === 'characters' || imageFolder === 'objects',
-    title: imageFolder === 'characters' ? 'Auf die Karte ziehen = neuer NPC mit Werten' : imageFolder === 'objects' ? 'Auf die Karte ziehen = Objekt' : '',
+    title: imageFolder === 'characters' ? 'Auf die Karte ziehen = Figur' : imageFolder === 'objects' ? 'Auf die Karte ziehen = Objekt' : '',
     ondragstart: (e) => { e.dataTransfer.setData('text/asset', a.id); e.dataTransfer.effectAllowed = 'copy'; },
   },
   h('button.asset-img', { title: 'Was soll mit dem Bild passieren?', onclick: (e) => assetMenu(a, e.clientX, e.clientY) },
@@ -809,7 +824,7 @@ function tabImages() {
   h('div.asset-tools', {},
     h('button.small.asset-more', { title: 'Was soll mit dem Bild passieren?', onclick: (e) => assetMenu(a, e.clientX, e.clientY) }, '⋯ Verwenden')))));
   const hints = {
-    characters: 'Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = neuer NPC mit Werten.',
+    characters: 'Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = Figur.',
     objects: 'Wagen, Türen, Tische … Antippen → „Als Objekt setzen“, oder auf die Karte ziehen.',
     maps: 'Szenenkarten und die Weltkarte. Antippen → „Als Karte von …“ oder „Als Weltkarte“.',
     misc: 'Alles andere. Bilder hier tauchen in keiner Auswahl auf; bei Bedarf in einen anderen Ordner verschieben.',
@@ -831,12 +846,14 @@ function assetMenu(a, x, y) {
   const sc = editScene();
   const folder = a.folder || 'misc';
   const items = [];
+  const asFigure = ['🙂 Als Figur setzen (rund)', () => startPlacing({ kind: 'token', token: { assetId: a.id, name: a.name, kind: 'marker' } }, `„${a.name}“`)];
   if (folder === 'characters') {
+    items.push(asFigure);
     items.push(['👹 Als NPC anlegen (mit Werten)', () => npcFromImage(a, null)]);
     items.push(['📍 Als NPC auf die Karte setzen', () => startPlacing({ kind: 'npcImage', assetId: a.id }, `„${a.name}“`)]);
     for (const c of state.characters) items.push([`🙂 Porträt für ${c.name}`, () => { const e = sheets.get(c.id); if (e) e.sheet.signature = ''; act({ type: 'character.update', id: c.id, patch: { portraitAssetId: a.id } }); }]);
   }
-  if (folder === 'objects') items.push(['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)]);
+  if (folder === 'objects') { items.push(['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)]); items.push(asFigure); }
   if (folder === 'maps') {
     items.push([`🗺 Als Karte von „${sc.name}“`, async () => { await act({ type: 'scene.update', id: sc.id, patch: { background: { assetId: a.id }, mapScale: 1 } }); board.fittedSceneId = null; }]);
     items.push(['🌍 Als Weltkarte', async () => { await act({ type: 'world.setMap', assetId: a.id }); world.update(state); world.open(); }]);
@@ -986,11 +1003,16 @@ function sheetActions(kind, id) {
       // Mehrfach setzen (Vorschlag 6): Anzahl und Kennungen, von Hand änderbar
       const r = await dialog({ title: `„${s.name}“ auf die Karte`, fields: [
         { name: 'count', label: 'Anzahl', type: 'number', value: 1, min: 1, max: 30 },
-        { name: 'style', label: 'Kennungen vorschlagen', type: 'select', value: 'num', options: [{ value: 'num', label: '1, 2, 3 …' }, { value: 'abc', label: 'A, B, C …' }, { value: 'none', label: 'keine' }] },
+        { name: 'style', label: 'Kennungen vorschlagen', type: 'select', value: 'num', options: [{ value: 'num', label: '1, 2, 3 …' }, { value: 'abc', label: 'A, B, C …' }, { value: 'color', label: 'Farbmarker (zufällige Farben)' }, { value: 'none', label: 'keine' }] },
         { name: 'hidden', label: 'Versteckt setzen (z. B. Hinterhalt)', type: 'checkbox', value: false },
       ], okText: 'Weiter' });
       if (!r) return;
       const count = Math.max(1, Math.min(30, r.count || 1));
+      if (r.style === 'color') {
+        // Farbmarker: der Kreis wird eingefärbt, die Farben vergibt der Server zufällig
+        startPlacing({ kind: 'spawn', npcId: id, labels: Array(count).fill(''), style: 'color', hidden: r.hidden }, count > 1 ? `${count}× „${s.name}“` : `„${s.name}“`);
+        return;
+      }
       const suggestion = Array.from({ length: count }, (_, i) => (r.style === 'abc' ? String.fromCharCode(65 + (i % 26)) : r.style === 'num' ? String(i + 1) : ''));
       const r2 = await dialog({ title: 'Kennungen', body: 'Durch Komma getrennt. Du kannst sie frei ändern (F3).',
         fields: [{ name: 'labels', label: 'Kennungen', value: suggestion.join(', ') }], okText: 'Auf die Karte tippen …' });
@@ -1008,7 +1030,8 @@ function sheetActions(kind, id) {
       if (r) openSheet('npcs', r.id);
     } });
     acts.push({ label: 'Löschen', onClick: async () => {
-      if (await dialog({ title: `„${fresh().name}“ löschen?`, okText: 'Löschen', danger: true })) {
+      const nTok = state.scenes.reduce((k, x) => k + x.tokens.filter((t) => t.kind === 'npc' && t.refId === id).length, 0);
+      if (await dialog({ title: `„${fresh().name}“ löschen?`, body: nTok ? `Die zugehörige Figur auf der Karte wird mit gelöscht${nTok > 1 ? ` (${nTok} Figuren)` : ''}.` : '', okText: 'Löschen', danger: true })) {
         await act({ type: 'npc.delete', id }); selected.npcs = null; sheets.delete(id); renderPanel(true);
       }
     } });

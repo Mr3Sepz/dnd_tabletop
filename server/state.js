@@ -18,6 +18,13 @@ const NAMES = {
   de: { character: 'Charakter', ac: 'RK', npc: 'Neuer NPC', scene: 'Neue Szene', firstScene: 'Erste Szene', copy: 'Kopie' },
   en: { character: 'Character', ac: 'AC', npc: 'New NPC', scene: 'New scene', firstScene: 'First scene', copy: 'copy' },
 };
+// Farbmarker für mehrere gleiche NPCs (statt Zahl oder Buchstabe), zufällig vergeben
+const BADGE_COLORS = [
+  ['#e53935', 'Rot', 'Red'], ['#1e88e5', 'Blau', 'Blue'], ['#43a047', 'Grün', 'Green'], ['#fdd835', 'Gelb', 'Yellow'],
+  ['#8e24aa', 'Lila', 'Purple'], ['#fb8c00', 'Orange', 'Orange'], ['#00acc1', 'Türkis', 'Cyan'], ['#ec407a', 'Pink', 'Pink'],
+  ['#6d4c41', 'Braun', 'Brown'], ['#ffffff', 'Weiß', 'White'], ['#212121', 'Schwarz', 'Black'], ['#c0ca33', 'Limette', 'Lime'],
+  ['#90a4ae', 'Grau', 'Grey'], ['#1a237e', 'Marine', 'Navy'],
+];
 let LANG = 'de';
 const L = (k) => NAMES[LANG][k];
 function configureLanguage(lang) { LANG = lang === 'en' ? 'en' : 'de'; }
@@ -215,8 +222,6 @@ function normalizeState(raw) {
       skills: { ...d.skills, ...(n.skills || {}) }, personal: { ...d.personal, ...(n.personal || {}) },
       weapons: Array.isArray(n.weapons) ? n.weapons : [], spells: Array.isArray(n.spells) ? n.spells : [] };
   });
-  // Figuren ohne Werte gibt es nicht mehr: alte „Markierungen“ werden zu NPCs.
-  for (const sc of s.scenes) for (const t of sc.tokens) markerToNpc(s, t);
   // Bildordner: ältere Bilder nach ihrer Verwendung einsortieren
   for (const a of s.assets) if (!a.purpose && !FOLDERS.includes(a.folder)) a.folder = guessFolder(s, a.id);
   // Initiative: ältere Stände hatten einen Index statt einer Id.
@@ -249,15 +254,14 @@ function guessFolder(state, id) {
   return 'misc';
 }
 
-/** Eine Figur ohne Werte (alter Stand) bekommt einen NPC mit Werten. */
-function markerToNpc(state, t) {
-  if (t.kind === 'npc' && state.npcs.some((n) => n.id === t.refId)) return;
-  if (t.kind === 'player' && state.characters.some((c) => c.id === t.refId)) return;
-  const n = newNpc(t.name || L('npc'));
-  n.portraitAssetId = t.assetId || null;
-  state.npcs.push(n);
-  t.kind = 'npc';
-  t.refId = n.id;
+/** Änderungen an NPC/Charakter auf die zugehörigen Figuren übertragen (Name, Bild). */
+function syncTokens(state, kind, ent, patch) {
+  const tk = kind === 'npc' ? 'npc' : 'player';
+  for (const sc of state.scenes) for (const t of sc.tokens) {
+    if (t.kind !== tk || t.refId !== ent.id) continue;
+    if ('name' in patch && (kind === 'npc' || ent.name)) t.name = ent.name;
+    if ('portraitAssetId' in patch) t.assetId = ent.portraitAssetId || null;
+  }
 }
 
 /** Plätze im laufenden Spiel ändern. Belegte Plätze werden nie entfernt. */
@@ -274,7 +278,7 @@ function changeSeatCount(state, wanted) {
     for (const sc of state.scenes) for (const t of sc.tokens) {
       if (t.ownerSeat > n) t.ownerSeat = null;
       if (Array.isArray(t.visibleTo)) t.visibleTo = t.visibleTo.filter((x) => x <= n);
-      if (removedChars.has(t.refId)) { t.refId = null; t.kind = 'marker'; markerToNpc(state, t); }
+      if (removedChars.has(t.refId)) { t.refId = null; t.kind = 'marker'; }
     }
     fixCurrent(state);
   }
@@ -291,14 +295,26 @@ function normalizeSlots(slots) {
   const out = emptySlots();
   if (Array.isArray(slots)) for (const sl of slots) {
     const t = out.find((o) => o.level === sl.level);
-    if (t) { t.max = clampInt(sl.max, 0, 99); t.used = clampInt(sl.used, 0, t.max); }
+    if (t) {
+      t.max = clampInt(sl.max, 0, 99);
+      // Jeder Platz einzeln abgehakt (marks); ältere Stände hatten nur eine Anzahl
+      const used = clampInt(sl.used, 0, t.max);
+      t.marks = Array.from({ length: t.max }, (_, i) => (Array.isArray(sl.marks) && sl.marks.length ? !!sl.marks[i] : i < used));
+      t.used = t.marks.filter(Boolean).length;
+    }
   }
+  for (const t of out) if (!t.marks) t.marks = Array.from({ length: t.max }, () => false);
   return out;
 }
 
 // ---------- Sichtbarkeit ----------
 
 /** Farbe der Figur zu einem Charakter/NPC (Hintergrund hinter durchsichtigen Porträts). */
+function tokenBadgeFor(state, refId) {
+  for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === refId && t.badgeColor) return t.badgeColor;
+  return null;
+}
+
 function tokenColorFor(state, refId) {
   for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === refId && t.color) return t.color;
   return null;
@@ -532,6 +548,7 @@ function sanitizeTokenPatch(patch) {
   if ('kind' in patch) out.kind = ['player', 'npc', 'marker'].includes(patch.kind) ? patch.kind : 'marker';
   if ('refId' in patch) out.refId = patch.refId ? str(patch.refId, 60) : null;
   if ('color' in patch) out.color = color(patch.color, '#8a6d3b');
+  if ('badgeColor' in patch) out.badgeColor = patch.badgeColor ? color(patch.badgeColor, '#e53935') : null;
   if (Array.isArray(patch.conditions)) out.conditions = sanitizeConditions(patch.conditions);
   return out;
 }
@@ -757,7 +774,6 @@ function applyAction(state, who, action) {
         ownerSeat: null, hidden: false, visibleTo: null, kind: 'marker', refId: null, color: '#8a6d3b', conditions: [],
         ...sanitizeTokenPatch(action.token || {}),
       };
-      markerToNpc(state, t); // jede Figur ist ein Spielercharakter oder ein NPC mit Werten
       sc.tokens.push(t);
       return { id: t.id, refId: t.refId };
     }
@@ -765,7 +781,6 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); const t = findToken(sc, action.id); must(t);
       Object.assign(t, sanitizeTokenPatch(action.patch || {}));
-      markerToNpc(state, t);
       return {};
     }
     case 'token.updateMany': {
@@ -813,7 +828,16 @@ function applyAction(state, who, action) {
       const base = state.npcs.find((n) => n.id === action.npcId); must(base);
       const labels = (Array.isArray(action.labels) ? action.labels : []).slice(0, 30).map((l) => str(String(l), 6));
       const count = Math.max(1, Math.min(30, labels.length || clampInt(action.count, 1, 30, 1)));
-      while (labels.length < count) labels.push(String(labels.length + 1));
+      const useColors = action.style === 'color';
+      if (!useColors) while (labels.length < count) labels.push(String(labels.length + 1));
+      else while (labels.length < count) labels.push('');
+      // Farben zufällig mischen; Farben, die gleichnamige Figuren in der Szene schon tragen, zuletzt
+      let colors = [];
+      if (useColors) {
+        const taken = new Set(sc.tokens.filter((t) => t.badgeColor).map((t) => t.badgeColor));
+        const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+        colors = [...shuffle(BADGE_COLORS.filter((c) => !taken.has(c[0]))), ...shuffle(BADGE_COLORS.filter((c) => taken.has(c[0])))];
+      }
       const baseHasToken = state.scenes.some((s) => s.tokens.some((t) => t.refId === base.id));
       const g = sc.grid.size || 70;
       const perRow = Math.ceil(Math.sqrt(count));
@@ -830,12 +854,14 @@ function applyAction(state, who, action) {
           npc.hp.cur = npc.hp.max; npc.dead = false; npc.conditions = []; npc.deathSaves = { success: 0, fail: 0 };
           state.npcs.splice(insertAt++, 0, npc);
         }
-        if (count > 1 || baseHasToken) { npc.baseName = baseName; npc.name = `${baseName} ${labels[i]}`.trim(); }
+        const col = useColors ? colors[i % colors.length] : null;
+        const tag = col ? `${LANG === 'en' ? col[2] : col[1]}${i >= colors.length ? ` ${Math.floor(i / colors.length) + 1}` : ''}` : labels[i];
+        if (count > 1 || baseHasToken || col) { npc.baseName = baseName; npc.name = `${baseName} ${tag}`.trim(); }
         const t = {
           id: newId('t_'), kind: 'npc', refId: npc.id, name: npc.name, label: labels[i], assetId: npc.portraitAssetId,
           x: num(action.x) + (i % perRow) * g, y: num(action.y) + Math.floor(i / perRow) * g,
           size: Math.min(10, Math.max(0.25, num(action.size, 1))), ownerSeat: null, hidden: bool(action.hidden),
-          visibleTo: null, color: '#8a6d3b', conditions: [],
+          visibleTo: null, color: '#8a6d3b', conditions: [], badgeColor: col ? col[0] : null,
         };
         sc.tokens.push(t);
         created.push({ npcId: npc.id, tokenId: t.id });
@@ -880,6 +906,20 @@ function applyAction(state, who, action) {
       return {};
     }
 
+    case 'drawing.erase': {
+      // Radierer: eine Freihandlinie durch ihre übrig gebliebenen Stücke ersetzen (keine = gelöscht)
+      if (!isDM) deny();
+      const sc = findScene(action.sceneId); const d = findDrawing(sc, action.id); must(d);
+      must(d.type === 'line', 'Nur Freihandlinien lassen sich radieren');
+      const idx = sc.drawings.indexOf(d);
+      const pieces = (Array.isArray(action.pieces) ? action.pieces : []).slice(0, 200).map((pc) => ({
+        ...d, id: newId('d_'), rotation: 0, x: num(pc.x), y: num(pc.y),
+        points: (Array.isArray(pc.points) ? pc.points : []).slice(0, 4000).map((v) => Math.round(num(v) * 10) / 10),
+      })).filter((pc) => pc.points.length >= 4);
+      sc.drawings.splice(idx, 1, ...pieces);
+      return { ids: pieces.map((pc) => pc.id) };
+    }
+
     // ---------- Bilder ----------
     case 'asset.rename': {
       if (!isDM) deny();
@@ -903,6 +943,7 @@ function applyAction(state, who, action) {
       const own = who.role === 'player' && who.seat === c.seat;
       if (!isDM && !own) deny();
       applySheetPatch(c, action.patch || {}, { allowPrivateNotes: own, allowInventory: true, allowAbilities: true });
+      syncTokens(state, 'character', c, action.patch || {});
       return {};
     }
 
@@ -948,6 +989,7 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const n = state.npcs.find((x) => x.id === action.id); must(n);
       applySheetPatch(n, action.patch || {}, { allowPrivateNotes: false, allowInventory: false, allowNote: true, allowAbilities: true });
+      syncTokens(state, 'npc', n, action.patch || {});
       return {};
     }
     case 'npc.duplicate': {
@@ -966,9 +1008,16 @@ function applyAction(state, who, action) {
       state.initiative.entries = state.initiative.entries
         .map((e) => (e.kind === 'group' ? { ...e, refIds: e.refIds.filter((r) => r !== action.id) } : e))
         .filter((e) => e.refId !== action.id && !(e.kind === 'group' && e.refIds.length === 0));
-      for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === action.id) t.refId = null;
+      // Die Figuren des NPCs verschwinden mit ihm von der Karte
+      let removedTokens = 0;
+      for (const sc of state.scenes) {
+        const before = sc.tokens.length;
+        sc.tokens = sc.tokens.filter((t) => !(t.kind === 'npc' && t.refId === action.id));
+        removedTokens += before - sc.tokens.length;
+        for (const t of sc.tokens) if (t.refId === action.id) t.refId = null;
+      }
       fixCurrent(state);
-      return {};
+      return { removedTokens };
     }
 
     // ---------- Initiative / Porträtleiste (N7, Vorschlag 1 und 4) ----------
@@ -1330,6 +1379,7 @@ function viewForPlayer(state, seatNo) {
       condition: e.kind === 'npc' && src ? roughCondition(src.hp, src.dead) : undefined,
       conditions: src ? src.conditions : [],
       color: tokenColorFor(state, e.refId),
+      badgeColor: tokenBadgeFor(state, e.refId),
     };
   });
   const currentVisible = entries.some((e) => e.id === state.initiative.currentId);

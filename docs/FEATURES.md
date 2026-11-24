@@ -48,7 +48,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 
 | Nr. | Funktion | Status | Umsetzung |
 | --- | --- | --- | --- |
-| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ (NPCs ohne Todesrettungswürfe) | Zauberplätze als blaue Rauten mit Grad (I, II, III …), verbrauchte grau |
+| C1–C7 | Übersicht, HP, Zauberplätze, Zähler, Werte | ✅ (NPCs ohne Todesrettungswürfe) | Zauberplätze als blaue Rauten mit Grad (I, II, III …), jede einzeln abhakbar, verbrauchte grau |
 | — | Bogen anpassen | ✅ | Zauberplätze und Zähler pro Charakter/NPC ein- und ausblendbar, fertige Zähler-Vorlagen (Ki, Kampfrausch, Zweiter Wind …) |
 | C5 | Inventar pro Charakter | ✅ | Waffen (Name, Angr. Bonus, Schaden/Art, Munitionszähler), vorbereitete Zauber (mit Reichweite), Platin, Gold, Silber, Kupfer + Gegenstände (Text). Spieler bearbeiten das eigene, der DM alle (Reiter *Inventar*). Andere Spieler sehen es nicht. Münznamen für alle änderbar (DM) |
 | — | Attribute und Fertigkeiten (optional, Reiter *Attribute*) | ✅ | Stufe, 6 Attribute mit Modifikator, Übungsbonus, Rettungswürfe, 18 Fertigkeiten mit Übung/Expertise, Initiative, passive Wahrnehmung, Angaben (Alter, Glaube, Größe, Kategorie, Gewicht, Geschlecht, Gesinnung). Regeln 2014 |
@@ -79,7 +79,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | T4 / P12 | Gemeinsame Notizen | ✅ (XP und Spieldatum entfernt, Gold ist ins Inventar gewandert) |
 | — | Tagebuch / Questlog | ✅ (alle dürfen alles; „Erledigt“ graut aus und sortiert nach hinten) |
 | X10 | Direktchat | ✅ (Tabs: Alle, je Person, Gruppen; nur Absender und Empfänger bekommen die Nachricht; wird nicht gespeichert) |
-| X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (schlicht: Anzahl × Würfel, Knöpfe Vorteil/Nachteil, keine Formeln) |
+| X1 / X2 | Würfel mit Protokoll, verdeckte DM-Würfe | ✅ (schlicht: Umschalter für Vorteil/Nachteil, Anzahl und Würfel, dann „Würfeln“; keine Formeln) |
 | — | Fuß ↔ Meter | ✅ (im Würfel-Fenster, genau und nach Regelbuch) |
 
 ## 8. Zeichnen und Messen
@@ -104,7 +104,11 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Zweisprachig | ✅ | Deutsch mit englischen Fachbegriffen darunter; komplette englische Oberfläche (UK), umschaltbar pro Gerät; Infotexte in beiden Sprachen |
 | — | Attribut-Effekte | ✅ | +/− Wert auf ein Attribut für X Runden (Tränke, Zauber, Flüche), grün/rot im Bogen, abhängige Werte rechnen mit, laufen von selbst ab; mehrere gleichzeitig |
 | — | Bildersammlung als eigener Reiter mit Ordnern | ✅ | Charaktere/NPCs, Objekte, Karten, Sonstiges; Auswahllisten zeigen nur den passenden Ordner; nur für den DM |
-| — | Keine Figuren ohne Werte | ✅ | Jede Figur ist Spielercharakter oder NPC; NPCs haben Attribute, Fertigkeiten, Rettungswürfe |
+| — | NPCs mit Werten | ✅ | NPCs haben Attribute, Fertigkeiten, Rettungswürfe; reine Figuren ohne Verknüpfung bleiben möglich |
+| — | NPC ↔ Figur verbunden | ✅ | Name und Bild gehen auf die Figuren über; NPC löschen löscht seine Figuren |
+| — | Farbmarker | ✅ | Mehrere gleiche NPCs mit zufällig gefärbtem Kreis statt Zahl/Buchstabe |
+| — | Zeichnungen löschen, Radierer | ✅ | 🗑 am Auswahlrahmen, Entf-Taste; 🧽 radiert Freihandlinien teilweise |
+| — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Darkmode | ✅ | Mitternachtsblau bis Dunkelrot, pro Gerät |
 | — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |

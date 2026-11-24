@@ -42,6 +42,11 @@ const enHint = (deText) => {
   return en && en.toLowerCase() !== String(deText).trim().toLowerCase() ? h('small.term-en.under', { lang: 'en' }, en) : null;
 };
 
+/** Abhakungen der einzelnen Zauberplätze (Länge = max); ältere Stände: die ersten „used“. */
+function slotMarks(sl) {
+  return Array.from({ length: sl.max }, (_, i) => (Array.isArray(sl.marks) && sl.marks.length ? !!sl.marks[i] : i < (sl.used || 0)));
+}
+
 export class Sheet {
   /**
    * opts: {
@@ -227,7 +232,7 @@ export class Sheet {
         h('h4', {}, term('spellSlots'), ' ', info('spellSlots'),
           h('button.small', { onclick: () => { this.editSlots = !editing; this.render(); } }, editing ? 'Fertig' : 'Anzahl ändern'),
           d.slots.some((s) => s.used) ? h('button.small', { title: 'Alle Plätze wieder frei (z. B. nach einer langen Rast)', onclick: () => {
-            this.patch({ slots: this.data.slots.map((s) => ({ ...s, used: 0 })) }); this.refreshValues();
+            this.patch({ slots: this.data.slots.map((s) => ({ ...s, used: 0, marks: Array(s.max).fill(false) })) }); this.refreshValues();
           } }, 'Alle frei') : null),
         slots));
     }
@@ -264,11 +269,13 @@ export class Sheet {
   renderSlotBoxes(el, level) {
     const sl = this.data.slots.find((s) => s.level === level);
     if (!sl) return;
-    if (el.childElementCount === sl.max && [...el.children].every((b, i) => b.classList.contains('used') === i < sl.used)) return;
-    el.replaceChildren(...Array.from({ length: sl.max }, (_, i) => h(`button.diamond${i < sl.used ? '.used' : ''}`, {
-      title: `Grad ${ROMAN[level - 1]}: ${i < sl.used ? 'verbraucht (antippen = wieder frei)' : 'frei (antippen = verbraucht)'}`,
-      'aria-label': `Zauberplatz Grad ${ROMAN[level - 1]} ${i < sl.used ? 'verbraucht' : 'frei'}`,
-      onclick: () => this.editSlot(level, { used: i < sl.used ? i : i + 1 }),
+    // Jeder Platz einzeln: nur der angetippte wird verbraucht oder wieder frei
+    const marks = slotMarks(sl);
+    if (el.childElementCount === sl.max && [...el.children].every((b, i) => b.classList.contains('used') === marks[i])) return;
+    el.replaceChildren(...Array.from({ length: sl.max }, (_, i) => h(`button.diamond${marks[i] ? '.used' : ''}`, {
+      title: `Grad ${ROMAN[level - 1]}: ${marks[i] ? 'verbraucht (antippen = wieder frei)' : 'frei (antippen = verbraucht)'}`,
+      'aria-label': `Zauberplatz Grad ${ROMAN[level - 1]} ${marks[i] ? 'verbraucht' : 'frei'}`,
+      onclick: () => { const m = slotMarks(this.data.slots.find((s) => s.level === level)); m[i] = !m[i]; this.editSlot(level, { marks: m }); },
     }, h('span', {}, ROMAN[level - 1]))));
   }
 
@@ -316,7 +323,8 @@ export class Sheet {
     this.patch({ slots: this.data.slots.map((s) => {
       if (s.level !== level) return s;
       const n = { ...s, ...p };
-      n.used = Math.min(n.used, n.max);
+      n.marks = slotMarks(n);
+      n.used = n.marks.filter(Boolean).length;
       return n;
     }) });
     this.refreshValues();

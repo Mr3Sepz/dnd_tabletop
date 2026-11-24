@@ -33,6 +33,7 @@ export const TOOLS = {
   'place-template': 'Zauberschablone setzen',
   'place-image': 'Objekt setzen',
   'light-brush': 'Licht malen (Nachtmodus)',
+  eraser: 'Radierer: über Freihandlinien wischen',
 };
 
 export class Board {
@@ -73,6 +74,7 @@ export class Board {
     this.toolOpts = {};
     this.drawStyle = { stroke: '#2b2118', fill: null, strokeWidth: 4 };
     this.brushRadius = 60;
+    this.eraserRadius = 18;
 
     new ResizeObserver(() => {
       this.stage.size({ width: container.clientWidth, height: container.clientHeight });
@@ -83,6 +85,14 @@ export class Board {
     container.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { this.clearSelection(); this.selectDrawing(null); }
+      // Entf (oder Rücktaste): ausgewählte Zeichnung löschen – nicht beim Tippen in Feldern
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedDrawing && this.opts.onDrawingDelete) {
+        const a = document.activeElement;
+        if (a && (/INPUT|TEXTAREA|SELECT/.test(a.tagName) || a.isContentEditable)) return;
+        if (document.querySelector('form.dialog')) return;
+        const d = this.scene && this.scene.drawings.find((x) => x.id === this.selectedDrawing);
+        if (d) { e.preventDefault(); this.#deleteSelectedDrawing(d); }
+      }
     });
 
     this.sendMove = throttle((t, x, y) => this.opts.onMove?.(t, x, y, false), 50);
@@ -119,6 +129,7 @@ export class Board {
     const world = { x: (point.x - stage.x()) / old, y: (point.y - stage.y()) / old };
     stage.scale({ x: next, y: next });
     stage.position({ x: point.x - world.x * next, y: point.y - world.y * next });
+    if (this.selectedDrawing) this.#placeTrash();
   }
 
   zoomBy(factor) { this.zoomAt({ x: this.stage.width() / 2, y: this.stage.height() / 2 }, factor); }
@@ -299,6 +310,7 @@ export class Board {
     }
     node.drawingId = d.id;
     node.on('dragstart', (e) => { e.cancelBubble = true; });
+    node.on('dragmove transform', () => { if (this.selectedDrawing === d.id) this.#placeTrash(); });
     node.on('dragend', (e) => {
       e.cancelBubble = true;
       this.opts.onDrawingChange?.(d, { x: node.x(), y: node.y() });
@@ -343,15 +355,74 @@ export class Board {
     layer.draw();
   }
 
+  /**
+   * Radierer: Freihandlinien dort entfernen, wo der Radierer drübergefahren ist.
+   * Eine Linie kann dabei in mehrere Stücke zerfallen; ganz wegradiert = gelöscht.
+   */
+  #erase(path, r) {
+    if (!this.scene || !this.opts.onErase) return;
+    const eraser = densify(path, r / 2);
+    const hit = (x, y) => { for (let i = 0; i < eraser.length; i += 2) if (Math.hypot(eraser[i] - x, eraser[i + 1] - y) <= r) return true; return false; };
+    for (const d of this.scene.drawings) {
+      if (d.type !== 'line' || d.locked || !(this.opts.canEditDrawing?.(d))) continue;
+      const rad = ((d.rotation || 0) * Math.PI) / 180; const cos = Math.cos(rad); const sin = Math.sin(rad);
+      const world = [];
+      for (let i = 0; i < d.points.length; i += 2) world.push(d.x + d.points[i] * cos - d.points[i + 1] * sin, d.y + d.points[i] * sin + d.points[i + 1] * cos);
+      const pts = densify(world, Math.max(2, r / 3));
+      const pieces = []; let cur = []; let touched = false;
+      for (let i = 0; i < pts.length; i += 2) {
+        if (hit(pts[i], pts[i + 1])) { touched = true; if (cur.length >= 4) pieces.push(cur); cur = []; } else cur.push(pts[i], pts[i + 1]);
+      }
+      if (cur.length >= 4) pieces.push(cur);
+      if (!touched) continue;
+      this.opts.onErase(d, pieces.map((q) => ({ x: q[0], y: q[1], points: q.map((v, i) => Math.round((v - (i % 2 ? q[1] : q[0])) * 10) / 10) })));
+    }
+  }
+
+  #deleteSelectedDrawing(d) {
+    this.selectDrawing(null);
+    this.opts.onDrawingDelete?.(d);
+  }
+
+  /** Mülleimer oben rechts am Auswahlrahmen, bleibt beim Zoomen gleich groß. */
+  #placeTrash() {
+    const node = this.selectedDrawing && this.drawingNodes && this.drawingNodes.get(this.selectedDrawing);
+    if (!this.trash) {
+      this.trash = new Konva.Group({ name: 'trash', visible: false });
+      this.trash.add(new Konva.Circle({ radius: 15, fill: '#b0172b', stroke: '#fff', strokeWidth: 2, shadowColor: '#000', shadowBlur: 4, shadowOpacity: 0.4 }));
+      this.trash.add(new Konva.Text({ text: '🗑', fontSize: 16, x: -9, y: -8, fill: '#fff' }));
+      const del = (e) => {
+        e.cancelBubble = true;
+        const d = this.scene && this.scene.drawings.find((x) => x.id === this.selectedDrawing);
+        if (d) this.#deleteSelectedDrawing(d);
+      };
+      this.trash.on('click tap', del);
+      this.trash.on('mousedown touchstart', (e) => { e.cancelBubble = true; });
+      this.trash.on('mouseenter', () => { this.container.style.cursor = 'pointer'; });
+      this.trash.on('mouseleave', () => { this.container.style.cursor = ''; });
+      this.uiLayer.add(this.trash);
+    }
+    if (!node || !this.opts.onDrawingDelete) { this.trash.visible(false); this.uiLayer.batchDraw(); return; }
+    // Rahmen in Bildschirm-Pixeln, Mülleimer 18 px rechts oberhalb, dann in Koordinaten der Ebene umrechnen
+    const box = node.getClientRect();
+    const inv = this.uiLayer.getAbsoluteTransform().copy().invert();
+    const pos = inv.point({ x: box.x + box.width + 18, y: box.y - 18 });
+    const k = 1 / this.stage.scaleX();
+    this.trash.setAttrs({ x: pos.x, y: pos.y, scaleX: k, scaleY: k, visible: true });
+    this.trash.moveToTop();
+    this.uiLayer.batchDraw();
+  }
+
   selectDrawing(id) {
     this.selectedDrawing = id;
     const node = id && this.drawingNodes && this.drawingNodes.get(id);
-    if (!node) { this.transformer.nodes([]); this.uiLayer.batchDraw(); return; }
+    if (!node) { this.transformer.nodes([]); this.#placeTrash(); this.uiLayer.batchDraw(); return; }
     const d = this.scene.drawings.find((x) => x.id === id);
     const resizable = d && d.type !== 'template';
     this.transformer.resizeEnabled(resizable);
     this.transformer.keepRatio(d && d.type === 'image');
     this.transformer.nodes([node]);
+    this.#placeTrash();
     this.uiLayer.batchDraw();
   }
 
@@ -435,7 +506,11 @@ export class Board {
       group.add(new Konva.Line({ points: [r * 0.6, -r * 0.6, -r * 0.6, r * 0.6], stroke: '#222', strokeWidth: 3 }));
     }
 
-    if (t.label) {
+    if (t.badgeColor) {
+      // Farbmarker: eingefärbter Kreis ohne Zahl oder Buchstabe
+      const br = Math.max(9, r * 0.38);
+      group.add(new Konva.Circle({ x: r * 0.72, y: -r * 0.72, radius: br, fill: t.badgeColor, stroke: '#fff', strokeWidth: 2.5, shadowColor: '#000', shadowBlur: 3, shadowOpacity: 0.7 }));
+    } else if (t.label) {
       const br = Math.max(9, r * 0.38);
       const badge = new Konva.Group({ x: r * 0.72, y: -r * 0.72 });
       badge.add(new Konva.Circle({ radius: br, fill: '#fff', stroke: '#2b2118', strokeWidth: 1.5 }));
@@ -613,6 +688,12 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
+      if (tool === 'eraser') {
+        draft = { kind: 'eraser', points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
+          stroke: 'rgba(255,255,255,0.55)', strokeWidth: this.eraserRadius * 2, shadowColor: '#000', shadowBlur: 2, shadowOpacity: 0.5 }) };
+        this.uiLayer.add(draft.node);
+        return;
+      }
       if (tool === 'line' || tool.startsWith('fog-brush') || tool === 'light-brush') {
         const fog = tool.startsWith('fog');
         const light = tool === 'light-brush';
@@ -678,6 +759,8 @@ export class Board {
         this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
       } else if (d.kind === 'light-brush') {
         this.opts.onLight?.({ points: d.points, r: this.brushRadius });
+      } else if (d.kind === 'eraser') {
+        this.#erase(d.points, this.eraserRadius);
       }
       this.uiLayer.batchDraw();
     };
@@ -692,4 +775,15 @@ export class Board {
       }
     });
   }
+}
+
+/** Punkte einer Linie so auffüllen, dass zwischen zwei Punkten höchstens step liegt. */
+function densify(points, step) {
+  const out = [points[0], points[1]];
+  for (let i = 2; i < points.length; i += 2) {
+    const x0 = points[i - 2]; const y0 = points[i - 1]; const x1 = points[i]; const y1 = points[i + 1];
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
+    for (let k = 1; k <= n; k++) out.push(x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n);
+  }
+  return out;
 }

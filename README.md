@@ -171,11 +171,13 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 <br clear="right">
 
-**Jede Figur hat Werte.** Auf der Karte stehen nur noch **Spielercharaktere** und **NPCs**. Auch ein Pferd oder ein Fass ist ein NPC mit HP und Attributen. Figuren ohne Werte aus älteren Spielständen werden beim Laden automatisch zu NPCs.
+**Figuren** sind alles, was rund auf der Karte steht. Eine Figur kann mit einem **Spielercharakter** oder einem **NPC** verknüpft sein. Dann übernimmt sie dessen Namen, Bild und Werte. Sie kann aber auch eine reine Figur ohne Werte bleiben, z. B. eine Markierung. **NPCs haben immer Werte**, also HP und Attribute, auch ein Pferd.
+
+**NPC und Figur bleiben verbunden:** Benennst du einen NPC um oder gibst ihm ein anderes Bild, ändern sich seine Figuren auf der Karte mit. Löschst du den NPC, verschwindet auch seine Figur. Die App sagt das vorher im Löschen-Dialog. Das Gleiche gilt für Name und Porträt von Spielercharakteren.
 
 **Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
 
-**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: im Reiter *Bilder* ein Bild aus *Charaktere/NPCs* auf die Karte ziehen. Das legt gleich einen NPC mit diesem Porträt an.
+**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: ein Bild aus *Charaktere/NPCs* antippen → **📍 Als NPC auf die Karte setzen**. Ziehst du ein Bild direkt auf die Karte, wird es eine **Figur** (ohne Werte). Eine Figur ohne Bild setzt du im Reiter *Figuren* mit **Figur ohne Bild setzen**.
 
 **Durchsichtige PNGs:** Hat ein Bild einen durchsichtigen Hintergrund, füllt die **Hintergrundfarbe** der Figur die Lücke (Rechtsklick → *Bearbeiten …* → *Hintergrundfarbe*). Die Farbe gilt auch für das Porträt in der Leiste.
 
@@ -183,8 +185,8 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 | Ordner des Bildes | Möglichkeiten beim Antippen |
 | --- | --- |
-| Charaktere/NPCs | 👹 Als NPC anlegen · 📍 Als NPC auf die Karte setzen · 🙂 Porträt für … (jeder Spielercharakter) |
-| Objekte | 🧱 Als Objekt setzen |
+| Charaktere/NPCs | 🙂 Als Figur setzen · 👹 Als NPC anlegen · 📍 Als NPC auf die Karte setzen · 🙂 Porträt für … (jeder Spielercharakter) |
+| Objekte | 🧱 Als Objekt setzen · 🙂 Als Figur setzen |
 | Karten | 🗺 Als Karte von „…“ · 🌍 Als Weltkarte |
 | alle | 📂 In Ordner verschieben · ✎ Umbenennen · 🗑 Löschen |
 
@@ -193,6 +195,9 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 Beim Setzen eines NPCs wählst du:
 - **Anzahl:** 4 Goblins auf einmal. Jeder bekommt eigene HP.
 - **Kennungen:** 1, 2, 3 … oder A, B, C … vorgeschlagen und frei änderbar. Sie stehen als Abzeichen auf der Figur.
+- **Farbmarker:** Statt Zahl oder Buchstabe wird der kleine Kreis **eingefärbt**. Die Farben werden **jedes Mal zufällig** vergeben. So lernen die Spieler keine feste Reihenfolge wie „Rot ist immer der Erste“. Die NPCs heißen dann z. B. *Ratte Grün* und *Ratte Marine*. Unter *Bearbeiten …* kannst du die Farbe einer Figur auch von Hand setzen oder entfernen.
+
+<img src="docs/img/45-farbmarker.webp" width="400" alt="Drei Ratten mit farbigen Kreisen statt Kennungen">
 - **Versteckt setzen:** für einen Hinterhalt. Nur du siehst die Figuren, halb durchsichtig.
 
 ### 4. Objekte, Zeichnungen und Schablonen
@@ -200,10 +205,22 @@ Beim Setzen eines NPCs wählst du:
 | Werkzeug | Wofür |
 | --- | --- |
 | ▭ ◯ ✎ | Rechteck, Ellipse, Freihand, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Leiste ein |
+| 🧽 **Radierer** | Über Freihandlinien wischen. Wo du drüberfährst, verschwindet die Linie, der Rest bleibt stehen. Die Größe stellst du unter dem Werkzeug ein. Rechtecke, Ellipsen und Objekte radiert er nicht, die löschst du mit dem Mülleimer |
 | 🧱 **Objekt** | Jedes **eigene Bild** aus deiner Bildersammlung als **eckiges, drehbares** Ding auf der Karte: Wagen, Tür, Tisch, Kiste, Lagerfeuer. Der Unterschied zur Figur: Figuren sind rund und für Lebewesen gedacht (mit HP, Zuständen, Initiative). Objekte sind Gegenstände, die du frei drehen und strecken kannst |
 | 🔥 **Schablone** | Kreis, Kegel, Linie oder Würfel in Fuß, z. B. „Feuerball, 20 ft“ |
 
-Ein Klick mit 🖐 auf eine Zeichnung oder ein Objekt zeigt Griffe zum **Verschieben, Drehen und Skalieren**. Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
+<img src="docs/img/44-zeichnung-muelleimer.webp" width="460" align="right" alt="Ausgewählte Freihandlinie mit rotem Mülleimer oben rechts am Rahmen">
+
+Ein Klick mit 🖐 auf eine Zeichnung oder ein Objekt zeigt Griffe zum **Verschieben, Drehen und Skalieren**. **Löschen:** den roten **🗑 oben rechts am Rahmen** antippen oder die **Entf**-Taste drücken.
+
+<br clear="right">
+
+<img src="docs/img/43-werkzeugleiste.webp" width="130" align="left" alt="Werkzeugleiste mit Radierer und Freihand-Einstellungen, endet über dem Würfelknopf">
+
+Die **Werkzeugleiste** endet über dem Würfelknopf 🎲. Passt nicht alles hinein, z. B. die Einstellungen zum Freihandzeichnen (Farbe, Füllung, Strichstärke), scrollst du in der Leiste nach unten. Darin steckt auch der **🧽 Radierer**.
+
+<br clear="left">
+ Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
 
 > **Spieler haben auch 📏 Messen und 🔥 Schablonen.** So planen sie ihre Angriffe selbst: Kegel anlegen, drehen, prüfen, wen es trifft. Eigene Schablonen können sie verschieben und löschen, fremde nicht.
 
@@ -251,11 +268,13 @@ Unten erscheint *„4 markiert · Aktionen …“*:
 - **Gleiche Gegner stehen einzeln** (Goblin A, Goblin B …) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
 - **Initiativwert** ins kleine Feld unter dem Porträt tippen, dann **Sortieren**. Der Höchste beginnt.
 - **Reihenfolge ändern:** Porträt ziehen (Maus) oder **‹ ›** (Touch). **Weiter ▶** schaltet zum Nächsten. Ein Klick auf ein Porträt macht es zum aktuellen.
+- **Doppelklick auf ein Porträt** öffnet den Bogen dieses NPCs oder Spielercharakters rechts, wo du Schaden, Heilung und Zustände einträgst. Bei einer Gruppe öffnet er den ersten NPC daraus.
+- Die Knöpfe **Sortieren · ◀ · Weiter ▶ · Leeren** stehen links **über dem Rundenzähler**. So bleibt rechts mehr Platz für die Porträts.
 - **Am Porträt** steht alles über den Zustand, **die Figur auf der Karte bleibt unverändert** (nur „tot“ ändert sie):
 
   | Was | Anzeige am Porträt |
   | --- | --- |
-  | Zustände (vergiftet, liegend, Segen …) | **farbige Punkte** um das Porträt herum, wie eine Perlenkette. Ein Punkt je Zustand |
+  | Zustände (vergiftet, liegend, Segen …) | **farbige Punkte** rundherum um das Porträt, wie eine Perlenkette. Ein Punkt je Zustand. Platz für etwa 20; bei vielen Zuständen werden die Punkte etwas kleiner |
   | unverletzt | kein Ring |
   | angeschlagen (über halbe HP) | blassroter Ring |
   | schwer verletzt (halbe HP oder weniger) | knallroter Ring |
@@ -276,7 +295,11 @@ Unten erscheint *„4 markiert · Aktionen …“*:
 
 Einträge, die gerade kein Spieler sieht, haben bei dir einen gestrichelten Rahmen.
 
-**Rundenzähler:** Ganz links steht **Runde 2**. Wer nach dem Letzten in der Leiste auf **Weiter ▶** drückt, startet automatisch die nächste Runde. Mit **− / +** stellst du die Zahl von Hand um. **Leeren** beendet den Kampf: Runde wieder 1.
+<img src="docs/img/46-zustaende-rundherum.webp" width="110" align="right" alt="Porträt mit 20 Zustandspunkten rundherum">
+
+<img src="docs/img/47-leiste-knoepfe.webp" alt="Porträtleiste: links Sortieren, Zurück, Weiter, Leeren über Rundenzähler und Effekttimern">
+
+**Rundenzähler:** Ganz links unter den Knöpfen steht **Runde 2**. Wer nach dem Letzten in der Leiste auf **Weiter ▶** drückt, startet automatisch die nächste Runde. Mit **− / +** stellst du die Zahl von Hand um. **Leeren** beendet den Kampf: Runde wieder 1.
 
 **Effekttimer:** Daneben zählen Effekte pro Runde herunter, z. B. *Segen 9*. Mit **+ ⏳** startest du einen: Name und Dauer in Runden (1 Minute = 10 Runden). Bei 0 wird er rot („vorbei“). Antippen = ändern oder entfernen. Du kannst einen Effekt **nur für dich** anlegen (z. B. „Falle scharf“). Spieler dürfen eigene Effekte starten, etwa für ihren Konzentrationszauber.
 
@@ -307,7 +330,7 @@ Spieler und NPCs haben denselben Bogen:
 - **Trefferpunkte:** aktuell, maximal, temporär; Knöpfe für Schaden und Heilung.
 - **Zustände** mit Erklärung per Klick.
 - **Werte** wie die RK (Rüstungsklasse), frei benennbar. Spieler sehen und ändern ihre eigene RK. Die RK von Gegnern sehen sie nie.
-- **Zauberplätze als blaue Rauten** mit dem Grad (I, II, III …). Antippen = verbraucht, die Raute wird grau. „Anzahl ändern“ legt fest, wie viele es pro Grad gibt. „Alle frei“ setzt nach einer langen Rast zurück.
+- **Zauberplätze als blaue Rauten** mit dem Grad (I, II, III …). Jede Raute gilt **einzeln**: Antippen = genau dieser Platz ist verbraucht und wird grau, egal in welcher Reihenfolge du tippst. Nochmal antippen = wieder frei. „Anzahl ändern“ legt fest, wie viele es pro Grad gibt. „Alle frei“ setzt nach einer langen Rast zurück.
 - **Zähler:** Ki, Kampfrausch, Heiltränke …
 - **Notiz** (NPC) bzw. **privates Notizbuch** (Spieler, das siehst auch du nicht).
 
@@ -322,7 +345,7 @@ Spieler und NPCs haben denselben Bogen:
 <td width="62%"><img src="docs/img/22-bogen-anpassen.webp" alt="Bogen anpassen: Zauberplätze aus, Zweiter Wind und Tatendrang an"></td>
 <td width="38%"><img src="docs/img/21-ohne-karte-handy.webp" alt="Zauberplätze als blaue Rauten, verbrauchte grau"></td>
 </tr>
-<tr><td>Borin, der Krieger: keine Zauberplätze, dafür Zweiter Wind und Tatendrang</td><td>Aria, die Zauberin: Grad I hat 2 von 4 Plätzen verbraucht (grau)</td></tr>
+<tr><td>Borin, der Krieger: keine Zauberplätze, dafür Zweiter Wind und Tatendrang</td><td>Aria, die Zauberin: in Grad I ist nur der zweite Platz verbraucht (grau). Jede Raute zählt einzeln</td></tr>
 </table>
 
 #### Attribute und Fertigkeiten (Reiter „Attribute“)
@@ -433,13 +456,17 @@ Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenm
 
 ### 15. Würfeln
 
-<img src="docs/img/13-wuerfel.webp" alt="Würfel-Panel mit verdecktem DM-Wurf">
+<img src="docs/img/13-wuerfel.webp" alt="Würfel-Panel: Vorteil und W20 eingeschaltet, Knopf Würfeln, verdeckter DM-Wurf im Protokoll">
 
 **🎲** unten links, bewusst schlicht:
 
-- **Vorteil** / **Nachteil:** zwei W20, der höhere bzw. niedrigere zählt.
-- **Anzahl** mit − / +, dann einen Würfel antippen: W4, W6, W8, W10, W12, W20, W100. Zum Beispiel 3 × W6.
-- Keine Formeln, keine Boni: Was dazukommt, rechnet ihr am Tisch.
+Erst einstellen, dann würfeln:
+
+1. **Vorteil** oder **Nachteil** einschalten, wenn nötig. Die Knöpfe sind **Umschalter**: Eingeschaltet sind sie rot, nochmal antippen schaltet aus. Es kann nur einer an sein.
+2. **Anzahl** mit − / + und den **Würfel** wählen: W4, W6, W8, W10, W12, W20, W100. Auch der Würfel bleibt markiert, bis du einen anderen wählst.
+3. Darunter steht, was gleich gewürfelt wird, z. B. *3W6* oder *2W20 · Vorteil*. Erst **🎲 Würfeln** würfelt wirklich.
+
+Bei Vorteil und Nachteil werden immer zwei Würfel geworfen, einer zählt; die Anzahl ist dann ausgegraut. Keine Formeln, keine Boni: Was dazukommt, rechnet ihr am Tisch.
 
 Jeder Wurf wird kurz bei allen eingeblendet und landet im Protokoll.
 
@@ -627,7 +654,11 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Krieger ohne Zauberplätze | Bogen → *⚙ Bogen anpassen* → Zauberplätze aus |
 | Beute verteilen | Reiter *Inventar* → Charakter wählen → Münzen / Gegenstände |
 | Geheim würfeln | 🎲 → *Verdeckt würfeln* |
-| Mit Vorteil würfeln | 🎲 → **Vorteil** |
+| Mit Vorteil würfeln | 🎲 → **Vorteil** an · **W20** · **🎲 Würfeln** |
+| Zeichnung löschen | mit 🖐 antippen → **🗑** am Rahmen oder `Entf` |
+| Teil einer Freihandlinie wegradieren | Werkzeug **🧽** → drüberwischen |
+| Bogen eines Gegners aus der Leiste öffnen | Porträt **doppelt** anklicken |
+| 5 gleiche Gegner ohne Zahlen unterscheiden | NPC → *Auf Karte setzen …* → *Farbmarker* |
 | Karte drehen | *Szenen* → **⟲ 90°** / **⟳ 90°** |
 | Sprache wechseln | **EN** / **DE** oben |
 | Münzbild ändern | *Inventar* → aufs Münzbild tippen |

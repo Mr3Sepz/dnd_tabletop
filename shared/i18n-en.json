@@ -594,7 +594,20 @@
   "Unbekannter Ordner": "Unknown folder",
   "Ziel nicht gefunden": "Target not found",
   "Nur für den eigenen Charakter": "Only for your own character",
-  "Wert fehlt": "Value missing"
+  "Wert fehlt": "Value missing",
+  "🎲 Würfeln": "🎲 Roll",
+  "Zwei Würfel, der höhere zählt (nochmal antippen = aus)": "Two dice, the higher counts (tap again = off)",
+  "Zwei Würfel, der niedrigere zählt (nochmal antippen = aus)": "Two dice, the lower counts (tap again = off)",
+  "Farbmarker (zufällige Farben)": "Colour markers (random colours)",
+  "Farbmarker (farbiger Kreis statt Kennung)": "Colour marker (coloured circle instead of a label)",
+  "Farbe des Markers": "Marker colour",
+  "Farbmarkierung der Figur": "Token colour marker",
+  "nichts (reine Figur)": "nothing (plain token)",
+  "Radierer: über Freihandlinien wischen": "Eraser: wipe over freehand lines",
+  "Größe des Radierers": "Eraser size",
+  "Auf die Karte ziehen = Figur": "Drag onto the map = token",
+  "Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild auf die Karte ziehen.": "Tokens are everything round on the map. Linked to an NPC or player character, a token takes on its name, image and stats. New tokens: NPCs tab → “Place on map …”, or drag an image from the Images tab onto the map.",
+  "Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = Figur.": "Portraits for player characters and NPCs. Tap → “Create as NPC” or “Portrait for …”. Drag onto the map = token."
  },
  "patterns": [
   [
@@ -968,6 +981,14 @@
   [
    "Hier: (.+)",
    "Here: $1"
+  ],
+  [
+   "Die zugehörige Figur auf der Karte wird mit gelöscht\\.",
+   "The token on the map will be deleted as well."
+  ],
+  [
+   "Die zugehörige Figur auf der Karte wird mit gelöscht \\((\\d+) Figuren\\)\\.",
+   "The tokens on the map will be deleted as well ($1 tokens)."
   ]
  ]
 }

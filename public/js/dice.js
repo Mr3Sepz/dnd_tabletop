@@ -70,26 +70,51 @@ export class DicePanel {
     toast(`${r.by}${r.secret ? ' (verdeckt)' : ''}: ${describe(r.expr)} = ${r.total}   ·   ${cleanDetail(r.detail)}`);
   }
 
+  /** Ausdruck aus der aktuellen Auswahl: Anzahl, Würfel, Vorteil/Nachteil. */
+  expression() {
+    const die = this.die || 'd20';
+    if (this.mode === 'adv') return `2${die}kh1`;
+    if (this.mode === 'dis') return `2${die}kl1`;
+    return `${this.count}${die}`;
+  }
+
   render() {
-    // Bewusst schlicht: Anzahl, Würfel, Vorteil/Nachteil. Keine Formeln, keine Boni.
+    // Bewusst schlicht: erst alles auswählen (Umschalter), dann „Würfeln“. Keine Formeln, keine Boni.
     this.count = this.count || 1;
+    this.die = this.die || 'd20';
+    this.mode = this.mode || null; // null | 'adv' | 'dis'
+    const label = (d) => (LANG === 'en' ? d : d.replace('d', 'W'));
     const countEl = h('b.dice-count', {}, String(this.count));
-    const setCount = (n) => { this.count = Math.max(1, Math.min(20, n)); countEl.textContent = String(this.count); };
+    const summary = h('div.dice-summary', { 'data-raw': '' });
+    const advBtn = h('button.small.dice-opt', { 'aria-pressed': 'false', title: 'Zwei Würfel, der höhere zählt (nochmal antippen = aus)', onclick: () => { this.mode = this.mode === 'adv' ? null : 'adv'; sync(); } }, term('advantage'));
+    const disBtn = h('button.small.dice-opt', { 'aria-pressed': 'false', title: 'Zwei Würfel, der niedrigere zählt (nochmal antippen = aus)', onclick: () => { this.mode = this.mode === 'dis' ? null : 'dis'; sync(); } }, term('disadvantage'));
+    const dieBtns = QUICK.map((d) => h('button.small.dice-opt', { 'aria-pressed': 'false', dataset: { die: d }, onclick: () => { this.die = d; sync(); } }, label(d)));
+    const minus = h('button.icon', { title: 'Weniger Würfel', onclick: () => { this.count = Math.max(1, this.count - 1); sync(); } }, '−');
+    const plus = h('button.icon', { title: 'Mehr Würfel', onclick: () => { this.count = Math.min(20, this.count + 1); sync(); } }, '+');
+    const sync = () => {
+      countEl.textContent = String(this.count);
+      advBtn.classList.toggle('on', this.mode === 'adv'); advBtn.setAttribute('aria-pressed', String(this.mode === 'adv'));
+      disBtn.classList.toggle('on', this.mode === 'dis'); disBtn.setAttribute('aria-pressed', String(this.mode === 'dis'));
+      for (const b of dieBtns) { const on = b.dataset.die === this.die; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
+      // Vorteil/Nachteil: immer zwei Würfel, einer zählt – die Anzahl gilt dann nicht
+      minus.disabled = plus.disabled = !!this.mode;
+      countEl.parentElement && countEl.parentElement.classList.toggle('off', !!this.mode);
+      const m = this.mode === 'adv' ? ` · ${termText('advantage')}` : this.mode === 'dis' ? ` · ${termText('disadvantage')}` : '';
+      summary.textContent = `${this.mode ? `2${label(this.die).toUpperCase()}` : `${this.count}${label(this.die).toUpperCase()}`}${m}`;
+    };
     this.logEl = h('ol.dice-log');
     this.panel.replaceChildren(
       h('div.dice-head', {}, h('b', {}, 'Würfeln'), h('button.icon', { onclick: () => this.toggle(false), title: 'Schließen' }, '×')),
-      h('div.dice-adv', {},
-        h('button.small', { title: 'Zwei W20, der höhere zählt', onclick: () => this.roll('2d20kh1') }, term('advantage')),
-        h('button.small', { title: 'Zwei W20, der niedrigere zählt', onclick: () => this.roll('2d20kl1') }, term('disadvantage')),
-        info('advantage')),
-      h('div.dice-count-row', {}, h('span', {}, 'Anzahl'),
-        h('button.icon', { title: 'Weniger Würfel', onclick: () => setCount(this.count - 1) }, '−'), countEl,
-        h('button.icon', { title: 'Mehr Würfel', onclick: () => setCount(this.count + 1) }, '+')),
-      h('div.dice-quick', {}, ...QUICK.map((d) => h('button.small', { onclick: () => this.roll(`${this.count}${d}`) }, LANG === 'en' ? d : d.replace('d', 'W')))),
-      this.opts.isDM ? h('label.check', {}, h('input', { type: 'checkbox', onchange: (e) => { this.secret = e.target.checked; } }), 'Verdeckt würfeln (nur ich sehe es)') : null,
+      h('div.dice-adv', {}, advBtn, disBtn, info('advantage')),
+      h('div.dice-count-row', {}, h('span', {}, 'Anzahl'), minus, countEl, plus),
+      h('div.dice-quick', {}, ...dieBtns),
+      h('div.dice-go', {}, summary,
+        h('button.primary.dice-roll', { onclick: () => this.roll(this.expression()) }, '🎲 Würfeln')),
+      this.opts.isDM ? h('label.check', {}, h('input', { type: 'checkbox', checked: this.secret, onchange: (e) => { this.secret = e.target.checked; } }), 'Verdeckt würfeln (nur ich sehe es)') : null,
       unitConverter(),
       this.logEl,
     );
+    sync();
     this.renderLog();
   }
 

@@ -187,6 +187,35 @@ try:
         drag_world(dm, (G * 12.5, G * 10.2), (G * 18.5, G * 13))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
 
+        step('Freihand: Linie auswählen, Mülleimer und Entf-Taste löschen, Radierer')
+        dm.click('#toolbar button.tool:has-text("✎") >> nth=0')
+        # alle Optionen der Werkzeugleiste sind erreichbar, nichts liegt unter dem Würfelknopf
+        tb = dm.locator('#toolbar').bounding_box(); dice_btn = dm.locator('.dice-toggle').bounding_box()
+        assert tb['y'] + tb['height'] <= dice_btn['y'], 'Werkzeugleiste endet über dem Würfelknopf'
+        dm.locator('#toolbar .tb-style').last.scroll_into_view_if_needed()
+        shot(dm, '43-werkzeugleiste.png', clip={'x': 0, 'y': tb['y'] - 10, 'width': 260, 'height': 900 - tb['y'] + 10})
+        drag_world(dm, (G * 1, G * 12), (G * 5, G * 13))
+        drag_world(dm, (G * 1, G * 14), (G * 6, G * 14))
+        n_before = dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length")
+        assert n_before == 2, n_before
+        dm.click('button.tool[title="Auswählen und Verschieben"]')
+        click_world(dm, G * 3, G * 12.5); time.sleep(0.3)
+        assert dm.evaluate("window.dnd.board.trash.visible()"), 'Mülleimer am Auswahlrahmen'
+        lx, ly = world(dm, G * 3, G * 12.5)
+        shot(dm, '44-zeichnung-muelleimer.png', clip={'x': max(0, lx - 260), 'y': ly - 200, 'width': 560, 'height': 320})
+        dm.keyboard.press('Delete'); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length") == 1, 'Entf löscht'
+        dm.click('#toolbar button.tool[title^="Radierer"]')
+        drag_world(dm, (G * 3.5, G * 13.3), (G * 3.5, G * 14.7)); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length") == 2, 'Radierer teilt die Linie'
+        dm.click('button.tool[title="Auswählen und Verschieben"]')
+        click_world(dm, G * 1.5, G * 14); time.sleep(0.3)
+        x, y = dm.evaluate("(() => { const t = window.dnd.board.trash; const r = window.dnd.board.container.getBoundingClientRect(); const p = t.getAbsolutePosition(); return [r.left + p.x, r.top + p.y]; })()")
+        dm.mouse.click(x, y); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length") == 1, 'Mülleimer löscht'
+        click_world(dm, G * 5.5, G * 14); time.sleep(0.3)
+        dm.keyboard.press('Delete'); time.sleep(0.4)
+
         step('Porträtleiste: alle Spieler und Goblins einzeln, Werte, sortieren')
         dm.click('#tabs button[data-tab=players]')
         dm.get_by_role('button', name='Alle in Leiste').click(); time.sleep(0.6)
@@ -258,17 +287,81 @@ try:
         dm.get_by_role('button', name='Bearbeiten …').click(); time.sleep(0.2)
         dm.fill('.dialog input[name=name]', 'Wolf'); dm.fill('.dialog input[name=color]', '#2f6b3a'); dialog_ok(dm); time.sleep(0.4)
 
+        step('Farbmarker: 3 Ratten mit zufälligen Farben statt Kennungen')
+        dm.click('#tabs button[data-tab=npcs]')
+        dm.get_by_role('button', name='+ Neuer NPC').click(); dm.fill('.dialog input[name=name]', 'Ratte'); dialog_ok(dm)
+        dm.wait_for_selector('.sheet .name')
+        dm.locator('.sheet-head button', has_text='Auf Karte setzen').click()
+        dm.fill('.dialog input[name=count]', '3'); dm.select_option('.dialog select[name=style]', 'color'); dialog_ok(dm)
+        click_world(dm, G * 16.5, G * 3.5); time.sleep(0.6)
+        rats = dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name.startsWith('Ratte')).map(t => [t.badgeColor, t.label])")
+        assert len(rats) == 3 and len({r[0] for r in rats}) == 3 and all(r[1] == '' for r in rats), rats
+        rx, ry = world(dm, G * 17, G * 4)
+        shot(dm, '45-farbmarker.png', clip={'x': rx - 200, 'y': ry - 150, 'width': 400, 'height': 280})
+
+        step('NPC umbenennen und Bild ändern: Figur ändert sich mit, Löschen nimmt sie mit')
+        rid = dm.evaluate("window.dnd.board.state.npcs.find(n => n.name.startsWith('Ratte')).id")
+        dm.evaluate("([id]) => { document.querySelector('#tabs button[data-tab=npcs]').click(); }", [rid])
+        first_rat = dm.evaluate("window.dnd.board.state.npcs.find(n => n.name.startsWith('Ratte')).name")
+        dm.locator('#tabBody button.link', has_text=first_rat).click(); time.sleep(0.3)
+        dm.fill('.sheet .name', 'Riesenratte'); dm.press('.sheet .name', 'Tab'); time.sleep(0.4)
+        dm.click('.sheet .portrait'); dm.select_option('.dialog select', label='wolf'); dialog_ok(dm); time.sleep(0.4)
+        tok = dm.evaluate("window.dnd.board.scene.tokens.find(t => t.refId === window.dnd.board.state.npcs.find(n => n.name === 'Riesenratte').id)")
+        assert tok and tok['name'] == 'Riesenratte' and tok['assetId'], tok
+        dm.locator('.sheet-actions button, .sheet-head button', has_text='Löschen').first.click(); time.sleep(0.2)
+        assert 'mit gelöscht' in dm.locator('.dialog').inner_text()
+        dialog_ok(dm); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name.startsWith('Ratte') || t.name === 'Riesenratte').length") == 2
+
+        step('Zustände rundherum: Platz für ~20 Perlen am Porträt')
+        kx, ky = token_pos(dm, 'Kael')
+        click_world(dm, kx, ky, button='right')
+        dm.get_by_role('button', name='Zustände …').click()
+        boxes = dm.locator('.dialog input[type=checkbox]')
+        for i in range(min(20, boxes.count())): boxes.nth(i).check()
+        dialog_ok(dm); time.sleep(0.5)
+        item = dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Kael'))
+        assert item.locator('.ini-pearl').count() == 20
+        ib = item.bounding_box()
+        shot(dm, '46-zustaende-rundherum.png', clip={'x': ib['x'] - 20, 'y': ib['y'] - 4, 'width': ib['width'] + 40, 'height': ib['height'] + 8})
+        click_world(dm, kx, ky, button='right')
+        dm.get_by_role('button', name='Zustände …').click()
+        for i in range(min(20, boxes.count())): boxes.nth(i).uncheck()
+        dialog_ok(dm); time.sleep(0.4)
+
+        step('Doppelklick aufs Porträt in der Leiste öffnet den Reiter')
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.2)
+        dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Goblin B')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
+        assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'npcs'
+        assert dm.locator('.sheet .name').input_value() == 'Goblin B'
+        dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Borin')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
+        assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'players'
+        ini = dm.locator('#initiative').bounding_box()
+        shot(dm, '47-leiste-knoepfe.png', clip={'x': 0, 'y': ini['y'], 'width': 1440, 'height': ini['height']})
+
         step('Zauberschablone: Feuerball 20 ft')
         dm.click('button.tool[title^="Zauberschablone"]')
         dialog_ok(dm)
         click_world(dm, G * 6, G * 3.2)
 
-        step('Würfeln: offen und verdeckt')
-        dm.click('.dice-toggle'); dm.click('.dice-quick button:has-text("W20")'); time.sleep(0.4)
+        step('Würfeln: erst auswählen (Umschalter), dann „Würfeln“; offen und verdeckt')
+        dm.click('.dice-toggle'); dm.click('.dice-quick button:has-text("W6")'); time.sleep(0.3)
+        assert dm.evaluate("window.dnd.board.state.diceLog.length") == 0, 'Auswählen würfelt noch nicht'
         dm.click('.dice-count-row button[title="Mehr Würfel"]'); dm.click('.dice-count-row button[title="Mehr Würfel"]')
-        dm.click('.dice-quick button:has-text("W6")'); time.sleep(0.4)
+        assert dm.locator('.dice-summary').inner_text().startswith('3W6')
+        dm.click('.dice-roll'); time.sleep(0.5)
+        assert dm.locator('.dice-log li').count() == 1
+        assert dm.locator('.dice-log li .detail').first.inner_text().startswith('3W6')
+        dm.click('.dice-quick button:has-text("W20")'); dm.click('.dice-adv button >> nth=0'); time.sleep(0.2)
+        assert dm.locator('.dice-adv button.on').count() == 1, 'Vorteil ist eingeschaltet'
+        dm.click('.dice-adv button >> nth=1'); time.sleep(0.2)
+        assert 'Nachteil' in dm.locator('.dice-adv button.on').inner_text(), 'Umschalten auf Nachteil'
+        dm.click('.dice-adv button >> nth=1'); time.sleep(0.2)
+        assert dm.locator('.dice-adv button.on').count() == 0, 'nochmal antippen = aus'
         assert dm.locator('.dice-panel input.expr').count() == 0, 'keine Formeleingabe mehr'
-        dm.check('.dice-panel input[type=checkbox]'); dm.click('.dice-adv button >> nth=0'); time.sleep(0.5)
+        dm.click('.dice-adv button >> nth=0')
+        dm.check('.dice-panel input[type=checkbox]'); dm.click('.dice-roll'); time.sleep(0.5)
+        assert 'Vorteil' in dm.locator('.dice-log li .detail').first.inner_text()
         shot(dm, '13-wuerfel.png')
         dm.click('.dice-toggle'); time.sleep(0.3)
 
@@ -279,7 +372,13 @@ try:
         for lvl, n in [(1, '4'), (2, '3'), (3, '2')]:
             dm.fill(f'.sheet input[data-bind="slotmax:{lvl}"]', n); dm.press(f'.sheet input[data-bind="slotmax:{lvl}"]', 'Tab'); time.sleep(0.2)
         dm.get_by_role('button', name='Fertig', exact=True).click(); time.sleep(0.3)
-        dm.click('.diamond >> nth=1'); time.sleep(0.3)
+        # einzeln abhaken: rechts zuerst, dann links – nur diese beiden sind verbraucht
+        dm.click('.diamond >> nth=3'); time.sleep(0.3); dm.click('.diamond >> nth=1'); time.sleep(0.3)
+        used = dm.evaluate("[...document.querySelectorAll('.boxes[data-slot-level=\"1\"] .diamond')].map(b => b.classList.contains('used'))")
+        assert used == [False, True, False, True], used
+        dm.click('.diamond >> nth=3'); time.sleep(0.3)
+        used = dm.evaluate("[...document.querySelectorAll('.boxes[data-slot-level=\"1\"] .diamond')].map(b => b.classList.contains('used'))")
+        assert used == [False, True, False, False], used
         dm.click('.party-card >> nth=1'); time.sleep(0.3)
         dm.get_by_role('button', name='⚙ Bogen anpassen').click()
         dm.uncheck('.dialog input[name=slots]')
@@ -354,6 +453,8 @@ try:
         mia.click('#mapToggle'); time.sleep(0.3)
         step('Mia blendet die Karte aus (Handy ohne Karte)')
         mia.click('#mapToggle'); time.sleep(0.4)
+        mia.click('#tabs button[data-tab=sheet]'); time.sleep(0.3)
+        mia.locator('.slots').scroll_into_view_if_needed(); time.sleep(0.2)
         shot(mia, '21-ohne-karte-handy.png')
         assert mia.locator('.diamond').count() == 9, 'Arias Rauten (4+3+2)'
         mia.click('#tabs button[data-tab=inventory]'); time.sleep(0.4)

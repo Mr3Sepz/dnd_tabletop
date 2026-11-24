@@ -47,13 +47,15 @@ async function effectDialog(opts, e) {
 /** Rundenzähler (links) und Effekttimer. */
 function roundBox(opts) {
   const round = opts.round || 1;
-  const box = h('div.round-box', {},
+  const box = h('div.round-box', {});
+  const row = h('div.round-row', {},
     h('div.round', { title: 'Kampfrunde' },
       h('small', {}, term('round'), info('round')),
       h('div.round-num', {},
         opts.isDM ? h('button.icon', { title: 'Runde zurück', onclick: () => opts.onRound(Math.max(1, round - 1)) }, '−') : null,
         h('b', {}, String(round)),
         opts.isDM ? h('button.icon', { title: 'Runde vor', onclick: () => opts.onRound(round + 1) }, '+') : null)));
+  box.append(row);
   const effects = h('div.effects', {},
     ...(opts.effects || []).map((e) => {
       const left = remaining(e, round);
@@ -64,13 +66,13 @@ function roundBox(opts) {
       }, h(`span${e.target ? '.ab-eff' : ''}`, { 'data-raw': '' }, e.target ? (e.target.delta > 0 ? '⬆ ' : '⬇ ') : '⏳ ', effectLabel(e)), h('b', {}, left > 0 ? String(left) : 'vorbei'));
     }),
     opts.onEffectAdd ? h('button.effect.add', { title: 'Effekttimer starten (zählt pro Runde herunter)', onclick: () => effectDialog(opts, null) }, '+ ⏳') : null);
-  box.append(effects);
+  row.append(effects);
   return box;
 }
 
 /**
  * entries: [{ id, kind, name, portraitAssetId, value, visibility?, condition?, conditions?, count?, hiddenNow? }]
- * opts: { isDM, currentId, state, onReorder, onSetCurrent, onRemove, onNext, onPrev, onClear, onValue, onVisibility, onSort }
+ * opts: { isDM, currentId, state, onReorder, onSetCurrent, onRemove, onNext, onPrev, onClear, onValue, onVisibility, onSort, onOpen }
  */
 export function renderInitiative(container, entries, opts) {
   // Beim Tippen eines Initiativwerts nicht neu aufbauen.
@@ -78,19 +80,24 @@ export function renderInitiative(container, entries, opts) {
   container.replaceChildren();
   const hasEffects = (opts.effects || []).length > 0;
   container.classList.toggle('empty', entries.length === 0 && !hasEffects);
-  if (entries.length || hasEffects) container.append(roundBox(opts));
+  const box = (entries.length || hasEffects) ? roundBox(opts) : null;
+  if (box) container.append(box);
   if (!entries.length) {
     if (opts.isDM) container.append(h('span.hint', {}, 'Porträtleiste leer. Bei NPCs, Spielern oder markierten Figuren „In Leiste“ wählen.'));
     else if (opts.onEffectAdd && !hasEffects) container.replaceChildren();
     return;
   }
   const list = h('div.ini-list');
+  let clickTimer = null;
   let dragId = null;
 
   entries.forEach((e, i) => {
     const url = e.portraitAssetId && assetUrl(opts.state, e.portraitAssetId);
     const ring = e.condition ? HEALTH_COLORS[e.condition] : null;
-    const dots = (e.conditions || []).slice(0, 13);
+    const dots = (e.conditions || []).slice(0, 24);
+    // Perlen gleichmäßig rundherum; bei vielen Zuständen werden sie kleiner (Platz für ~20)
+    const R = 30; const n = Math.max(dots.length, 10);
+    const pearl = Math.max(6, Math.min(11, Math.floor((2 * Math.PI * R) / n) - 1));
     const isCurrent = e.id === opts.currentId;
     const cls = `div.ini-item${isCurrent ? '.current' : ''}${e.condition === 'tot' ? '.defeated' : ''}${opts.isDM && e.hiddenNow ? '.hidden-for-players' : ''}`;
     const item = h(cls, {
@@ -107,16 +114,26 @@ export function renderInitiative(container, entries, opts) {
         dragId = null;
         opts.onReorder(ids);
       },
-      onclick: () => { if (opts.isDM) opts.onSetCurrent(e.id); },
+      // Einfach antippen = ist dran (DM); doppelt = zum Reiter des Charakters/NPCs springen
+      onclick: () => {
+        if (!opts.isDM) return;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => opts.onSetCurrent(e.id), 260);
+      },
+      ondblclick: (ev) => {
+        clearTimeout(clickTimer);
+        if (opts.onOpen && !ev.target.closest('input, button')) opts.onOpen(e);
+      },
     },
     h('div.ini-portrait', { style: { ...(ring ? { boxShadow: `0 0 0 5px ${ring}` } : {}), ...(e.color ? { background: e.color } : {}) } },
       url ? h('img', { src: url, alt: '' }) : h('span', {}, initials(e.name)),
       e.count ? h('span.ini-count', {}, `×${e.count}`) : null,
       // Zustände als farbige Perlen um das Porträt herum, oben beginnend im Uhrzeigersinn
       ...dots.map((c, k) => {
-        const a = (-90 + k * 26) * Math.PI / 180;
-        return h('span.ini-pearl', { title: c.label, style: { background: c.color, left: `${23 + 29 * Math.cos(a)}px`, top: `${23 + 29 * Math.sin(a)}px` } });
-      })),
+        const a = (-90 + k * (360 / n)) * Math.PI / 180;
+        return h('span.ini-pearl', { title: c.label, style: { background: c.color, width: `${pearl}px`, height: `${pearl}px`, margin: `${-pearl / 2}px 0 0 ${-pearl / 2}px`, left: `${23 + R * Math.cos(a)}px`, top: `${23 + R * Math.sin(a)}px` } });
+      }),
+      e.badgeColor ? h('span.ini-badge', { style: { background: e.badgeColor }, title: 'Farbmarkierung der Figur' }) : null),
     h('div.ini-name', {}, e.name),
     opts.isDM
       ? h('div.ini-tools', {},
@@ -144,7 +161,8 @@ export function renderInitiative(container, entries, opts) {
 
   container.append(list);
   if (opts.isDM) {
-    container.append(h('div.ini-controls', {},
+    // Knöpfe direkt über Rundenzähler und Effekttimer (spart Platz rechts)
+    box.prepend(h('div.ini-controls', {},
       info('initiative'),
       h('button.small', { onclick: opts.onSort, title: 'Nach Initiativwert sortieren, der Höchste beginnt' }, 'Sortieren'),
       h('button.small', { onclick: opts.onPrev, title: 'Zurück' }, '◀'),

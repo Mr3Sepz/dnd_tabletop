@@ -47,6 +47,7 @@ const board = new Board($('#board'), {
   // Eigene Zauberschablonen verschieben, drehen, löschen
   canEditDrawing: (d) => d.ownerSeat === seat,
   onDrawingChange: (d, patch) => conn.act({ type: 'drawing.update', sceneId: sceneId(), id: d.id, patch }),
+  onDrawingDelete: (d) => conn.act({ type: 'drawing.delete', sceneId: sceneId(), id: d.id }),
   onDrawingContext: async (d) => {
     if (d.ownerSeat !== seat) return;
     if (await dialog({ title: 'Schablone entfernen?', okText: 'Entfernen', danger: true })) conn.act({ type: 'drawing.delete', sceneId: sceneId(), id: d.id });

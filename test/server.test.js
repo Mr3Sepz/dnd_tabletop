@@ -629,30 +629,60 @@ test('Bildordner: Upload mit Ordner, verschieben; alte Bilder werden nach Verwen
   dm.c.close();
 });
 
-test('Keine Figuren ohne Werte: jede Figur ist Spielercharakter oder NPC (mit Attributen)', async () => {
+test('Figuren ohne Verknüpfung bleiben erlaubt; NPCs haben Werte', async () => {
   const dm = await joinDM();
   const st = inst.getState();
   const sc = st.scenes.find((x) => x.id === st.activeSceneId);
   const before = st.npcs.length;
-  const r = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Pferd', x: 10, y: 10 } });
+  const r = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Fass', x: 10, y: 10 } });
   const t = sc.tokens.find((x) => x.id === r.result.id);
-  assert.equal(t.kind, 'npc');
-  const horse = st.npcs.find((x) => x.id === t.refId);
-  assert.equal(horse.name, 'Pferd');
-  assert.equal(st.npcs.length, before + 1);
-  assert.equal(horse.abilities.str, 10, 'auch ein Pferd hat Werte');
-  assert.equal((await act(dm.c, { type: 'npc.update', id: horse.id, patch: { abilities: { str: 18 }, skills: { athletics: 1 } } })).ok, true);
-  assert.equal(horse.abilities.str, 18);
-  // alter Spielstand mit Markierung
+  assert.equal(t.kind, 'marker', 'reine Figur ohne NPC');
+  assert.equal(st.npcs.length, before, 'kein NPC angelegt');
+  const horse = await act(dm.c, { type: 'npc.create', name: 'Pferd' });
+  const n = st.npcs.find((x) => x.id === horse.result.id);
+  assert.equal(n.abilities.str, 10, 'auch ein Pferd hat Werte');
+  // alter Spielstand mit Markierung bleibt Markierung
   const S = require('../server/state');
   const raw = S.createInitialState();
   raw.scenes[0].tokens.push({ id: 't_old', name: 'Fass', kind: 'marker', refId: null, x: 0, y: 0, assetId: null });
-  const n = S.normalizeState(raw);
-  const old = n.scenes[0].tokens.find((x) => x.id === 't_old');
-  assert.equal(old.kind, 'npc');
-  assert.ok(n.npcs.some((x) => x.id === old.refId && x.name === 'Fass'));
+  const norm = S.normalizeState(raw);
+  assert.equal(norm.scenes[0].tokens.find((x) => x.id === 't_old').kind, 'marker');
   await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [t.id] });
-  await act(dm.c, { type: 'npc.delete', id: horse.id });
+  await act(dm.c, { type: 'npc.delete', id: n.id });
+  dm.c.close();
+});
+
+test('NPC-Änderungen gehen auf die Figuren über, Löschen nimmt die Figur mit', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const r = await act(dm.c, { type: 'npc.create', name: 'Wolf' });
+  const id = r.result.id;
+  const sp = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: id, labels: [''], x: 0, y: 0 });
+  const tokId = sp.result.created[0].tokenId;
+  await act(dm.c, { type: 'npc.update', id, patch: { name: 'Grauwolf', portraitAssetId: 'a_test' } });
+  const t = sc.tokens.find((x) => x.id === tokId);
+  assert.equal(t.name, 'Grauwolf');
+  assert.equal(t.assetId, 'a_test');
+  const del = await act(dm.c, { type: 'npc.delete', id });
+  assert.equal(del.result.removedTokens, 1);
+  assert.ok(!sc.tokens.some((x) => x.id === tokId), 'Figur mit gelöscht');
+  dm.c.close();
+});
+
+test('Farbmarker: mehrere NPCs bekommen verschiedene, zufällige Farben ohne Kennung', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const r = await act(dm.c, { type: 'npc.create', name: 'Goblin' });
+  const sp = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: r.result.id, labels: ['', '', '', ''], style: 'color', x: 0, y: 0 });
+  const toks = sp.result.created.map((c) => sc.tokens.find((t) => t.id === c.tokenId));
+  assert.equal(toks.length, 4);
+  assert.ok(toks.every((t) => /^#[0-9a-f]{6}$/.test(t.badgeColor) && t.label === ''));
+  assert.equal(new Set(toks.map((t) => t.badgeColor)).size, 4, 'alle verschieden');
+  const names = sp.result.created.map((c) => st.npcs.find((n) => n.id === c.npcId).name);
+  assert.equal(new Set(names).size, 4, 'Namen unterscheidbar');
+  for (const c of sp.result.created) await act(dm.c, { type: 'npc.delete', id: c.npcId });
   dm.c.close();
 });
 
@@ -794,4 +824,41 @@ test('Infotexte: jeder Zustand aus dem Katalog hat eine Erklärung, Quelle ist S
   for (const c of cat.conditions) assert.ok(help.conditions[c.key], `Erklärung fehlt: ${c.key}`);
   assert.match(help.attribution, /System Reference Document 5\.1/);
   assert.match(help.attribution, /creativecommons\.org\/licenses\/by\/4\.0/);
+});
+
+test('Zauberplätze einzeln abhaken: nur der gewählte Platz ist verbraucht', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const c = st.characters[0];
+  await act(dm.c, { type: 'character.update', id: c.id, patch: { slots: [{ level: 1, max: 4, marks: [false, false, true, false] }] } });
+  const sl = c.slots.find((x) => x.level === 1);
+  assert.deepEqual(sl.marks, [false, false, true, false]);
+  assert.equal(sl.used, 1);
+  // alter Stand: nur Anzahl → die ersten sind verbraucht
+  const S = require('../server/state');
+  const raw = S.createInitialState();
+  raw.characters[0].slots = [{ level: 2, max: 3, used: 2 }];
+  const n = S.normalizeState(raw);
+  assert.deepEqual(n.characters[0].slots.find((x) => x.level === 2).marks, [true, true, false]);
+  await act(dm.c, { type: 'character.update', id: c.id, patch: { slots: [] } });
+  dm.c.close();
+});
+
+test('Radierer: Linie zerfällt in Stücke, ganz wegradiert = gelöscht; nur DM', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(2);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const r = await act(dm.c, { type: 'drawing.create', sceneId: sc.id, drawing: { type: 'line', x: 0, y: 0, points: [0, 0, 100, 0, 200, 0], stroke: '#123456', strokeWidth: 5 } });
+  const id = r.result.id;
+  assert.equal((await act(p.c, { type: 'drawing.erase', sceneId: sc.id, id, pieces: [] })).ok, false);
+  const e = await act(dm.c, { type: 'drawing.erase', sceneId: sc.id, id, pieces: [{ x: 0, y: 0, points: [0, 0, 50, 0] }, { x: 150, y: 0, points: [0, 0, 50, 0] }] });
+  assert.equal(e.result.ids.length, 2);
+  assert.ok(!sc.drawings.some((d) => d.id === id));
+  const parts = sc.drawings.filter((d) => e.result.ids.includes(d.id));
+  assert.ok(parts.every((d) => d.stroke === '#123456' && d.strokeWidth === 5));
+  await act(dm.c, { type: 'drawing.erase', sceneId: sc.id, id: parts[0].id, pieces: [] });
+  assert.ok(!sc.drawings.some((d) => d.id === parts[0].id), 'ganz wegradiert');
+  await act(dm.c, { type: 'drawing.delete', sceneId: sc.id, id: parts[1].id });
+  p.c.close(); dm.c.close();
 });
