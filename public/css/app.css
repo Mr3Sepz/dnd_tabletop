@@ -617,3 +617,11 @@ small.term-en.under { display: block; margin-top: 1px; padding-left: 4px; font-s
 .npc-list .npc-del:hover { opacity: 1; color: var(--bad); }
 .sel-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; margin: 6px 0; background: var(--tint); border: 1px solid var(--accent); border-radius: 8px; position: sticky; top: 0; z-index: 2; }
 .sel-bar b { margin-right: auto; }
+
+/* Bildausschnitt für runde Porträts */
+.crop-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.crop-view { border-radius: 50%; background-repeat: no-repeat; background-color: var(--card); cursor: grab; touch-action: none;
+  box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0,0,0,0.3); }
+.crop-view:active { cursor: grabbing; }
+.crop-zoom { width: 100%; }
+.crop-zoom input { width: 100%; accent-color: var(--accent); }

@@ -139,7 +139,7 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 
 - **+ Neue Szene**, dann **Bild hochladen**. Große Bilder werden automatisch verkleinert, damit sie bei allen schnell laden.
 - **Jede Szene ist für sich:** Eine neue Szene ist **völlig leer**, ohne Karte, ohne Figuren und mit **leerer Porträtleiste**. Jede Szene hat ihre eigene Leiste mit eigenem Rundenzähler. Schaltest du eine andere Szene live, bleibt die Leiste der alten Szene dort liegen. Gehst du zurück, ist sie wieder da. Laufende Effekttimer behalten beim Wechsel ihre restlichen Runden.
-- **Plätze:** Unter der Szenenliste stehen die Spielerplätze mit ihrem *Ort* (siehe [Getrennte Gruppen](#12-getrennte-gruppen)) und *Freigeben*.
+- **Plätze:** Ganz unten im Reiter stehen die Spielerplätze mit ihrem *Ort* (siehe [Getrennte Gruppen](#12-getrennte-gruppen)) und *Freigeben*.
 - **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
 - **Fuß pro Feld** (Standard 5) braucht das Lineal.
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
@@ -188,6 +188,12 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 <br clear="right">
 
 **NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: ein Bild aus *Charaktere/NPCs* antippen → **📍 Als NPC auf die Karte setzen**. Ziehst du ein Bild direkt auf die Karte, wird es eine **Figur** (ohne Werte). Eine Figur ohne Bild setzt du im Reiter *Figuren* mit **Figur ohne Bild setzen**.
+
+<img src="docs/img/52-bildausschnitt.webp" width="300" align="right" alt="Dialog Bildausschnitt: Porträt im Kreis mit Zoomregler">
+
+**Bildausschnitt im runden Rahmen:** Ist ein Bild nicht quadratisch, schneidet der Kreis es manchmal ungünstig ab. Im Bogen eines Charakters oder NPCs gibt es dafür **✂️ Bildausschnitt**, im Reiter *Bilder* (Ordner Charaktere/NPCs) **✂️ Ausschnitt anpassen**. Im Kreis ziehst du das Bild an die richtige Stelle, mit dem **Zoom**-Regler (oder dem Mausrad) vergrößerst du es. Der Ausschnitt gilt überall, wo das Bild rund erscheint: auf der Figur, in der Porträtleiste, im Bogen und bei den Spielern. Das Originalbild bleibt erhalten. *Ganzes Bild (zurücksetzen)* nimmt den Ausschnitt wieder weg.
+
+<br clear="right">
 
 **Durchsichtige PNGs:** Hat ein Bild einen durchsichtigen Hintergrund, füllt die **Hintergrundfarbe** der Figur die Lücke (Rechtsklick → *Bearbeiten …* → *Hintergrundfarbe*). Die Farbe gilt auch für das Porträt in der Leiste.
 
@@ -260,7 +266,7 @@ Die **Werkzeugleiste** endet über dem Würfelknopf 🎲. Passt nicht alles hine
 
 **Markieren**, drei Wege:
 - **Umschalt gedrückt halten und Figuren einzeln anklicken.** Noch einmal klicken hebt die Markierung wieder auf.
-- **Umschalt + Rahmen ziehen** auf freier Fläche.
+- **Umschalt + Rahmen ziehen** auf freier Fläche. Solange Umschalt gedrückt ist, lässt sich die Karte nicht verschieben, so bleibt sie beim Ziehen des Rahmens stehen. Nach dem Loslassen verschiebt sie sich wieder wie gewohnt.
 - **☐** in der Figurenliste (praktisch am Tablet).
 
 Unten erscheint *„4 markiert · Aktionen …“*:
@@ -505,7 +511,7 @@ Reiter **Notizen** (bei dir) bzw. **Gruppe** (bei den Spielern):
 
 - **+ Eintrag** legt eine neue Quest oder Notiz an. Der neueste Eintrag steht oben.
 - Jeder Eintrag hat einen Titel und ein Textfeld. **Alle** dürfen alles: anlegen, schreiben, löschen.
-- **Erledigt** anhaken: Der Eintrag wird grau, durchgestrichen und rutscht hinter alle offenen.
+- **Erledigt** anhaken: Der Eintrag wird **sofort** grau, durchgestrichen und rutscht hinter alle offenen. Nimmst du das Häkchen wieder weg, springt er sofort an seinen alten Platz zurück.
 - Darunter stehen die **gemeinsamen Notizen** für alles andere.
 
 <br clear="right">

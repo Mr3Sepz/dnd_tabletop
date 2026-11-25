@@ -14,7 +14,8 @@ export class QuestLog {
 
   focusedInside() {
     const a = document.activeElement;
-    return this.container.contains(a) && /INPUT|TEXTAREA/.test(a.tagName);
+    // Häkchen zählen nicht als „gerade am Tippen“, sonst springt die Quest erst später
+    return this.container.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type !== 'checkbox'));
   }
 
   update(quests) {
@@ -54,7 +55,13 @@ export class QuestLog {
       list.length ? h('div.quests', {}, ...list.map((q) => h(`div.quest${q.done ? '.done' : ''}`, {},
         h('div.quest-head', {},
           h('label.quest-check', { title: q.done ? 'Wieder öffnen' : 'Als erledigt abhaken' },
-            h('input', { type: 'checkbox', checked: q.done, onchange: (e) => this.opts.act({ type: 'quest.update', id: q.id, patch: { done: e.target.checked } }) }),
+            h('input', { type: 'checkbox', checked: q.done, onchange: (e) => {
+              // sofort grau und nach unten (bzw. zurück an den alten Platz), ohne auf den Server zu warten
+              q.done = e.target.checked;
+              this.sig = JSON.stringify(this.sorted().map((x) => [x.id, x.done]));
+              this.render();
+              this.opts.act({ type: 'quest.update', id: q.id, patch: { done: q.done } });
+            } }),
             h('span', {}, 'Erledigt')),
           h('input.quest-title', { value: q.title, placeholder: 'Titel, z. B. Gundren Felsensucher finden', 'data-q': `${q.id}:title`,
             oninput: (e) => this.commit(q.id, 'title')(e.target.value), onblur: (e) => this.opts.act({ type: 'quest.update', id: q.id, patch: { title: e.target.value } }) }),

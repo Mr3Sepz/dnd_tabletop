@@ -617,7 +617,15 @@
   "Mehrere auswählen: Umschalt + Klick, auf dem Handy lang drücken.": "Select several: Shift + click, long-press on a phone.",
   "Als Gruppe": "As group",
   "1 NPC ausgewählt": "1 NPC selected",
-  "Die zugehörige Figur auf der Karte wird mit gelöscht.": "The token on the map will be deleted as well."
+  "Die zugehörige Figur auf der Karte wird mit gelöscht.": "The token on the map will be deleted as well.",
+  "✂️ Bildausschnitt": "✂️ Image crop",
+  "Bild im runden Rahmen verschieben und zoomen": "Move and zoom the image in the round frame",
+  "✂️ Ausschnitt anpassen (rund)": "✂️ Adjust crop (round)",
+  "✂️ Ausschnitt ändern (rund)": "✂️ Change crop (round)",
+  "Bild im Kreis ziehen, um es zu verschieben. So sieht es auf der Figur, in der Porträtleiste und im Bogen aus.": "Drag the image inside the circle to move it. This is how it looks on the token, in the portrait bar and on the sheet.",
+  "Ganzes Bild (zurücksetzen)": "Whole image (reset)",
+  "Ausschnitt konnte nicht gespeichert werden.": "Could not save the crop.",
+  "Bild konnte nicht geladen werden.": "Could not load the image."
  },
  "patterns": [
   [
@@ -1019,6 +1027,10 @@
   [
    "(\\d+) NPCs",
    "$1 NPCs"
+  ],
+  [
+   "Ausschnitt: (.+)",
+   "Crop: $1"
   ]
  ]
 }

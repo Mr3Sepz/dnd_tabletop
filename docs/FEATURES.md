@@ -112,6 +112,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | NPC-Initiative würfeln | ✅ | 🎲 NPCs: W20 + GE-Bonus für alle NPC-Einträge, ohne Sortieren |
 | — | Licht radieren | ✅ | 🌑 macht gemalte Lichtstellen wieder dunkel |
 | — | NPC-Liste | ✅ | 🗑 pro Eintrag, Mehrfachauswahl (Umschalt + Klick, lang drücken) mit Sammelaktionen |
+| — | Bildausschnitt | ✅ | Porträt im runden Rahmen verschieben und zoomen, gilt überall |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Darkmode | ✅ | Mitternachtsblau bis Dunkelrot, pro Gerät |

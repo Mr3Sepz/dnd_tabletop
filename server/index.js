@@ -108,7 +108,16 @@ function createApp(overrides = {}) {
     };
     // Bilder für Münzen landen nicht in der Bildersammlung
     if (req.query.purpose === 'coin') asset.purpose = 'coin';
-    else asset.folder = ['characters', 'objects', 'maps', 'misc'].includes(req.query.folder) ? req.query.folder : 'misc';
+    else if (req.query.purpose === 'crop') {
+      // Runder Ausschnitt eines Porträts: quadratisches Bild, das überall statt des Originals erscheint
+      const orig = state.assets.find((a) => a.id === req.query.of && !a.purpose);
+      if (!orig) return res.status(400).json({ error: 'Bild nicht gefunden' });
+      asset.purpose = 'crop'; asset.cropOf = orig.id;
+      if (orig.cropAssetId) state.assets = state.assets.filter((a) => a.id !== orig.cropAssetId);
+      orig.cropAssetId = id;
+      const n = (v, lo, hi, d) => { const x = Number(v); return Number.isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d; };
+      orig.crop = { x: n(req.query.cx, 0, 1, 0.5), y: n(req.query.cy, 0, 1, 0.5), z: n(req.query.z, 1, 8, 1) };
+    } else asset.folder = ['characters', 'objects', 'maps', 'misc'].includes(req.query.folder) ? req.query.folder : 'misc';
     state.assets.push(asset);
     changed();
     res.json(asset);

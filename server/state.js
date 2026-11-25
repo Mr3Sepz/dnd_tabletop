@@ -224,6 +224,7 @@ function normalizeState(raw) {
   });
   // Bildordner: ältere Bilder nach ihrer Verwendung einsortieren
   for (const a of s.assets) if (!a.purpose && !FOLDERS.includes(a.folder)) a.folder = guessFolder(s, a.id);
+  for (const a of s.assets) if (a.cropAssetId && !s.assets.some((x) => x.id === a.cropAssetId)) { delete a.cropAssetId; delete a.crop; }
   // Initiative: ältere Stände hatten einen Index statt einer Id.
   const ini = raw.initiative || {};
   const entries = (Array.isArray(ini.entries) ? ini.entries : []).map((e) => ({ value: null, visibility: 'auto', ...e }));
@@ -978,8 +979,16 @@ function applyAction(state, who, action) {
         || sc.tokens.some((t) => t.assetId === action.id) || sc.drawings.some((d) => d.assetId === action.id))
         || state.characters.some((c) => c.portraitAssetId === action.id) || state.npcs.some((n) => n.portraitAssetId === action.id);
       if (used) throw new ActionError('Bild wird noch verwendet');
-      state.assets = state.assets.filter((a) => a.id !== action.id);
+      state.assets = state.assets.filter((a) => a.id !== action.id && a.cropOf !== action.id);
       return { removedAssetId: action.id };
+    }
+    case 'asset.cropReset': {
+      // Ausschnitt zurücksetzen: wieder das ganze Bild (mittig zugeschnitten)
+      if (!isDM) deny();
+      const a = state.assets.find((x) => x.id === action.id); must(a);
+      state.assets = state.assets.filter((x) => x.id !== a.cropAssetId);
+      delete a.cropAssetId; delete a.crop;
+      return {};
     }
 
     // ---------- Charaktere ----------
@@ -1465,6 +1474,8 @@ function viewForPlayer(state, seatNo) {
     me: { seat: seatNo },
     seatCount: SEAT_COUNT,
   };
+  // Zugeschnittene Porträts gehören mit dazu
+  for (const a of state.assets) if (usedAssets.has(a.id) && a.cropAssetId) usedAssets.add(a.cropAssetId);
   out.assets = state.assets.filter((a) => usedAssets.has(a.id));
   if (seatNo === SPECTATOR) { delete out.characters; out.characters = []; delete out.quests; out.diceLog = []; }
   return out;

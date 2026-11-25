@@ -243,6 +243,19 @@ try:
         dm.locator('#selbar button', has_text='Aktionen').click(); time.sleep(0.2)
         dm.get_by_role('button', name='Alle aufdecken').click(); time.sleep(0.3)
         dm.locator('#selbar button', has_text='Aufheben').click(); time.sleep(0.2)
+
+        step('Umschalt gedrückt halten: Karte bleibt stehen, Rahmen um die Goblins ziehen')
+        gp = [token_pos(dm, f'Goblin {k}') for k in 'ABCD']
+        x0 = min(p[0] for p in gp) - G * 0.6; x1 = max(p[0] for p in gp) + G * 0.6
+        y0 = min(p[1] for p in gp) - G * 0.6; y1 = max(p[1] for p in gp) + G * 0.6
+        pos0 = dm.evaluate("[window.dnd.board.stage.x(), window.dnd.board.stage.y()]")
+        dm.keyboard.down('Shift')
+        drag_world(dm, (x0, y0), (x1, y1))
+        dm.keyboard.up('Shift'); time.sleep(0.3)
+        assert dm.evaluate("[window.dnd.board.stage.x(), window.dnd.board.stage.y()]") == pos0, 'Karte hat sich nicht bewegt'
+        assert dm.evaluate("window.dnd.board.selection.size") == 4, dm.evaluate("[...window.dnd.board.selection]")
+        assert dm.evaluate("window.dnd.board.stage.draggable()"), 'nach dem Loslassen wieder verschiebbar'
+        dm.locator('#selbar button', has_text='Aufheben').click(); time.sleep(0.2)
         gx, gy = token_pos(dm, 'Goblin A')
         click_world(dm, gx, gy, button='right')
         shot(dm, '03-figurenmenue.png')
@@ -337,6 +350,26 @@ try:
         assert dm.locator('.npc-list li', has_text='Ratte').count() == 0
         assert dm.locator('.sel-bar').count() == 0
         assert dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name.startsWith('Ratte')).length") == 0
+
+        step('Bildausschnitt: Kaels Porträt im runden Rahmen verschieben und zoomen')
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
+        dm.locator('.party-card', has_text='Kael').click(); time.sleep(0.3)
+        kid = dm.evaluate("window.dnd.board.state.characters.find(c => c.name === 'Kael').portraitAssetId")
+        old_url = dm.evaluate("(id) => window.dnd.board.state.assets.find(a => a.id === id).file", kid)
+        dm.get_by_role('button', name='✂️ Bildausschnitt').click(); time.sleep(0.5)
+        v = dm.locator('.crop-view').bounding_box()
+        dm.locator('.crop-zoom input').fill('1.8'); time.sleep(0.1)
+        dm.mouse.move(v['x'] + v['width'] / 2, v['y'] + v['height'] / 2); dm.mouse.down()
+        dm.mouse.move(v['x'] + v['width'] / 2 + 30, v['y'] + v['height'] / 2 + 50, steps=6); dm.mouse.up(); time.sleep(0.2)
+        db = dm.locator('form.dialog').bounding_box()
+        shot(dm, '52-bildausschnitt.png', clip={'x': db['x'] - 10, 'y': db['y'] - 10, 'width': db['width'] + 20, 'height': db['height'] + 20})
+        dm.get_by_role('button', name='Übernehmen').click(); time.sleep(1.0)
+        crop = dm.evaluate("(id) => window.dnd.board.state.assets.find(a => a.id === id)", kid)
+        assert crop.get('cropAssetId') and crop['crop']['z'] > 1.7, crop
+        tok = dm.evaluate("window.dnd.board.scene.tokens.find(t => t.name === 'Kael')")
+        assert tok['assetId'] == kid, 'Figur behält das Bild, zeigt aber den Ausschnitt'
+        src = dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Kael')).locator('img').get_attribute('src')
+        assert old_url not in src, src
 
         step('Zustände rundherum: Platz für ~20 Perlen am Porträt')
         kx, ky = token_pos(dm, 'Kael')
@@ -665,7 +698,10 @@ try:
         step('Tom sieht nur die Höhle ohne den Gegner im Nebel, Mia bleibt am Waldweg')
         shot(tom, '08-nebel-spieler.png')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
-        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        heads = dm.evaluate("[...document.querySelectorAll('#tabBody h3')].map(x => x.textContent)")
+        assert heads[-1] == 'Plätze', heads
+        dm.locator('#tabBody h3', has_text='Plätze').scroll_into_view_if_needed(); time.sleep(0.2)
+        dm.evaluate("(() => { const b = document.getElementById('tabBody'); const h = [...b.querySelectorAll('h3')].at(-1); b.scrollTop += h.getBoundingClientRect().top - b.getBoundingClientRect().top - 8; })()"); time.sleep(0.2)
         panel_shot(dm, '09-getrennte-gruppen.png', 620)
 
         step('Messen')
@@ -691,9 +727,16 @@ try:
         mia.get_by_role('button', name='+ Eintrag').click(); time.sleep(0.5)
         mia.fill('.quest-title >> nth=0', 'Sildar Hallwinter retten'); mia.press('.quest-title >> nth=0', 'Tab'); time.sleep(0.4)
         idx = dm.evaluate("[...document.querySelectorAll('.quest-title')].findIndex(i => i.value.startsWith('Wagen'))")
-        dm.locator(f'.quest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.6)
+        before = dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)")
+        # sofort, ohne dass das Häkchen den Fokus verliert
+        dm.locator(f'.quest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.05)
         titles = dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)")
         assert titles[-1] == 'Wagen nach Phandalin bringen', titles
+        assert dm.locator('.quest').last.get_attribute('class').find('done') >= 0
+        dm.locator('.quest').last.locator('input[type=checkbox]').uncheck(); time.sleep(0.05)
+        assert dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)") == before, 'zurück an den alten Platz'
+        idx = dm.evaluate("[...document.querySelectorAll('.quest-title')].findIndex(i => i.value.startsWith('Wagen'))")
+        dm.locator(f'.quest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.6)
         dm.fill('#tabBody textarea.big', 'Sildar sitzt in der Burg Cragmaw fest. Klarg hat einen Wolf namens Ripper.'); time.sleep(0.8)
         dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
         panel_shot(dm, '16-notizen.png', 750)

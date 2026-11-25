@@ -1,5 +1,6 @@
 // DM-Ansicht (A1): Karte mit Werkzeugleiste in der Mitte, alle Verwaltung in der Seitenleiste.
 
+import { cropDialog } from './crop.js';
 import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
 import { InventoryEditor, COINS, coinLabel, coinImage } from './inventory.js';
 import { connect } from './net.js';
@@ -723,7 +724,6 @@ function tabScenes() {
     } }, '+ Neue Szene')),
     list,
     h('p.hint', {}, 'Jede Szene hat ihre eigene Porträtleiste. Eine neue Szene startet leer: ohne Karte, ohne Figuren, mit leerer Leiste. Beim Wechsel mit „Live schalten“ bleibt die Leiste der alten Szene dort erhalten.'),
-    ...seatsSection(),
     h('h3', {}, `Einstellungen: ${sc.name}`),
     h('label.field', {}, h('span', {}, 'Name'), h('input', { value: sc.name, onchange: (e) => update({ name: e.target.value }) })),
     h('div.field', {}, h('span', {}, 'Hintergrund'),
@@ -774,6 +774,8 @@ function tabScenes() {
         h('span.hint', {}, `${(sc.lights || []).filter((l) => !l.erase).length} Licht(er)`))) : null,
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
+    // Plätze der Spieler ganz unten
+    ...seatsSection(),
   ];
 }
 
@@ -859,6 +861,7 @@ function assetMenu(a, x, y) {
     items.push(asFigure);
     items.push(['👹 Als NPC anlegen (mit Werten)', () => npcFromImage(a, null)]);
     items.push(['📍 Als NPC auf die Karte setzen', () => startPlacing({ kind: 'npcImage', assetId: a.id }, `„${a.name}“`)]);
+    items.push([a.cropAssetId ? '✂️ Ausschnitt ändern (rund)' : '✂️ Ausschnitt anpassen (rund)', () => cropPortrait(a.id)]);
     for (const c of state.characters) items.push([`🙂 Porträt für ${c.name}`, () => { const e = sheets.get(c.id); if (e) e.sheet.signature = ''; act({ type: 'character.update', id: c.id, patch: { portraitAssetId: a.id } }); }]);
   }
   if (folder === 'objects') { items.push(['🧱 Als Objekt setzen (eckig, drehbar)', () => placeObject(a.id)]); items.push(asFigure); }
@@ -1093,6 +1096,7 @@ function sheetActions(kind, id) {
     } },
     inIni ? null : { label: 'In Leiste', title: 'In die Porträtleiste / Initiative aufnehmen', onClick: () => act({ type: 'initiative.add', kind: isNpc ? 'npc' : 'character', refId: id }) },
     { label: '± HP', title: 'Schaden oder Heilung', onClick: () => hpDialog([{ kind: isNpc ? 'npc' : 'character', id }], fresh().name) },
+    src.portraitAssetId ? { label: '✂️ Bildausschnitt', title: 'Bild im runden Rahmen verschieben und zoomen', onClick: () => cropPortrait(fresh().portraitAssetId) } : null,
   ];
   if (isNpc) {
     acts.push({ label: 'Kopieren', onClick: async () => {
@@ -1102,6 +1106,12 @@ function sheetActions(kind, id) {
     acts.push({ label: 'Löschen', onClick: () => deleteNpcs([id]) });
   }
   return acts.filter(Boolean);
+}
+
+/** Runden Ausschnitt eines Porträts einstellen (gilt überall, wo das Bild rund erscheint). */
+function cropPortrait(assetId) {
+  const a = state.assets.find((x) => x.id === assetId);
+  if (a) cropDialog({ state, session: conn.session, asset: a, act });
 }
 
 async function pickPortrait(kind, id) {

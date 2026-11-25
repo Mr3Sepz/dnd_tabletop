@@ -74,7 +74,7 @@ export class Sheet {
     this.data = JSON.parse(JSON.stringify(data));
     this.state = state;
     const sig = JSON.stringify([
-      data.id, data.portraitAssetId, (data.stats || []).map((s) => s.id), (data.counters || []).map((c) => c.id),
+      data.id, data.portraitAssetId, data.portraitAssetId && assetUrl(this.state, data.portraitAssetId), (data.stats || []).map((s) => s.id), (data.counters || []).map((c) => c.id),
       (data.conditions || []).map((c) => c.id), data.hp.cur <= 0, !!data.dead, data.deathSaves,
       (data.slots || []).map((s) => s.max), (data.slots || []).some((s) => s.used), (this.opts.actions || []).map((a) => a.label),
       data.sheetPrefs,

@@ -40,7 +40,7 @@ export class WorldMap {
     const st = this.state;
     if (!st || !this.overlay) return;
     const w = st.world || { assetId: null, pins: [] };
-    const url = w.assetId && assetUrl(st, w.assetId);
+    const url = w.assetId && assetUrl(st, w.assetId, { raw: true });
     const o = this.opts;
     this.head.replaceChildren(
       h('b', {}, '🌍 Weltkarte'),

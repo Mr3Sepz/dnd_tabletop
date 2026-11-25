@@ -43,8 +43,11 @@ export function throttle(fn, ms) {
   };
 }
 
-export function assetUrl(state, assetId) {
-  const a = state && state.assets && state.assets.find((x) => x.id === assetId);
+/** URL eines Bildes. Hat ein Porträt einen eigenen runden Ausschnitt, kommt dieser – außer mit { raw: true }. */
+export function assetUrl(state, assetId, { raw = false } = {}) {
+  const list = state && state.assets;
+  let a = list && list.find((x) => x.id === assetId);
+  if (a && !raw && a.cropAssetId) a = list.find((x) => x.id === a.cropAssetId) || a;
   return a ? `/assets/${a.file}` : null;
 }
 

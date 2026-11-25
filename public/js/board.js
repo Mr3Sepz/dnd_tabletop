@@ -86,6 +86,9 @@ export class Board {
     container.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { this.clearSelection(); this.selectDrawing(null); }
+      // Umschalttaste gedrückt: Karte nicht verschieben, damit ein Auswahlrahmen gezogen werden kann
+      if (e.key === 'Shift') this.shiftDown = true;
+      if (e.key === 'Shift' && this.opts.isDM && this.tool === 'select') { this.stage.stopDrag?.(); this.stage.draggable(false); }
       // Entf (oder Rücktaste): ausgewählte Zeichnung löschen – nicht beim Tippen in Feldern
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedDrawing && this.opts.onDrawingDelete) {
         const a = document.activeElement;
@@ -202,7 +205,7 @@ export class Board {
     if (!scene) { layer.draw(); return; }
     const { w, h } = this.mapSize();
     layer.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#e9e1cf' }));
-    const url = scene.background && assetUrl(this.state, scene.background.assetId);
+    const url = scene.background && assetUrl(this.state, scene.background.assetId, { raw: true });
     if (url) {
       const img = loadImage(url, () => this.redraw());
       if (img) {
@@ -307,7 +310,7 @@ export class Board {
         node = new Konva.Line({ ...base, points: d.points, stroke: d.stroke, strokeWidth: d.strokeWidth, lineCap: 'round', lineJoin: 'round', tension: 0.3, dash, opacity, hitStrokeWidth: Math.max(14, d.strokeWidth) });
         break;
       case 'image': {
-        const url = assetUrl(this.state, d.assetId);
+        const url = assetUrl(this.state, d.assetId, { raw: true });
         const img = url ? loadImage(url, () => this.redraw()) : null;
         node = img
           ? new Konva.Image({ ...base, image: img, width: d.w, height: d.h, offsetX: d.w / 2, offsetY: d.h / 2, opacity })
@@ -675,6 +678,10 @@ export class Board {
 
     const onEmpty = (e) => e.target === stage || e.target.getLayer() === this.mapLayer;
 
+    const restorePan = (e) => { if (e.key === 'Shift' || e.type === 'blur') { this.shiftDown = false; if (!draft) stage.draggable(this.tool === 'select'); } };
+    window.addEventListener('keyup', restorePan);
+    window.addEventListener('blur', restorePan);
+
     stage.on('mousedown touchstart', (e) => {
       if (e.evt.touches && e.evt.touches.length > 1) return;
       if (e.evt.button === 1 || e.evt.button === 2) return;
@@ -684,6 +691,7 @@ export class Board {
       if (tool === 'select') {
         // Umschalt + Ziehen auf leerer Fläche: Auswahlrahmen (nur DM)
         if (this.opts.isDM && e.evt.shiftKey && onEmpty(e)) {
+          stage.stopDrag?.();
           stage.draggable(false);
           draft = { kind: 'box', start: p, node: new Konva.Rect({ x: p.x, y: p.y, width: 0, height: 0, stroke: '#2d7ff9', dash: [6, 4], strokeWidth: 2 / stage.scaleX(), fill: 'rgba(45,127,249,0.08)' }) };
           this.uiLayer.add(draft.node);
@@ -749,7 +757,7 @@ export class Board {
       const d = draft; draft = null;
       if (d.node) d.node.destroy();
       if (d.kind === 'box') {
-        stage.draggable(true);
+        stage.draggable(this.tool === 'select' && !(this.shiftDown && this.opts.isDM));
         const a = d.node.attrs;
         for (const t of this.scene.tokens) {
           if (t.x >= a.x && t.x <= a.x + a.width && t.y >= a.y && t.y <= a.y + a.height) this.selection.add(t.id);

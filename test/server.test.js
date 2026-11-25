@@ -942,3 +942,34 @@ test('Licht radieren: Radierstriche werden gespeichert und mit „Rückgängig�
   await act(dm.c, { type: 'light.clear', sceneId: sc.id });
   dm.c.close();
 });
+
+test('Bildausschnitt: quadratischer Ausschnitt ersetzt das Porträt, Original bleibt, zurücksetzbar', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  const post = (q) => fetch(`${base}/api/assets?${q}`, { method: 'POST', headers: { 'content-type': 'image/png', 'x-session': dm.session }, body: png });
+  const orig = await (await post('name=Ork&w=300&h=500&folder=characters')).json();
+  const r = await post(`name=Ork%20(Ausschnitt)&w=512&h=512&purpose=crop&of=${orig.id}&cx=0.5&cy=0.3&z=1.5`);
+  assert.equal(r.status, 200);
+  const crop = await r.json();
+  const a = st.assets.find((x) => x.id === orig.id);
+  assert.equal(a.cropAssetId, crop.id);
+  assert.deepEqual(a.crop, { x: 0.5, y: 0.3, z: 1.5 });
+  assert.equal(st.assets.find((x) => x.id === crop.id).purpose, 'crop');
+  // neuer Ausschnitt ersetzt den alten
+  const crop2 = await (await post(`name=x&w=512&h=512&purpose=crop&of=${orig.id}&cx=0.4&cy=0.4&z=1`)).json();
+  assert.ok(!st.assets.some((x) => x.id === crop.id));
+  assert.equal(a.cropAssetId, crop2.id);
+  // Spieler bekommen den Ausschnitt mit, wenn das Porträt sichtbar ist
+  const c = st.characters[0];
+  await act(dm.c, { type: 'character.update', id: c.id, patch: { portraitAssetId: orig.id } });
+  const p = await joinPlayer(c.seat);
+  assert.ok(p.state.assets.some((x) => x.id === crop2.id));
+  assert.equal((await act(p.c, { type: 'asset.cropReset', id: orig.id })).ok, false);
+  await act(dm.c, { type: 'asset.cropReset', id: orig.id });
+  assert.equal(a.cropAssetId, undefined);
+  assert.ok(!st.assets.some((x) => x.id === crop2.id));
+  assert.equal((await post('name=y&w=1&h=1&purpose=crop&of=gibtsnicht')).status, 400);
+  await act(dm.c, { type: 'character.update', id: c.id, patch: { portraitAssetId: null } });
+  p.c.close(); dm.c.close();
+});
