@@ -973,3 +973,16 @@ test('Bildausschnitt: quadratischer Ausschnitt ersetzt das Porträt, Original bl
   await act(dm.c, { type: 'character.update', id: c.id, patch: { portraitAssetId: null } });
   p.c.close(); dm.c.close();
 });
+
+test('Farbmarker: ein einzelner NPC bleibt ohne Marker und behält seinen Namen', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const r = await act(dm.c, { type: 'npc.create', name: 'Einsiedler' });
+  const sp = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: r.result.id, labels: [''], style: 'color', x: 0, y: 0 });
+  const t = sc.tokens.find((x) => x.id === sp.result.created[0].tokenId);
+  assert.equal(t.badgeColor, null);
+  assert.equal(st.npcs.find((n) => n.id === r.result.id).name, 'Einsiedler');
+  await act(dm.c, { type: 'npc.delete', id: r.result.id });
+  dm.c.close();
+});

@@ -1076,7 +1076,7 @@ function sheetActions(kind, id) {
       // Mehrfach setzen (Vorschlag 6): Anzahl und Kennungen, von Hand änderbar
       const r = await dialog({ title: `„${s.name}“ auf die Karte`, fields: [
         { name: 'count', label: 'Anzahl', type: 'number', value: 1, min: 1, max: 30 },
-        { name: 'style', label: 'Kennungen vorschlagen', type: 'select', value: 'num', options: [{ value: 'num', label: '1, 2, 3 …' }, { value: 'abc', label: 'A, B, C …' }, { value: 'color', label: 'Farbmarker (zufällige Farben)' }, { value: 'none', label: 'keine' }] },
+        { name: 'style', label: 'Kennungen', type: 'select', value: 'color', options: [{ value: 'color', label: 'Farbmarker (zufällige Farben)' }, { value: 'num', label: '1, 2, 3 …' }, { value: 'abc', label: 'A, B, C …' }, { value: 'none', label: 'keine' }] },
         { name: 'hidden', label: 'Versteckt setzen (z. B. Hinterhalt)', type: 'checkbox', value: false },
       ], okText: 'Weiter' });
       if (!r) return;

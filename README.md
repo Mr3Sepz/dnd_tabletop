@@ -210,8 +210,8 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 Beim Setzen eines NPCs wählst du:
 - **Anzahl:** 4 Goblins auf einmal. Jeder bekommt eigene HP.
-- **Kennungen:** 1, 2, 3 … oder A, B, C … vorgeschlagen und frei änderbar. Sie stehen als Abzeichen auf der Figur.
-- **Farbmarker:** Statt Zahl oder Buchstabe wird der kleine Kreis **eingefärbt**. Die Farben werden **jedes Mal zufällig** vergeben. So lernen die Spieler keine feste Reihenfolge wie „Rot ist immer der Erste“. Die NPCs heißen dann z. B. *Ratte Grün* und *Ratte Marine*. Unter *Bearbeiten …* kannst du die Farbe einer Figur auch von Hand setzen oder entfernen.
+- **Kennungen 1, 2, 3 … oder A, B, C …:** im Dialog auswählbar, vorgeschlagen und frei änderbar. Sie stehen als Abzeichen auf der Figur.
+- **Farbmarker (Standard):** Statt Zahl oder Buchstabe wird der kleine Kreis **eingefärbt**. Das ist voreingestellt; Zahlen oder Buchstaben wählst du im Dialog. Ein einzelner NPC bekommt keinen Marker, erst wenn es mehrere gleiche gibt. Die Farben werden **jedes Mal zufällig** vergeben. So lernen die Spieler keine feste Reihenfolge wie „Rot ist immer der Erste“. Die NPCs heißen dann z. B. *Ratte Grün* und *Ratte Marine*. Unter *Bearbeiten …* kannst du die Farbe einer Figur auch von Hand setzen oder entfernen.
 
 <img src="docs/img/45-farbmarker.webp" width="400" alt="Drei Ratten mit farbigen Kreisen statt Kennungen">
 - **Versteckt setzen:** für einen Hinterhalt. Nur du siehst die Figuren, halb durchsichtig.

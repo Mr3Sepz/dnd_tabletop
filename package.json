@@ -1,6 +1,6 @@
 {
   "name": "dnd_tabletop",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Lokal gehostetes DnD-Tabletop: der DM startet den Server, bis zu 5 Spieler treten per Browser bei (LAN oder Tailscale).",
   "main": "server/index.js",
   "private": true,

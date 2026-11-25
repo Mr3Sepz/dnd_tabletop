@@ -874,7 +874,9 @@ function applyAction(state, who, action) {
       const base = state.npcs.find((n) => n.id === action.npcId); must(base);
       const labels = (Array.isArray(action.labels) ? action.labels : []).slice(0, 30).map((l) => str(String(l), 6));
       const count = Math.max(1, Math.min(30, labels.length || clampInt(action.count, 1, 30, 1)));
-      const useColors = action.style === 'color';
+      const baseHasToken = state.scenes.some((s) => s.tokens.some((t) => t.refId === base.id));
+      // Farbmarker nur, wenn es mehrere gleiche gibt; ein einzelner NPC bleibt ohne Markierung
+      const useColors = action.style === 'color' && (count > 1 || baseHasToken);
       if (!useColors) while (labels.length < count) labels.push(String(labels.length + 1));
       else while (labels.length < count) labels.push('');
       // Farben zufällig mischen; Farben, die gleichnamige Figuren in der Szene schon tragen, zuletzt
@@ -884,7 +886,6 @@ function applyAction(state, who, action) {
         const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
         colors = [...shuffle(BADGE_COLORS.filter((c) => !taken.has(c[0]))), ...shuffle(BADGE_COLORS.filter((c) => taken.has(c[0])))];
       }
-      const baseHasToken = state.scenes.some((s) => s.tokens.some((t) => t.refId === base.id));
       const g = sc.grid.size || 70;
       const perRow = Math.ceil(Math.sqrt(count));
       const created = [];
