@@ -597,11 +597,30 @@ try:
         shot(dm, '48-licht-radieren.png', clip={'x': lx - 330, 'y': ly - 170, 'width': 660, 'height': 340})
         dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
 
-        step('Darkmode')
-        dm.click('.theme-switch'); mia.click('.theme-switch'); time.sleep(0.5)
+        step('Themes: Nacht und die Stil-Themes')
+        def pick_theme(page, tid):
+            page.click('.theme-switch'); time.sleep(0.2)
+            page.click(f'.theme-menu button[data-theme={tid}]'); time.sleep(0.6)
+        dm.click('.theme-switch'); time.sleep(0.3)
+        assert dm.locator('.theme-menu button').count() == 9
+        shot(dm, '53-theme-menue.png', clip={'x': 1000, 'y': 0, 'width': 440, 'height': 560})
+        dm.keyboard.press('Escape'); time.sleep(0.2)
+        pick_theme(dm, 'dark'); pick_theme(mia, 'dark')
+        assert dm.evaluate("document.documentElement.dataset.theme") == 'dark'
         shot(dm, '41-darkmode-dm.png')
         shot(mia, '42-darkmode-handy.png')
-        dm.click('.theme-switch'); mia.click('.theme-switch'); time.sleep(0.3)
+        for tid in ['parchment', 'crypt', 'steampunk', 'scifi', 'cyberpunk', 'retro', 'console']:
+            pick_theme(dm, tid)
+            assert dm.evaluate("document.documentElement.dataset.skin") == tid
+            dm.evaluate("document.fonts.ready"); time.sleep(0.3)
+            shot(dm, f'54-theme-{tid}.png')
+        pick_theme(mia, 'console'); mia.evaluate("document.fonts.ready"); time.sleep(0.3)
+        shot(mia, '55-theme-console-handy.png')
+        # Wahl bleibt nach dem Neuladen
+        dm.reload(); dm.wait_for_selector('#tabBody h3'); time.sleep(0.5)
+        assert dm.evaluate("document.documentElement.dataset.skin") == 'console'
+        pick_theme(dm, 'light'); pick_theme(mia, 'light')
+        assert dm.evaluate("document.documentElement.dataset.skin") is None
 
         step('Szene drehen')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)

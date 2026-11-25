@@ -115,7 +115,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Bildausschnitt | ✅ | Porträt im runden Rahmen verschieben und zoomen, gilt überall |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
-| — | Darkmode | ✅ | Mitternachtsblau bis Dunkelrot, pro Gerät |
+| — | Themes | ✅ | Standard, Nacht (Darkmode), Pergament, Gruft, Messing, Zukunft, Neon, 8-Bit, Konsole; pro Gerät, Schriften lokal (OFL/Apache) |
 | — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
 | — | Zuschauer-Bildschirm | ✅ | `/spectator`: Live-Szene wie bei Spielern, nur Karte und Leiste, belegt keinen Platz |
 | — | Bildersammlung: „Verwenden als“ | ✅ | Figur, NPC, Objekt, Szenenkarte, Weltkarte |

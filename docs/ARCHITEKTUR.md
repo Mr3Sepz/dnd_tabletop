@@ -53,7 +53,7 @@ public/
   js/lock.js      Sperre „✎ Bearbeiten“ gegen versehentliches Ändern
   js/i18n.js      Sprache: Glossar-Begriffe zweisprachig, englische Oberfläche per Wörterbuch
   js/glossary.js  DnD-Fachbegriffe Deutsch/Englisch
-  js/theme.js     Darkmode-Umschalter
+  js/theme.js     Themenwähler 🎨 (data-theme="dark" + data-skin), css/themes.css, fonts/ (OFL/Apache-2.0)
   js/quests.js    Tagebuch / Questlog
   js/chat.js      Direktchat
   js/worldmap.js  Weltkarte mit Pins

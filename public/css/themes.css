@@ -1,0 +1,186 @@
+/* ================================================================ Themes
+   Auswählbar über 🎨 in der Kopfzeile, gilt pro Gerät. Dunkle Themes setzen zusätzlich
+   data-theme="dark", damit alle Darkmode-Regeln greifen; data-skin färbt und setzt Schriften.
+   Alle Schriften liegen lokal unter /fonts (SIL Open Font License bzw. Apache 2.0, siehe *-LICENSE.txt). */
+
+@font-face { font-family: "Cinzel"; src: url("/fonts/cinzel-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Cinzel"; src: url("/fonts/cinzel-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "EB Garamond"; src: url("/fonts/eb-garamond-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "EB Garamond"; src: url("/fonts/eb-garamond-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "IM Fell English"; src: url("/fonts/im-fell-english-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "IM Fell English SC"; src: url("/fonts/im-fell-english-sc-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Special Elite"; src: url("/fonts/special-elite-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Orbitron"; src: url("/fonts/orbitron-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Orbitron"; src: url("/fonts/orbitron-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Exo 2"; src: url("/fonts/exo-2-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Exo 2"; src: url("/fonts/exo-2-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Rajdhani"; src: url("/fonts/rajdhani-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Rajdhani"; src: url("/fonts/rajdhani-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Press Start 2P"; src: url("/fonts/press-start-2p-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "VT323"; src: url("/fonts/vt323-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Antonio"; src: url("/fonts/antonio-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Antonio"; src: url("/fonts/antonio-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+/* Überschriften-Schrift je Theme; --head-font wird unten gesetzt */
+:root[data-skin] h1, :root[data-skin] h2, :root[data-skin] h3, :root[data-skin] .tabs button,
+:root[data-skin] .dialog h3, :root[data-skin] .topbar .brand, :root[data-skin] .round-num b,
+:root[data-skin] .sheet .name, :root[data-skin] .dice-head b { font-family: var(--head-font, inherit); }
+
+/* ---------------------------------------------------------------- Pergament (Mittelalter, hell) */
+:root[data-skin="parchment"] {
+  --head-font: "Cinzel", Georgia, serif;
+  font-family: "EB Garamond", Georgia, serif; font-size: 17px;
+  --bg: #e9dcbc; --paper: #f4e8c8; --card: #fbf3dc; --ink: #2a1c0e; --muted: #6e5a3c;
+  --line: #bfa577; --accent: #7a1f12; --soft-line: #dccaa0; --tint: #ead9b1; --badge-bg: #dcc79a;
+  --sel: #ecd6a6; --bar: #dfcda4; --board-bg: #b9a57c; --toolbar-bg: rgba(244,232,200,0.96);
+  --top-bg: linear-gradient(180deg, #4a2c14, #2e1a0b); --asset-bg: #e2d2ac;
+}
+:root[data-skin="parchment"] .panel { background: radial-gradient(ellipse at top, #f7ecd0, #ecdcb4 70%, #e0cc9e); }
+:root[data-skin="parchment"] button { border-radius: 4px; }
+:root[data-skin="parchment"] button.primary { background: linear-gradient(180deg, #8f2a19, #6a180d); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2); }
+:root[data-skin="parchment"] .topbar { border-bottom: 3px double #c9a45c; }
+:root[data-skin="parchment"] h3 { border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+
+/* ---------------------------------------------------------------- Gruft (Horror, dunkel) */
+:root[data-skin="crypt"] {
+  --head-font: "IM Fell English SC", Georgia, serif;
+  font-family: "IM Fell English", Georgia, serif; font-size: 17px;
+  --bg: #0c0b0b; --paper: #161313; --card: #1f1a19; --ink: #e6dccb; --muted: #9a8c78;
+  --line: #3c2f2a; --accent: #8a0f14; --soft-line: #2a2220; --tint: #241d1b; --badge-bg: #2f2522;
+  --sel: #3a1212; --bar: #120f0f; --board-bg: #050404; --toolbar-bg: rgba(22,19,19,0.95);
+  --track: #302624; --asset-bg: #100d0d; --top-bg: linear-gradient(90deg, #0a0808, #2a0608 60%, #0a0808);
+}
+:root[data-skin="crypt"] .panel { box-shadow: inset 8px 0 24px rgba(0,0,0,0.6); }
+:root[data-skin="crypt"] button.primary { background: linear-gradient(180deg, #a3141b, #5e0a0e); border-color: #3a0507; }
+:root[data-skin="crypt"] .effect { background: #2a1414; border-color: #6b2424; }
+:root[data-skin="crypt"] .effect b, :root[data-skin="crypt"] .chat-who { color: #e3b46a; }
+:root[data-skin="crypt"] .round-num b, :root[data-skin="crypt"] .cs-mod { color: #d23a3a; }
+:root[data-skin="crypt"] .chat-tab.on, :root[data-skin="crypt"] .chat-toggle { background: #5e0a0e; border-color: #5e0a0e; }
+
+/* ---------------------------------------------------------------- Messing (Steampunk, dunkel) */
+:root[data-skin="steampunk"] {
+  --head-font: "Special Elite", "Courier New", monospace;
+  --bg: #1d1510; --paper: #2a1f17; --card: #33261b; --ink: #f0e0c2; --muted: #b89c74;
+  --line: #6b4f2c; --accent: #b5782a; --accent-ink: #1d1208; --soft-line: #3d2e20; --tint: #3a2b1e; --badge-bg: #463422;
+  --sel: #4a3317; --bar: #1a120c; --board-bg: #120c08; --toolbar-bg: rgba(42,31,23,0.96);
+  --track: #3e2f20; --asset-bg: #1a130d; --top-bg: linear-gradient(180deg, #5a3a17, #2b1b0c);
+}
+:root[data-skin="steampunk"] button { border-color: #8a6631; }
+:root[data-skin="steampunk"] button.primary { background: linear-gradient(180deg, #d9a54e, #9b6420); color: #1d1208; border-color: #6e4614; font-weight: 700; }
+:root[data-skin="steampunk"] .topbar { border-bottom: 2px solid #c08a3e; }
+:root[data-skin="steampunk"] .effect { background: #3a2a16; border-color: #8a6631; }
+:root[data-skin="steampunk"] .effect b, :root[data-skin="steampunk"] .chat-who { color: #f0c06a; }
+:root[data-skin="steampunk"] .round-num b, :root[data-skin="steampunk"] .cs-mod { color: #f0a24a; }
+:root[data-skin="steampunk"] .chat-tab.on, :root[data-skin="steampunk"] .chat-toggle { background: #9b6420; border-color: #9b6420; }
+
+/* ---------------------------------------------------------------- Zukunft (Sci-Fi, dunkel) */
+:root[data-skin="scifi"] {
+  --head-font: "Orbitron", "Segoe UI", sans-serif;
+  font-family: "Exo 2", "Segoe UI", sans-serif;
+  --bg: #050d14; --paper: #08151f; --card: #0d1f2c; --ink: #d8f3ff; --muted: #7aa6ba;
+  --line: #17435a; --accent: #00a6c8; --accent-ink: #001218; --soft-line: #0f2c3c; --tint: #0c2433; --badge-bg: #11354a;
+  --sel: #083548; --bar: #04101a; --board-bg: #02070c; --toolbar-bg: rgba(8,21,31,0.94);
+  --track: #123346; --asset-bg: #030b11; --top-bg: linear-gradient(90deg, #02121c, #063247 60%, #02121c);
+}
+:root[data-skin="scifi"] h3, :root[data-skin="scifi"] .tabs button { letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; }
+:root[data-skin="scifi"] button { border-radius: 2px; }
+:root[data-skin="scifi"] button.primary { box-shadow: 0 0 10px rgba(0,200,240,0.45); font-weight: 700; }
+:root[data-skin="scifi"] .topbar { border-bottom: 1px solid #00a6c8; box-shadow: 0 0 12px rgba(0,166,200,0.4); }
+:root[data-skin="scifi"] .effect { background: #072636; border-color: #00a6c8; }
+:root[data-skin="scifi"] .effect b, :root[data-skin="scifi"] .chat-who, :root[data-skin="scifi"] .round-num b, :root[data-skin="scifi"] .cs-mod { color: #4fe3ff; }
+:root[data-skin="scifi"] .chat-tab.on, :root[data-skin="scifi"] .chat-toggle { background: #00708a; border-color: #00708a; }
+
+/* ---------------------------------------------------------------- Neon (Cyberpunk, dunkel) */
+:root[data-skin="cyberpunk"] {
+  --head-font: "Rajdhani", "Segoe UI", sans-serif;
+  font-family: "Rajdhani", "Segoe UI", sans-serif; font-size: 17px;
+  --bg: #0a0612; --paper: #120a1f; --card: #1a0f2b; --ink: #f2e9ff; --muted: #a58fc4;
+  --line: #3e1f63; --accent: #ff2a8a; --accent-ink: #12000a; --soft-line: #2a1545; --tint: #22123a; --badge-bg: #2e1850;
+  --sel: #3a0f3a; --bar: #08040e; --board-bg: #040208; --toolbar-bg: rgba(18,10,31,0.94);
+  --track: #301a4d; --asset-bg: #07030c; --top-bg: linear-gradient(90deg, #12001f, #3a0040 50%, #001c33);
+}
+:root[data-skin="cyberpunk"] h3, :root[data-skin="cyberpunk"] .tabs button { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+:root[data-skin="cyberpunk"] button.primary { box-shadow: 0 0 12px rgba(255,42,138,0.6); font-weight: 700; }
+:root[data-skin="cyberpunk"] .tabs button.active { border-bottom-color: #00f0ff; color: #00f0ff; }
+:root[data-skin="cyberpunk"] .topbar { border-bottom: 2px solid #00f0ff; }
+:root[data-skin="cyberpunk"] .effect { background: #1c0d33; border-color: #00f0ff; }
+:root[data-skin="cyberpunk"] .effect b, :root[data-skin="cyberpunk"] .chat-who { color: #00f0ff; }
+:root[data-skin="cyberpunk"] .round-num b, :root[data-skin="cyberpunk"] .cs-mod { color: #ff4fa3; }
+:root[data-skin="cyberpunk"] .chat-tab.on, :root[data-skin="cyberpunk"] .chat-toggle { background: #b5146a; border-color: #b5146a; }
+
+/* ---------------------------------------------------------------- 8-Bit (Retro, dunkel) */
+:root[data-skin="retro"] {
+  --head-font: "Press Start 2P", monospace;
+  font-family: "VT323", "Courier New", monospace; font-size: 20px;
+  --bg: #0f0f2d; --paper: #1a1a40; --card: #222255; --ink: #f8f8f8; --muted: #a8a8d8;
+  --line: #4848a0; --accent: #e04040; --accent-ink: #fff; --soft-line: #30306a; --tint: #26265c; --badge-bg: #303078;
+  --sel: #503070; --bar: #0b0b24; --board-bg: #08081c; --toolbar-bg: rgba(26,26,64,0.96);
+  --track: #303070; --asset-bg: #0b0b24; --top-bg: #202060;
+}
+:root[data-skin="retro"] h1 { font-size: 1.1rem; line-height: 1.6; }
+:root[data-skin="retro"] h3, :root[data-skin="retro"] .dialog h3 { font-size: 0.7rem; line-height: 1.6; }
+:root[data-skin="retro"] .tabs button { font-family: "VT323", monospace; font-size: 1.05rem; padding: 0.5em 0.25em; }
+:root[data-skin="retro"] .topbar .brand { font-size: 0.75rem; }
+:root[data-skin="retro"] .round-num b { font-size: 1rem; }
+:root[data-skin="retro"] .sheet .name, :root[data-skin="retro"] .dice-head b { font-size: 0.75rem; }
+:root[data-skin="retro"] button, :root[data-skin="retro"] input, :root[data-skin="retro"] select, :root[data-skin="retro"] textarea { border-radius: 0; border-width: 2px; }
+:root[data-skin="retro"] button { box-shadow: 3px 3px 0 #000; }
+:root[data-skin="retro"] button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+:root[data-skin="retro"] .topbar { border-bottom: 4px solid #f8d030; }
+:root[data-skin="retro"] .effect { background: #303078; border-color: #f8d030; border-radius: 0; }
+:root[data-skin="retro"] .effect b, :root[data-skin="retro"] .chat-who, :root[data-skin="retro"] .cs-mod { color: #f8d030; }
+:root[data-skin="retro"] .round { border-radius: 0; }
+:root[data-skin="retro"] .chat-tab.on, :root[data-skin="retro"] .chat-toggle { background: #e04040; border-color: #e04040; }
+
+/* ---------------------------------------------------------------- Konsole (Raumschiff-Bedienpult, dunkel)
+   Eigene Gestaltung im Stil alter Sci-Fi-Bedienpulte: schwarze Fläche, abgerundete Farbbalken, Großbuchstaben.
+   Keine Logos, Namen, Schriften oder Bildvorlagen aus Filmen oder Serien. */
+:root[data-skin="console"] {
+  --head-font: "Antonio", "Arial Narrow", sans-serif;
+  font-family: "Antonio", "Arial Narrow", sans-serif; font-size: 17px; letter-spacing: 0.02em;
+  --bg: #000; --paper: #000; --card: #0b0b10; --ink: #ffcc99; --muted: #c99be0;
+  --line: #33334d; --accent: #ff9933; --accent-ink: #000; --soft-line: #1c1c2b; --tint: #12121e; --badge-bg: #1e1e33;
+  --sel: #2a1a33; --bar: #000; --board-bg: #000; --toolbar-bg: rgba(0,0,0,0.92);
+  --track: #262640; --asset-bg: #05050a; --top-bg: #000;
+  --c-orange: #ff9933; --c-peach: #ffcc99; --c-lilac: #cc99cc; --c-blue: #9999ff; --c-sky: #99ccff; --c-red: #cc6666;
+}
+:root[data-skin="console"] h1, :root[data-skin="console"] h3, :root[data-skin="console"] h4, :root[data-skin="console"] .tabs button,
+:root[data-skin="console"] button, :root[data-skin="console"] .dialog h3 { text-transform: uppercase; letter-spacing: 0.06em; }
+/* Pillen-Knöpfe in wechselnden Farben */
+:root[data-skin="console"] button { border-radius: 999px; background: var(--c-blue); color: #000; border: none; font-weight: 700; }
+:root[data-skin="console"] button:not(.effect):not(.on):nth-of-type(3n+2) { background: var(--c-lilac); }
+:root[data-skin="console"] button:not(.effect):not(.on):nth-of-type(3n) { background: var(--c-peach); }
+:root[data-skin="console"] button.on, :root[data-skin="console"] .dice-opt.on { background: var(--c-orange) !important; color: #000; }
+:root[data-skin="console"] button.primary { background: var(--c-orange); }
+:root[data-skin="console"] button.danger { background: var(--c-red); }
+:root[data-skin="console"] button.link, :root[data-skin="console"] .tabs button, :root[data-skin="console"] button.tool { background: transparent !important; color: var(--ink); border-radius: 0; }
+:root[data-skin="console"] button.tool.active { background: var(--c-orange) !important; color: #000; border-radius: 999px; }
+:root[data-skin="console"] input, :root[data-skin="console"] select, :root[data-skin="console"] textarea { background: #0b0b10; border: 2px solid var(--c-blue); border-radius: 12px; color: var(--c-peach); }
+/* Kopfzeile als Balken mit runden Enden, Seitenleiste mit „Ellbogen“ oben links */
+:root[data-skin="console"] .topbar { background: #000; border-bottom: none; box-shadow: inset 0 -8px 0 var(--c-orange); padding-bottom: 8px; }
+:root[data-skin="console"] .topbar::before { content: ""; flex: none; width: 46px; height: 28px; border-radius: 14px 0 0 14px; background: var(--c-lilac); }
+:root[data-skin="console"] .panel { border-left: none; border-top-left-radius: 36px; box-shadow: inset 18px 0 0 var(--c-lilac), inset 0 14px 0 var(--c-lilac); padding-left: 18px; padding-top: 14px; }
+:root[data-skin="console"] .tabs { border-bottom: 4px solid var(--c-blue); }
+:root[data-skin="console"] .tabs button.active { color: var(--c-orange); border-bottom-color: var(--c-orange); }
+:root[data-skin="console"] h3 { color: var(--c-orange); }
+:root[data-skin="console"] h3::before { content: ""; display: inline-block; width: 22px; height: 0.8em; margin-right: 8px; border-radius: 999px; background: var(--c-orange); vertical-align: middle; }
+:root[data-skin="console"] button.effect { background: #000; border: 2px solid var(--c-sky); border-radius: 999px; color: var(--c-sky); }
+:root[data-skin="console"] button.effect.over { border-color: var(--c-red); color: var(--c-red); }
+:root[data-skin="console"] button.effect:disabled { opacity: 1; }
+@media (max-width: 700px) { :root[data-skin="console"] .topbar::before { display: none; } }
+:root[data-skin="console"] .effect b, :root[data-skin="console"] .chat-who { color: var(--c-orange); }
+:root[data-skin="console"] .round { border-radius: 18px; border-color: var(--c-lilac); }
+:root[data-skin="console"] .round-num b, :root[data-skin="console"] .cs-mod { color: var(--c-orange); }
+:root[data-skin="console"] .dialog { border: 3px solid var(--c-orange); border-radius: 24px; }
+:root[data-skin="console"] .chat-tab.on, :root[data-skin="console"] .chat-toggle { background: var(--c-orange); color: #000; }
+
+/* ---------------------------------------------------------------- Themenwähler */
+.theme-menu { position: fixed; z-index: 1000; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35); padding: 6px; display: grid; gap: 2px; min-width: 230px; max-height: 80vh; overflow-y: auto; }
+.theme-menu button { justify-content: flex-start; background: transparent; border: 1px solid transparent; border-radius: 8px; text-transform: none; letter-spacing: 0; box-shadow: none; color: var(--ink); width: 100%; }
+.theme-menu button:hover { border-color: var(--line); }
+.theme-menu button.on { border-color: var(--accent); background: var(--tint); }
+.theme-menu .sw { display: inline-flex; flex: none; border-radius: 5px; overflow: hidden; border: 1px solid rgba(128,128,128,0.5); }
+.theme-menu .sw i { width: 12px; height: 22px; display: block; }
+.theme-menu .tname { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; text-align: left; }
+.theme-menu .tname small { color: var(--muted); font-size: 0.75em; }

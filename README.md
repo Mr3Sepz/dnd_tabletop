@@ -25,7 +25,7 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 - [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Bilder, Figuren und NPCs](#3-bilder-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
 - [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative, Runden, Effekte](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Charakterbogen und Attribute](#9-der-charakterbogen) · [Inventar, Waffen, Zauber](#10-inventar) · [Fog of War](#11-fog-of-war) · [Getrennte Gruppen](#12-getrennte-gruppen) · [Sicht pro Spieler](#13-sicht-pro-spieler) · [Messen](#14-entfernungen-messen) · [Würfel und Fuß ↔ Meter](#15-würfeln) · [Vorschau](#16-als-spieler-ansehen)
 - [Alle zusammen](#alle-zusammen): [Tagebuch und Quests](#17-tagebuch-und-quests) · [Chat](#18-chat) · [Weltkarte](#19-weltkarte) · [Zuschauer-Bildschirm](#20-zuschauer-bildschirm)
-- [Darkmode](#darkmode) · [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
+- [Themes und Darkmode](#themes-und-darkmode) · [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
 - [Notizen, Speichern, Beenden](#notizen-speichern-beenden)
 - [Was deine Spieler sehen](#was-deine-spieler-sehen)
 - [Spickzettel](#spickzettel)
@@ -84,7 +84,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🌙** Darkmode · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
@@ -553,16 +553,51 @@ Für einen Fernseher oder zweiten Bildschirm am Tisch: **nur die Karte und die P
 
 ---
 
-## Darkmode
+## Themes und Darkmode
+
+<img src="docs/img/53-theme-menue.webp" width="300" align="right" alt="Themenwähler mit Farbmustern">
+
+**🎨** oben in der Kopfzeile öffnet die Auswahl. Die Wahl gilt **pro Gerät**: Der DM kann im Pergament-Look spielen, ein Spieler am Handy in *Nacht*. Die Karte selbst bleibt immer unverändert.
+
+| Theme | Passt zu | Schrift |
+|---|---|---|
+| **Standard** | hell und schlicht | Systemschrift |
+| **Nacht** (Darkmode) | dunkle Räume, abends; Mitternachtsblau bis Dunkelrot | Systemschrift |
+| **Pergament** | Mittelalter, klassische Fantasy | Cinzel, EB Garamond |
+| **Gruft** | Horror, Gothic, Untote | IM Fell English |
+| **Messing** | Steampunk, Erfindungen, Luftschiffe | Special Elite |
+| **Zukunft** | Science-Fiction, Raumstationen | Orbitron, Exo 2 |
+| **Neon** | Cyberpunk, Großstadt bei Nacht | Rajdhani |
+| **8-Bit** | Retro-Videospiel, Pixel-Look | Press Start 2P, VT323 |
+| **Konsole** | Raumschiff-Bedienpult: schwarze Fläche, runde Farbbalken, Großbuchstaben | Antonio |
+
+<br clear="right">
 
 <table>
 <tr>
-<td width="70%"><img src="docs/img/41-darkmode-dm.webp" alt="DM-Ansicht im Darkmode"></td>
-<td width="30%"><img src="docs/img/42-darkmode-handy.webp" alt="Spieleransicht am Handy im Darkmode"></td>
+<td width="50%"><img src="docs/img/54-theme-parchment.webp" alt="Theme Pergament"><br>Pergament</td>
+<td width="50%"><img src="docs/img/54-theme-crypt.webp" alt="Theme Gruft"><br>Gruft</td>
+</tr>
+<tr>
+<td><img src="docs/img/54-theme-steampunk.webp" alt="Theme Messing"><br>Messing</td>
+<td><img src="docs/img/54-theme-scifi.webp" alt="Theme Zukunft"><br>Zukunft</td>
+</tr>
+<tr>
+<td><img src="docs/img/54-theme-cyberpunk.webp" alt="Theme Neon"><br>Neon</td>
+<td><img src="docs/img/54-theme-retro.webp" alt="Theme 8-Bit"><br>8-Bit</td>
+</tr>
+<tr>
+<td><img src="docs/img/54-theme-console.webp" alt="Theme Konsole"><br>Konsole</td>
+<td><img src="docs/img/41-darkmode-dm.webp" alt="DM-Ansicht im Darkmode"><br>Nacht (Darkmode)</td>
 </tr>
 </table>
 
-**🌙** oben in der Kopfzeile schaltet auf den Darkmode, in Farben zwischen Mitternachtsblau und Dunkelrot. **☀** schaltet zurück. Die Wahl gilt pro Gerät. Die Karte selbst bleibt unverändert.
+<img src="docs/img/55-theme-console-handy.webp" width="200" align="right" alt="Theme Konsole am Handy">
+<img src="docs/img/42-darkmode-handy.webp" width="200" align="right" alt="Spieleransicht am Handy im Darkmode">
+
+**Rechtliches:** Alle Schriften liegen in der App unter `public/fonts` und funktionieren ohne Internet. Sie stehen unter der *SIL Open Font License 1.1*, Special Elite unter der *Apache-Lizenz 2.0*. Beide erlauben das Mitliefern in Open-Source-Projekten; die Lizenztexte liegen daneben. Das Theme **Konsole** ist eine eigene Gestaltung im Stil alter Sci-Fi-Bedienpulte. Es verwendet bewusst **keine** Namen, Logos, Schriften oder Bildvorlagen aus Filmen oder Serien, also z. B. nicht den Namen „LCARS“ oder Star-Trek-Elemente.
+
+<br clear="right">
 
 ---
 
@@ -658,7 +693,7 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** (zu viel? **🌑 Licht radieren**) |
 | NPCs würfeln Initiative | Leiste → **🎲 NPCs**, dann *Sortieren* |
 | Mehrere NPCs löschen | *NPCs* → Umschalt + Klick / lang drücken → **🗑 Löschen** |
-| Darkmode | **🌙** oben |
+| Darkmode oder anderes Aussehen | **🎨** oben → Theme wählen |
 | Felder im Bogen ändern | **✎ Bearbeiten**, danach **✓ Fertig** |
 | Menü einer Figur | Rechtsklick oder lange drücken |
 | Mehrere Figuren markieren | **Umschalt + einzelne Figuren anklicken** · Umschalt + Rahmen ziehen · ☐ in der Liste |

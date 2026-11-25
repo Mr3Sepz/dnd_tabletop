@@ -2,11 +2,12 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <script>try{if(localStorage.getItem("dnd.theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
+  <script>try{var t=localStorage.getItem("dnd.theme"),r=document.documentElement;if(/^(dark|crypt|steampunk|scifi|cyberpunk|retro|console)$/.test(t))r.dataset.theme="dark";if(/^(parchment|crypt|steampunk|scifi|cyberpunk|retro|console)$/.test(t))r.dataset.skin=t}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Spieler – DnD-Tabletop</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/themes.css">
 </head>
 <body class="player">
   <header class="topbar">

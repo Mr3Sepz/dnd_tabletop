@@ -625,7 +625,26 @@
   "Bild im Kreis ziehen, um es zu verschieben. So sieht es auf der Figur, in der Porträtleiste und im Bogen aus.": "Drag the image inside the circle to move it. This is how it looks on the token, in the portrait bar and on the sheet.",
   "Ganzes Bild (zurücksetzen)": "Whole image (reset)",
   "Ausschnitt konnte nicht gespeichert werden.": "Could not save the crop.",
-  "Bild konnte nicht geladen werden.": "Could not load the image."
+  "Bild konnte nicht geladen werden.": "Could not load the image.",
+  "Aussehen (Theme) wählen": "Choose look (theme)",
+  "Standard": "Standard",
+  "hell, schlicht": "light, plain",
+  "Nacht": "Night",
+  "Mitternachtsblau bis Dunkelrot": "Midnight blue to dark red",
+  "Pergament": "Parchment",
+  "Mittelalter, Fantasy": "Medieval, fantasy",
+  "Gruft": "Crypt",
+  "Horror, Gothic": "Horror, gothic",
+  "Messing": "Brass",
+  "Steampunk, Dampf und Zahnräder": "Steampunk, steam and gears",
+  "Zukunft": "Future",
+  "Science-Fiction": "Science fiction",
+  "Neon": "Neon",
+  "Cyberpunk": "Cyberpunk",
+  "8-Bit": "8-bit",
+  "Retro-Videospiel": "Retro video game",
+  "Konsole": "Console",
+  "Raumschiff-Bedienpult": "Starship control panel"
  },
  "patterns": [
   [
