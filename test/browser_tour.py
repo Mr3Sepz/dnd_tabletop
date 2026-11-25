@@ -120,6 +120,8 @@ try:
         dm.wait_for_selector('#tabBody h3')
 
         step('Szene benennen, Karte hochladen')
+        assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'players', 'Spieler ist der erste Reiter'
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
         dm.fill('#tabBody input >> nth=0', 'Waldweg'); dm.press('#tabBody input >> nth=0', 'Tab'); time.sleep(0.3)
         upload(dm, 'Bild hochladen', art('waldweg.jpg'))
         dm.wait_for_selector('#tabBody img.thumb')
@@ -312,6 +314,29 @@ try:
         assert 'mit gelöscht' in dm.locator('.dialog').inner_text()
         dialog_ok(dm); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name.startsWith('Ratte') || t.name === 'Riesenratte').length") == 2
+
+        step('NPC-Liste: Löschen pro Eintrag, Mehrfachauswahl mit Umschalt + Klick und lang drücken')
+        dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
+        dm.get_by_role('button', name='+ Neuer NPC').click(); dm.fill('.dialog input[name=name]', 'Wegwerf'); dialog_ok(dm); time.sleep(0.4)
+        dm.locator('.npc-list li', has_text='Wegwerf').locator('.npc-del').click(); time.sleep(0.2)
+        dialog_ok(dm); time.sleep(0.4)
+        assert dm.locator('.npc-list li', has_text='Wegwerf').count() == 0
+        rats = dm.locator('.npc-list li', has_text='Ratte')
+        assert rats.count() == 2
+        rats.nth(0).locator('button.link').click(modifiers=['Shift']); time.sleep(0.3)
+        # lang drücken: Maus halten
+        bb = dm.locator('.npc-list li', has_text='Ratte').nth(1).locator('.hptext').bounding_box()
+        dm.mouse.move(bb['x'] + 5, bb['y'] + 5); dm.mouse.down(); time.sleep(0.7); dm.mouse.up(); time.sleep(0.3)
+        assert dm.locator('.npc-list li.multi').count() == 2
+        assert '2 NPCs ausgewählt' in dm.locator('.sel-bar').inner_text()
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        panel_shot(dm, '49-npc-mehrfachauswahl.png', 520)
+        dm.locator('.sel-bar button', has_text='Löschen').click(); time.sleep(0.2)
+        assert 'mit gelöscht' in dm.locator('.dialog').inner_text()
+        dialog_ok(dm); time.sleep(0.6)
+        assert dm.locator('.npc-list li', has_text='Ratte').count() == 0
+        assert dm.locator('.sel-bar').count() == 0
+        assert dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name.startsWith('Ratte')).length") == 0
 
         step('Zustände rundherum: Platz für ~20 Perlen am Porträt')
         kx, ky = token_pos(dm, 'Kael')
@@ -531,6 +556,12 @@ try:
         dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
         shot(dm, '40-nacht-licht.png')
         assert mia.evaluate("window.dnd.board.scene.lights.length") == 2, 'Spieler sehen das Licht'
+        dm.get_by_role('button', name='🌑 Licht radieren').click(); time.sleep(0.2)
+        drag_world(dm, (G * 9.2, G * 9.6), (G * 9.2, G * 11.4)); time.sleep(0.6)
+        assert dm.evaluate("window.dnd.board.scene.lights.at(-1).erase") is True
+        dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
+        lx, ly = world(dm, G * 9, G * 10.5)
+        shot(dm, '48-licht-radieren.png', clip={'x': lx - 330, 'y': ly - 170, 'width': 660, 'height': 340})
         dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
 
         step('Darkmode')
@@ -609,8 +640,9 @@ try:
         dm.click('button.tool[title="Nebel aufdecken (Pinsel)"]')
         drag_world(dm, (G * 5, G * 6.4), (G * 5, G * 8.5))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
-        dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
+        # Plätze (wer ist wo) stehen jetzt im Reiter „Szenen“
         dm.select_option('.seat-row >> nth=1 >> .seat-scene select', label='Cragmaw-Höhle'); time.sleep(0.3)
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
         dm.click('.party-card >> nth=1'); time.sleep(0.2)
         dm.locator('.sheet-head button', has_text='Figur setzen').click()
         click_world(dm, G * 4.5, G * 4.5)
@@ -632,8 +664,9 @@ try:
         assert mia_scene == 'Waldweg', mia_scene
         step('Tom sieht nur die Höhle ohne den Gegner im Nebel, Mia bleibt am Waldweg')
         shot(tom, '08-nebel-spieler.png')
-        dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
-        panel_shot(dm, '09-getrennte-gruppen.png', 520)
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        panel_shot(dm, '09-getrennte-gruppen.png', 620)
 
         step('Messen')
         dm.select_option('#editScene', label='Waldweg (live)'); time.sleep(0.5)
@@ -667,6 +700,40 @@ try:
         time.sleep(0.4)
         shot(mia, '30-tagebuch-handy.png')
         mia.click('#tabs button[data-tab=sheet]'); time.sleep(0.2)
+
+        step('Reiter in neuer Reihenfolge, Gruppe und Inventar-Auswahl nebeneinander')
+        tabs = dm.evaluate("[...document.querySelectorAll('#tabs button')].map(b => b.dataset.tab)")
+        assert tabs == ['players', 'npcs', 'inventory', 'notes', 'scenes', 'tokens', 'images', 'game'], tabs
+        dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
+        assert dm.locator('#tabBody .seat-row').count() == 0, 'Plätze sind im Reiter Szenen'
+        ys = dm.evaluate("[...document.querySelectorAll('.party-card')].map(c => Math.round(c.getBoundingClientRect().top))")
+        assert len(set(ys)) == 1, f'alle in einer Reihe: {ys}'
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        panel_shot(dm, '50-gruppe-nebeneinander.png', 300)
+        dm.click('#tabs button[data-tab=inventory]'); time.sleep(0.3)
+        ys = dm.evaluate("[...document.querySelectorAll('.inv-pick')].map(c => Math.round(c.getBoundingClientRect().top))")
+        assert len(set(ys)) == 1, f'Inventar: alle in einer Reihe: {ys}'
+        assert 'Münzen' not in dm.locator('.inv-picker').inner_text()
+
+        step('NPC-Initiative automatisch würfeln (ohne Sortieren)')
+        order = dm.evaluate("window.dnd.board.state.initiative.entries.map(e => e.id)")
+        dm.locator('#initiative button', has_text='🎲 NPCs').click(); time.sleep(0.5)
+        ents = dm.evaluate("window.dnd.board.state.initiative.entries.map(e => [e.id, e.kind, e.value])")
+        assert [e[0] for e in ents] == order, 'Reihenfolge bleibt'
+        assert all(isinstance(e[2], (int, float)) for e in ents if e[1] != 'character'), ents
+        ini = dm.locator('#initiative').bounding_box()
+        shot(dm, '51-npc-initiative.png', clip={'x': 0, 'y': ini['y'], 'width': 1440, 'height': ini['height']})
+
+        step('Neue Szene live: leere Leiste; zurück: alte Leiste wieder da')
+        n_before = len(order)
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.2)
+        dm.get_by_role('button', name='+ Neue Szene').click(); dm.fill('.dialog input[name=name]', 'Taverne'); dialog_ok(dm); time.sleep(0.4)
+        dm.evaluate("window.dnd.act({ type: 'scene.activate', id: window.dnd.board.state.scenes.find(s => s.name === 'Taverne').id })"); time.sleep(0.6)
+        assert dm.evaluate("window.dnd.board.state.initiative.entries.length") == 0
+        assert dm.evaluate("window.dnd.board.state.scenes.find(s => s.name === 'Taverne').tokens.length") == 0
+        dm.evaluate("window.dnd.act({ type: 'scene.activate', id: window.dnd.board.state.scenes.find(s => s.name === 'Waldweg').id })"); time.sleep(0.6)
+        assert dm.evaluate("window.dnd.board.state.initiative.entries.length") == n_before
+        dm.evaluate("window.dnd.act({ type: 'scene.delete', id: window.dnd.board.state.scenes.find(s => s.name === 'Taverne').id })"); time.sleep(0.4)
 
         step('Spiel: Einladen, Plätze, Speichern')
         dm.click('#tabs button[data-tab=game]'); time.sleep(0.8)

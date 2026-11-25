@@ -34,6 +34,7 @@ export const TOOLS = {
   'place-image': 'Objekt setzen',
   'light-brush': 'Licht malen (Nachtmodus)',
   eraser: 'Radierer: über Freihandlinien wischen',
+  'light-eraser': 'Licht radieren (Nachtmodus)',
 };
 
 export class Board {
@@ -234,9 +235,33 @@ export class Board {
     group.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.62 }));
     const lights = scene.lights || [];
     if (!lights.length) return group;
-    // Punkte entlang der Pinselstriche, nicht zu dicht
-    const blobs = [];
+    const radial = (x, y, r, stops) => new Konva.Circle({ x, y, radius: r * 1.35,
+      fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+      fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r * 1.35, fillRadialGradientColorStops: stops });
+    // Striche der Reihe nach: Lichtstriche hintereinander bilden einen Abschnitt (erst Löcher, dann Schein),
+    // ein Radierstrich macht an seiner Stelle wieder dunkel. Spätere Lichter können dort neu leuchten.
+    let blobs = [];
+    const flush = () => {
+      for (const [x, y, r] of blobs) {
+        const hole = radial(x, y, r, [0, 'rgba(0,0,0,1)', 0.55, 'rgba(0,0,0,0.85)', 1, 'rgba(0,0,0,0)']);
+        hole.globalCompositeOperation('destination-out');
+        group.add(hole);
+      }
+      for (const [x, y, r] of blobs) group.add(radial(x, y, r, [0, 'rgba(255,140,30,0.38)', 0.55, 'rgba(240,90,20,0.18)', 1, 'rgba(220,70,10,0)']));
+      blobs = [];
+    };
     for (const l of lights) {
+      if (l.erase) {
+        flush();
+        const pts = l.points.length === 2 ? [...l.points, l.points[0] + 0.1, l.points[1]] : l.points;
+        const line = { points: pts, strokeWidth: l.r * 2, lineCap: 'round', lineJoin: 'round' };
+        const cut = new Konva.Line({ ...line, stroke: '#000' });
+        cut.globalCompositeOperation('destination-out');
+        group.add(cut);
+        group.add(new Konva.Line({ ...line, stroke: '#0a1440', opacity: 0.62 }));
+        continue;
+      }
+      // Punkte entlang der Pinselstriche, nicht zu dicht
       const step = Math.max(8, l.r * 0.45);
       let lx = null; let ly = null;
       for (let i = 0; i + 1 < l.points.length; i += 2) {
@@ -244,17 +269,7 @@ export class Board {
         if (lx === null || Math.hypot(x - lx, y - ly) >= step || i + 2 >= l.points.length) { blobs.push([x, y, l.r]); lx = x; ly = y; }
       }
     }
-    const radial = (x, y, r, stops) => new Konva.Circle({ x, y, radius: r * 1.35,
-      fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
-      fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r * 1.35, fillRadialGradientColorStops: stops });
-    for (const [x, y, r] of blobs) {
-      const hole = radial(x, y, r, [0, 'rgba(0,0,0,1)', 0.55, 'rgba(0,0,0,0.85)', 1, 'rgba(0,0,0,0)']);
-      hole.globalCompositeOperation('destination-out');
-      group.add(hole);
-    }
-    for (const [x, y, r] of blobs) {
-      group.add(radial(x, y, r, [0, 'rgba(255,140,30,0.38)', 0.55, 'rgba(240,90,20,0.18)', 1, 'rgba(220,70,10,0)']));
-    }
+    flush();
     // Zwischenspeichern, damit die Löcher nur die Dunkelheit treffen und nicht die Karte
     group.cache({ x: 0, y: 0, width: w, height: h, pixelRatio: Math.min(1, 2400 / Math.max(w, h)) });
     return group;
@@ -694,12 +709,13 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
-      if (tool === 'line' || tool.startsWith('fog-brush') || tool === 'light-brush') {
+      if (tool === 'line' || tool.startsWith('fog-brush') || tool === 'light-brush' || tool === 'light-eraser') {
         const fog = tool.startsWith('fog');
         const light = tool === 'light-brush';
-        const width = fog || light ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
+        const lightErase = tool === 'light-eraser';
+        const width = fog || light || lightErase ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
-          stroke: light ? 'rgba(255,170,60,0.45)' : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
+          stroke: lightErase ? 'rgba(10,20,64,0.6)' : light ? 'rgba(255,170,60,0.45)' : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);
         return;
       }
@@ -757,8 +773,8 @@ export class Board {
         if (a.width > 4 && a.height > 4) this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'rect', x: a.x, y: a.y, w: a.width, h: a.height });
       } else if (d.kind.startsWith('fog-brush')) {
         this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
-      } else if (d.kind === 'light-brush') {
-        this.opts.onLight?.({ points: d.points, r: this.brushRadius });
+      } else if (d.kind === 'light-brush' || d.kind === 'light-eraser') {
+        this.opts.onLight?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'light-eraser' });
       } else if (d.kind === 'eraser') {
         this.#erase(d.points, this.eraserRadius);
       }

@@ -20,7 +20,7 @@ let info = null;         // Adressen, QR-Codes, PIN, Pfade
 let editSceneId = null;  // welche Szene der DM gerade bearbeitet (S4)
 let previewSeat = 0;     // "Als Spieler ansehen" (A4)
 let previewView = null;  // echte Spielersicht vom Server
-let tab = 'scenes';
+let tab = 'players';
 let placing = null;      // nächste Figur (F1: von Hand setzen)
 let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bogen / Inventar
 let invEditor = null;
@@ -287,7 +287,7 @@ document.addEventListener('keydown', (e) => {
 
 const TOOL_ICONS = {
   select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', eraser: '🧽',
+  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', eraser: '🧽',
 };
 
 function renderToolbar() {
@@ -304,12 +304,13 @@ function renderToolbar() {
     h('span.tb-sep'),
     btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
     state && editScene().night ? btn('light-brush') : null,
+    state && editScene().night ? btn('light-eraser') : null,
     ['rect', 'ellipse', 'line'].includes(tool) ? h('div.tb-style', {},
       h('label', { title: 'Linienfarbe' }, h('input', { type: 'color', value: style.stroke, onchange: (e) => { style.stroke = e.target.value; } })),
       h('label', { title: 'Füllung' }, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderToolbar(); } }),
         style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
-    tool.startsWith('fog-brush') || tool === 'light-brush' ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
+    tool.startsWith('fog-brush') || tool.startsWith('light-') ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
       h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
     tool === 'eraser' ? h('div.tb-style', {}, h('label', { title: 'Größe des Radierers' }, 'Größe',
       h('input', { type: 'range', min: 5, max: 120, value: board.eraserRadius, onchange: (e) => { board.eraserRadius = Number(e.target.value); } }))) : null,
@@ -611,7 +612,7 @@ async function render() {
   updateBanner();
   // Kerzen-Werkzeug nur bei Nacht: Werkzeugleiste anpassen, wenn sich das ändert
   const night = !!editScene().night;
-  if (night !== lastNight) { lastNight = night; if (!night && board.tool === 'light-brush') board.setTool('select'); renderToolbar(); }
+  if (night !== lastNight) { lastNight = night; if (!night && board.tool.startsWith('light-')) board.setTool('select'); renderToolbar(); }
   if (previewSeat) {
     await refreshPreview();
     if (previewView) board.setData(previewView, previewView.scenes[0]);
@@ -656,6 +657,10 @@ function renderInitiativeBar() {
     onNext: () => act({ type: 'initiative.next' }),
     onPrev: () => act({ type: 'initiative.prev' }),
     onSort: () => act({ type: 'initiative.sort', startTop: true }),
+    onRollNpcs: async () => {
+      const r = await act({ type: 'initiative.rollNpcs' });
+      if (r && r.rolls) toast(`Initiative für ${r.rolls.length} NPC-Einträge gewürfelt. Sortieren nicht vergessen.`);
+    },
     onValue: (id, value) => act({ type: 'initiative.update', id, patch: { value } }),
     onVisibility: (id, visibility) => act({ type: 'initiative.update', id, patch: { visibility } }),
     onClear: async () => { if (await dialog({ title: 'Porträtleiste leeren?', body: 'Der Kampf ist vorbei: Runde wieder 1, alle Effekttimer werden entfernt.', okText: 'Leeren', danger: true })) act({ type: 'initiative.clear' }); },
@@ -717,6 +722,8 @@ function tabScenes() {
       if (r) { const res = await act({ type: 'scene.create', name: r.name }); if (res) { editSceneId = res.id; render(); } }
     } }, '+ Neue Szene')),
     list,
+    h('p.hint', {}, 'Jede Szene hat ihre eigene Porträtleiste. Eine neue Szene startet leer: ohne Karte, ohne Figuren, mit leerer Leiste. Beim Wechsel mit „Live schalten“ bleibt die Leiste der alten Szene dort erhalten.'),
+    ...seatsSection(),
     h('h3', {}, `Einstellungen: ${sc.name}`),
     h('label.field', {}, h('span', {}, 'Name'), h('input', { value: sc.name, onchange: (e) => update({ name: e.target.value }) })),
     h('div.field', {}, h('span', {}, 'Hintergrund'),
@@ -756,14 +763,15 @@ function tabScenes() {
       h('p.hint', {}, 'Aufdecken und Verdecken mit den Nebel-Werkzeugen links auf der Karte (☀ = aufdecken, ☁ = verdecken). Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
     h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: async (e) => { await update({ night: e.target.checked }); renderToolbar(); } }), 'Nachtfilter (S8)'),
     sc.night ? h('div.lights-box', {},
-      h('p.hint', {}, '🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis.'),
+      h('p.hint', {}, '🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. 🌑 Licht radieren macht eine Stelle wieder dunkel.'),
       h('div.row', {},
         h('button.small', { onclick: () => { board.setTool('light-brush'); renderToolbar(); } }, '🕯️ Licht malen'),
+        h('button.small', { onclick: () => { board.setTool('light-eraser'); renderToolbar(); } }, '🌑 Licht radieren'),
         h('button.small', { disabled: !(sc.lights || []).length, onclick: () => act({ type: 'light.undo', sceneId: sc.id }) }, 'Rückgängig'),
         h('button.small', { disabled: !(sc.lights || []).length, onclick: async () => {
           if (await dialog({ title: 'Alle Lichter löschen?', okText: 'Löschen', danger: true })) act({ type: 'light.clear', sceneId: sc.id });
         } }, 'Alle Lichter löschen'),
-        h('span.hint', {}, `${(sc.lights || []).length} Licht(er)`))) : null,
+        h('span.hint', {}, `${(sc.lights || []).filter((l) => !l.erase).length} Licht(er)`))) : null,
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
   ];
@@ -876,6 +884,35 @@ function assetMenu(a, x, y) {
 // ================================================================ Tab: Spieler (V8, V10, C1–C7, A5, Szene pro Spieler)
 
 function tabPlayers() {
+  const party = h('div.party', {}, ...state.characters.map((c) => {
+    const r = hpRatio(c) ?? 0;
+    return h(`button.party-card${selected.players === c.id ? '.selected' : ''}`, { onclick: () => openSheet('players', c.id) },
+      c.portraitAssetId ? h('img', { src: assetUrl(state, c.portraitAssetId), alt: '' }) : h('span.ph', {}, initials(c.name)),
+      h('span.pname', {}, c.name),
+      h('span.hpbar', {}, h('span', { style: { width: `${Math.max(0, Math.min(1, r)) * 100}%` } })),
+      h('span.hptext', {}, c.hp.cur <= 0 ? 'am Boden' : `${c.hp.cur}/${c.hp.max}${c.hp.temp ? ` +${c.hp.temp}` : ''}`),
+      c.conditions.length ? h('span.mini-dots', {}, ...c.conditions.slice(0, 5).map((x) => h('span', { style: { background: x.color }, title: x.label }))) : null);
+  }));
+
+  const out = [
+    h('div.section-head', {}, h('h3', {}, 'Gruppe'),
+      h('button.small', { title: 'Alle Spielercharaktere in die Porträtleiste', onclick: async () => {
+        // Nur Charaktere, die mitspielen: Platz belegt oder Figur auf einer Karte
+        const used = (c) => state.seats.find((s) => s.seat === c.seat)?.taken || state.scenes.some((sc) => sc.tokens.some((t) => t.refId === c.id));
+        for (const c of state.characters) if (used(c) && !state.initiative.entries.some((e) => e.refId === c.id)) await act({ type: 'initiative.add', kind: 'character', refId: c.id });
+      } }, 'Alle in Leiste')),
+    party,
+  ];
+  const c = selected.players && character(selected.players);
+  if (c) {
+    out.push(sheetFor('players', c));
+    out.push(abilityDetails('character', c));
+  }
+  return out;
+}
+
+/** Plätze der Spieler mit ihrem Ort (Szene), steht im Reiter „Szenen“. */
+function seatsSection() {
   const sceneOpts = state.scenes.map((s) => ({ value: s.id, label: s.name }));
   const seats = h('ul.list', {}, ...state.seats.map((s) => {
     const c = state.characters.find((x) => x.seat === s.seat);
@@ -894,49 +931,80 @@ function tabPlayers() {
           ...sceneOpts.map((o) => h('option', { value: o.value, selected: o.value === s.sceneId }, o.label)))));
   }));
 
-  const party = h('div.party', {}, ...state.characters.map((c) => {
-    const r = hpRatio(c) ?? 0;
-    return h(`button.party-card${selected.players === c.id ? '.selected' : ''}`, { onclick: () => openSheet('players', c.id) },
-      c.portraitAssetId ? h('img', { src: assetUrl(state, c.portraitAssetId), alt: '' }) : h('span.ph', {}, initials(c.name)),
-      h('span.pname', {}, c.name),
-      h('span.hpbar', {}, h('span', { style: { width: `${Math.max(0, Math.min(1, r)) * 100}%` } })),
-      h('span.hptext', {}, c.hp.cur <= 0 ? 'am Boden' : `${c.hp.cur}/${c.hp.max}${c.hp.temp ? ` +${c.hp.temp}` : ''}`),
-      c.conditions.length ? h('span.mini-dots', {}, ...c.conditions.slice(0, 5).map((x) => h('span', { style: { background: x.color }, title: x.label }))) : null);
-  }));
-
-  const out = [
+  return [
     h('h3', {}, 'Plätze'),
     h('p.hint', {}, 'Mit „Ort“ legst du fest, welche Szene ein Spieler sieht. So kann sich die Gruppe aufteilen. „Live schalten“ holt alle wieder zusammen.'),
     seats,
-    h('div.section-head', {}, h('h3', {}, 'Gruppe'),
-      h('button.small', { title: 'Alle Spielercharaktere in die Porträtleiste', onclick: async () => {
-        // Nur Charaktere, die mitspielen: Platz belegt oder Figur auf einer Karte
-        const used = (c) => state.seats.find((s) => s.seat === c.seat)?.taken || state.scenes.some((sc) => sc.tokens.some((t) => t.refId === c.id));
-        for (const c of state.characters) if (used(c) && !state.initiative.entries.some((e) => e.refId === c.id)) await act({ type: 'initiative.add', kind: 'character', refId: c.id });
-      } }, 'Alle in Leiste')),
-    party,
   ];
-  const c = selected.players && character(selected.players);
-  if (c) {
-    out.push(sheetFor('players', c));
-    out.push(abilityDetails('character', c));
-  }
-  return out;
 }
 
 // ================================================================ Tab: NPCs (N1–N8)
 
+/** Mehrfachauswahl in der NPC-Liste (Umschalt + Klick, lang drücken auf dem Handy). */
+const npcSel = new Set();
+
+function npcTokenCount(ids) {
+  const set = new Set(ids);
+  return state.scenes.reduce((k, x) => k + x.tokens.filter((t) => t.kind === 'npc' && set.has(t.refId)).length, 0);
+}
+
+async function deleteNpcs(ids) {
+  ids = ids.filter((id) => npc(id));
+  if (!ids.length) return;
+  const nTok = npcTokenCount(ids);
+  const title = ids.length === 1 ? `„${npc(ids[0]).name}“ löschen?` : `${ids.length} NPCs löschen?`;
+  const body = nTok ? (nTok === 1 ? 'Die zugehörige Figur auf der Karte wird mit gelöscht.' : `Die zugehörigen Figuren auf der Karte werden mit gelöscht (${nTok} Figuren).`) : '';
+  if (!(await dialog({ title, body, okText: 'Löschen', danger: true }))) return;
+  for (const id of ids) {
+    await act({ type: 'npc.delete', id });
+    npcSel.delete(id); sheets.delete(id);
+    if (selected.npcs === id) selected.npcs = null;
+  }
+  renderPanel(true);
+}
+
 function tabNpcs() {
-  const list = h('ul.list', {}, ...state.npcs.map((n) => {
+  for (const id of [...npcSel]) if (!npc(id)) npcSel.delete(id);
+  const toggleSel = (id) => { if (npcSel.has(id)) npcSel.delete(id); else npcSel.add(id); renderPanel(true); };
+  const list = h('ul.list.npc-list', {}, ...state.npcs.map((n) => {
     const r = hpRatio(n) ?? 0;
-    return h(`li${selected.npcs === n.id ? '.selected' : ''}`, {},
-      n.portraitAssetId ? h('img.mini', { src: assetUrl(state, n.portraitAssetId), alt: '' }) : h('span.mini.ph', {}, initials(n.name)),
-      h('button.link', { onclick: () => openSheet('npcs', n.id) }, n.name),
-      h('span.spacer'),
-      n.conditions.length ? h('span.mini-dots', {}, ...n.conditions.slice(0, 4).map((x) => h('span', { style: { background: x.color }, title: x.label }))) : null,
-      h('span.hpbar.small', { title: n.condition, style: { outline: `2px solid ${HEALTH_COLORS[n.condition] || 'transparent'}` } }, h('span', { style: { width: `${Math.max(0, Math.min(1, r)) * 100}%` } })),
-      h('span.hptext', {}, n.hp.cur <= 0 ? (n.dead ? 'tot' : 'am Boden') : `${n.hp.cur}/${n.hp.max}`));
+    let pressTimer = null; let longPressed = false;
+    const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
+    return h(`li${selected.npcs === n.id ? '.selected' : ''}${npcSel.has(n.id) ? '.multi' : ''}`, {
+      // lang drücken (Handy) = zur Auswahl hinzufügen
+      onpointerdown: (e) => {
+        if (e.button > 0 || e.target.closest('.npc-del')) return;
+        longPressed = false;
+        pressTimer = setTimeout(() => { longPressed = true; navigator.vibrate?.(20); toggleSel(n.id); }, 500);
+      },
+      onpointerup: cancelPress, onpointerleave: cancelPress, onpointercancel: cancelPress,
+      oncontextmenu: (e) => { if (longPressed || e.pointerType === 'touch') e.preventDefault(); },
+      onclickcapture: (e) => {
+        if (e.target.closest('.npc-del')) return;
+        if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; return; }
+        // Umschalt + Klick, oder wenn schon etwas ausgewählt ist: Auswahl umschalten
+        if (e.shiftKey || npcSel.size) { e.stopPropagation(); e.preventDefault(); toggleSel(n.id); }
+      },
+    },
+    npcSel.size ? h('span.sel-box', { 'aria-hidden': 'true' }, npcSel.has(n.id) ? '✓' : '') : null,
+    n.portraitAssetId ? h('img.mini', { src: assetUrl(state, n.portraitAssetId), alt: '' }) : h('span.mini.ph', {}, initials(n.name)),
+    h('button.link', { onclick: () => openSheet('npcs', n.id) }, n.name),
+    h('span.spacer'),
+    n.conditions.length ? h('span.mini-dots', {}, ...n.conditions.slice(0, 4).map((x) => h('span', { style: { background: x.color }, title: x.label }))) : null,
+    h('span.hpbar.small', { title: n.condition, style: { outline: `2px solid ${HEALTH_COLORS[n.condition] || 'transparent'}` } }, h('span', { style: { width: `${Math.max(0, Math.min(1, r)) * 100}%` } })),
+    h('span.hptext', {}, n.hp.cur <= 0 ? (n.dead ? 'tot' : 'am Boden') : `${n.hp.cur}/${n.hp.max}`),
+    h('button.icon.npc-del', { title: `„${n.name}“ löschen`, onclick: (e) => { e.stopPropagation(); deleteNpcs([n.id]); } }, '🗑'));
   }));
+  const selIds = [...npcSel];
+  const selBar = selIds.length ? h('div.sel-bar', {},
+    h('b', {}, selIds.length === 1 ? '1 NPC ausgewählt' : `${selIds.length} NPCs ausgewählt`),
+    h('button.small', { onclick: async () => {
+      for (const id of selIds) if (!state.initiative.entries.some((e) => e.refId === id || (e.refIds || []).includes(id))) await act({ type: 'initiative.add', kind: 'npc', refId: id });
+    } }, 'In Leiste'),
+    h('button.small', { onclick: () => groupDialog(selIds) }, 'Als Gruppe'),
+    h('button.small', { onclick: () => hpDialog(selIds.map((id) => ({ kind: 'npc', id })), `${selIds.length} NPCs`) }, '± HP'),
+    h('button.small.danger', { onclick: () => deleteNpcs(selIds) }, '🗑 Löschen'),
+    h('button.small', { onclick: () => { npcSel.clear(); renderPanel(true); } }, 'Auswahl aufheben')) : null;
   const out = [
     h('div.section-head', {}, h('h3', {}, 'NPCs'),
       h('div.row', {},
@@ -945,6 +1013,8 @@ function tabNpcs() {
           const r = await dialog({ title: 'Neuer NPC', fields: [{ name: 'name', label: 'Name', value: '' }], okText: 'Anlegen' });
           if (r) { const res = await act({ type: 'npc.create', name: r.name }); if (res) openSheet('npcs', res.id); }
         } }, '+ Neuer NPC'))),
+    state.npcs.length ? h('p.hint', {}, 'Mehrere auswählen: Umschalt + Klick, auf dem Handy lang drücken.') : null,
+    selBar,
     state.npcs.length ? list : h('p.hint', {}, 'Noch keine NPCs. Spieler sehen nie die genauen Werte, nur einen groben Zustand.'),
   ];
   const n = selected.npcs && npc(selected.npcs);
@@ -1029,12 +1099,7 @@ function sheetActions(kind, id) {
       const r = await act({ type: 'npc.duplicate', id });
       if (r) openSheet('npcs', r.id);
     } });
-    acts.push({ label: 'Löschen', onClick: async () => {
-      const nTok = state.scenes.reduce((k, x) => k + x.tokens.filter((t) => t.kind === 'npc' && t.refId === id).length, 0);
-      if (await dialog({ title: `„${fresh().name}“ löschen?`, body: nTok ? `Die zugehörige Figur auf der Karte wird mit gelöscht${nTok > 1 ? ` (${nTok} Figuren)` : ''}.` : '', okText: 'Löschen', danger: true })) {
-        await act({ type: 'npc.delete', id }); selected.npcs = null; sheets.delete(id); renderPanel(true);
-      }
-    } });
+    acts.push({ label: 'Löschen', onClick: () => deleteNpcs([id]) });
   }
   return acts.filter(Boolean);
 }
@@ -1077,15 +1142,11 @@ function abilityDetails(kind, src) {
 function tabInventory() {
   if (!selected.inventory || !character(selected.inventory)) selected.inventory = state.characters[0]?.id;
   const c = character(selected.inventory);
-  const coinsShort = (x) => {
-    const k = x.coins || {};
-    return COINS.filter((cn) => k[cn.key]).map((cn) => `${k[cn.key]} ${coinLabel(cn, state.settings.coinNames).short}`).join(' · ') || 'keine Münzen';
-  };
   const picker = h('div.inv-picker', {}, ...state.characters.map((x) => h(`button.inv-pick${x.id === selected.inventory ? '.selected' : ''}`, {
     onclick: () => { selected.inventory = x.id; renderPanel(true); },
   },
   x.portraitAssetId ? h('img', { src: assetUrl(state, x.portraitAssetId), alt: '' }) : h('span.ph', {}, initials(x.name)),
-  h('span.pname', {}, x.name), h('span.hptext', {}, coinsShort(x)))));
+  h('span.pname', {}, x.name))));
   if (!invEditor) {
     invEditor = new InventoryEditor(h('div.inv-wrap'), {
       isDM: true,
@@ -1219,4 +1280,4 @@ setupViewToggles('dm', board);
 start();
 
 // Für automatische Tests (Koordinaten der Karte): window.dnd.board
-window.dnd = { board };
+window.dnd = { board, act: (a) => act(a) }; // für Tests und die Browser-Konsole

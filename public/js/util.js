@@ -12,7 +12,10 @@ export function h(tag, attrs = {}, ...children) {
   if (classes.length) el.className = classes.join(' ');
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v === undefined || v === null || v === false) continue;
-    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    if (k.startsWith('on') && typeof v === 'function') {
+      // „onclickcapture“ = Listener in der Capture-Phase
+      if (k.endsWith('capture')) el.addEventListener(k.slice(2, -7), v, true); else el.addEventListener(k.slice(2), v);
+    }
     else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
     else if (k === 'dataset') Object.assign(el.dataset, v);
     else if (k in el && k !== 'list' && typeof v !== 'string') el[k] = v;

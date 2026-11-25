@@ -108,6 +108,10 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | NPC ↔ Figur verbunden | ✅ | Name und Bild gehen auf die Figuren über; NPC löschen löscht seine Figuren |
 | — | Farbmarker | ✅ | Mehrere gleiche NPCs mit zufällig gefärbtem Kreis statt Zahl/Buchstabe |
 | — | Zeichnungen löschen, Radierer | ✅ | 🗑 am Auswahlrahmen, Entf-Taste; 🧽 radiert Freihandlinien teilweise |
+| — | Leiste pro Szene | ✅ | Neue Szene startet leer; jede Szene behält ihre eigene Leiste und Runde |
+| — | NPC-Initiative würfeln | ✅ | 🎲 NPCs: W20 + GE-Bonus für alle NPC-Einträge, ohne Sortieren |
+| — | Licht radieren | ✅ | 🌑 macht gemalte Lichtstellen wieder dunkel |
+| — | NPC-Liste | ✅ | 🗑 pro Eintrag, Mehrfachauswahl (Umschalt + Klick, lang drücken) mit Sammelaktionen |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Darkmode | ✅ | Mitternachtsblau bis Dunkelrot, pro Gerät |

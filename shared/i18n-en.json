@@ -607,7 +607,17 @@
   "Größe des Radierers": "Eraser size",
   "Auf die Karte ziehen = Figur": "Drag onto the map = token",
   "Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild auf die Karte ziehen.": "Tokens are everything round on the map. Linked to an NPC or player character, a token takes on its name, image and stats. New tokens: NPCs tab → “Place on map …”, or drag an image from the Images tab onto the map.",
-  "Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = Figur.": "Portraits for player characters and NPCs. Tap → “Create as NPC” or “Portrait for …”. Drag onto the map = token."
+  "Porträts für Spielercharaktere und NPCs. Antippen → „Als NPC anlegen“ oder „Porträt für …“. Auf die Karte ziehen = Figur.": "Portraits for player characters and NPCs. Tap → “Create as NPC” or “Portrait for …”. Drag onto the map = token.",
+  "🎲 NPCs": "🎲 NPCs",
+  "NPC-Initiative automatisch würfeln: jeder NPC bekommt W20 + Initiativebonus. Sortiert wird erst mit „Sortieren“.": "Roll NPC initiative automatically: each NPC gets d20 + initiative bonus. Sorting only happens with “Sort”.",
+  "Licht radieren (Nachtmodus)": "Erase light (night mode)",
+  "🌑 Licht radieren": "🌑 Erase light",
+  "🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. 🌑 Licht radieren macht eine Stelle wieder dunkel.": "🕯️ Paint light: pick the candle tool in the toolbar on the left and paint over torches, campfires or windows. It becomes bright there for everyone, with a warm firelight glow. Tap without dragging = round circle of light. 🌑 Erase light makes a spot dark again.",
+  "Jede Szene hat ihre eigene Porträtleiste. Eine neue Szene startet leer: ohne Karte, ohne Figuren, mit leerer Leiste. Beim Wechsel mit „Live schalten“ bleibt die Leiste der alten Szene dort erhalten.": "Each scene has its own portrait bar. A new scene starts empty: no map, no tokens, an empty bar. When you switch with “Go live”, the old scene keeps its bar.",
+  "Mehrere auswählen: Umschalt + Klick, auf dem Handy lang drücken.": "Select several: Shift + click, long-press on a phone.",
+  "Als Gruppe": "As group",
+  "1 NPC ausgewählt": "1 NPC selected",
+  "Die zugehörige Figur auf der Karte wird mit gelöscht.": "The token on the map will be deleted as well."
  },
  "patterns": [
   [
@@ -989,6 +999,26 @@
   [
    "Die zugehörige Figur auf der Karte wird mit gelöscht \\((\\d+) Figuren\\)\\.",
    "The tokens on the map will be deleted as well ($1 tokens)."
+  ],
+  [
+   "(\\d+) NPCs ausgewählt",
+   "$1 NPCs selected"
+  ],
+  [
+   "(\\d+) NPCs löschen\\?",
+   "Delete $1 NPCs?"
+  ],
+  [
+   "Die zugehörigen Figuren auf der Karte werden mit gelöscht \\((\\d+) Figuren\\)\\.",
+   "The tokens on the map will be deleted as well ($1 tokens)."
+  ],
+  [
+   "Initiative für (\\d+) NPC-Einträge gewürfelt\\. Sortieren nicht vergessen\\.",
+   "Initiative rolled for $1 NPC entries. Don’t forget to sort."
+  ],
+  [
+   "(\\d+) NPCs",
+   "$1 NPCs"
   ]
  ]
 }

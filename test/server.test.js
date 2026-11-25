@@ -862,3 +862,83 @@ test('Radierer: Linie zerfällt in Stücke, ganz wegradiert = gelöscht; nur DM'
   await act(dm.c, { type: 'drawing.delete', sceneId: sc.id, id: parts[1].id });
   p.c.close(); dm.c.close();
 });
+
+test('Jede Szene hat ihre eigene Porträtleiste; neue Szene startet leer', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const first = st.activeSceneId;
+  const r = await act(dm.c, { type: 'npc.create', name: 'Ork' });
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: r.result.id, value: 12 });
+  await act(dm.c, { type: 'initiative.round', round: 3 });
+  await act(dm.c, { type: 'effect.add', name: 'Segen', rounds: 5 });
+  const eff = st.effects[st.effects.length - 1];
+  const n0 = st.initiative.entries.length;
+  const sc = await act(dm.c, { type: 'scene.create', name: 'Leer' });
+  const fresh = st.scenes.find((x) => x.id === sc.result.id);
+  assert.equal(fresh.tokens.length, 0);
+  await act(dm.c, { type: 'scene.activate', id: sc.result.id });
+  assert.equal(st.initiative.entries.length, 0, 'leere Leiste');
+  assert.equal(st.initiative.round, 1);
+  assert.equal(eff.endRound - st.initiative.round + 1, 5, 'Effekt behält seine Runden');
+  // NPC löschen entfernt ihn auch aus der gespeicherten Leiste der anderen Szene
+  const r2 = await act(dm.c, { type: 'npc.create', name: 'Troll' });
+  await act(dm.c, { type: 'scene.activate', id: first });
+  assert.equal(st.initiative.entries.length, n0, 'alte Leiste zurück');
+  assert.equal(st.initiative.round, 3);
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: r2.result.id });
+  await act(dm.c, { type: 'scene.activate', id: sc.result.id });
+  await act(dm.c, { type: 'npc.delete', id: r2.result.id });
+  assert.ok(!st.scenes.find((x) => x.id === first).initiative.entries.some((e) => e.refId === r2.result.id));
+  // gelöschte Live-Szene: Leiste der anderen wird geladen
+  await act(dm.c, { type: 'scene.delete', id: sc.result.id });
+  assert.equal(st.activeSceneId === first || st.scenes.some((x) => x.id === st.activeSceneId), true);
+  if (st.activeSceneId === first) assert.equal(st.initiative.round, 3);
+  // Spieler bekommen keine fremden Leisten
+  const p = await joinPlayer(1);
+  assert.equal(p.state.scenes[0].initiative, undefined);
+  await act(dm.c, { type: 'effect.delete', id: eff.id });
+  await act(dm.c, { type: 'npc.delete', id: r.result.id });
+  await act(dm.c, { type: 'initiative.round', round: 1 });
+  p.c.close(); dm.c.close();
+});
+
+test('NPC-Initiative würfeln: W20 + GE-Bonus, Spieler unverändert, nicht sortiert', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  await act(dm.c, { type: 'initiative.clear' });
+  const a = await act(dm.c, { type: 'npc.create', name: 'Flink' });
+  await act(dm.c, { type: 'npc.update', id: a.result.id, patch: { abilities: { dex: 18 } } });
+  const b = await act(dm.c, { type: 'npc.create', name: 'Lahm' });
+  const c = st.characters[0];
+  await act(dm.c, { type: 'initiative.add', kind: 'character', refId: c.id, value: 7 });
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: a.result.id });
+  await act(dm.c, { type: 'initiative.add', kind: 'npc', refId: b.result.id });
+  const order = st.initiative.entries.map((e) => e.id);
+  const p = await joinPlayer(1);
+  assert.equal((await act(p.c, { type: 'initiative.rollNpcs' })).ok, false);
+  const r = await act(dm.c, { type: 'initiative.rollNpcs' });
+  assert.equal(r.result.rolls.length, 2);
+  const fa = st.initiative.entries.find((e) => e.refId === a.result.id);
+  assert.ok(fa.value >= 5 && fa.value <= 24, 'W20 + 4');
+  assert.ok(r.result.rolls.every((x) => x.d20 >= 1 && x.d20 <= 20));
+  assert.equal(st.initiative.entries.find((e) => e.refId === c.id).value, 7);
+  assert.deepEqual(st.initiative.entries.map((e) => e.id), order, 'nicht sortiert');
+  await act(dm.c, { type: 'npc.delete', id: a.result.id });
+  await act(dm.c, { type: 'npc.delete', id: b.result.id });
+  await act(dm.c, { type: 'initiative.clear' });
+  p.c.close(); dm.c.close();
+});
+
+test('Licht radieren: Radierstriche werden gespeichert und mit „Rückgängig“ entfernt', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [10, 10], r: 50 } });
+  await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [10, 10, 30, 10], r: 20, erase: true } });
+  assert.equal(sc.lights.at(-1).erase, true);
+  assert.ok(!sc.lights.at(-2).erase);
+  await act(dm.c, { type: 'light.undo', sceneId: sc.id });
+  assert.ok(!sc.lights.some((l) => l.erase));
+  await act(dm.c, { type: 'light.clear', sceneId: sc.id });
+  dm.c.close();
+});

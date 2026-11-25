@@ -88,7 +88,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
-| **Seitenleiste** (rechts) | Reiter *Szenen · Figuren · Bilder · Spieler · NPCs · Inventar · Notizen · Spiel* |
+| **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · Notizen · Szenen · Figuren · Bilder · Spiel* |
 | **🎲 💬** (unten links) | Würfel mit Protokoll und Fuß-↔-Meter-Rechner · Chat |
 
 Auf dem Tablet oder Handy klappt die Seitenleiste mit **☰** auf und zu.
@@ -102,7 +102,7 @@ Es gibt viele Momente ohne Karte: Gespräche, Reisen, Einkaufen. Oder es liegt o
 <td width="70%"><img src="docs/img/26-dm-ohne-karte.webp" alt="DM-Ansicht ohne Karte"></td>
 <td width="30%"><img src="docs/img/21-ohne-karte-handy.webp" alt="Spieler am Handy ohne Karte, mit Zauberplätzen als Rauten"></td>
 </tr>
-<tr><td>DM ohne Karte: Leiste, Plätze, Gruppe, Bögen</td><td>Spieler am Handy ohne Karte</td></tr>
+<tr><td>DM ohne Karte: Leiste, Gruppe, Bögen</td><td>Spieler am Handy ohne Karte</td></tr>
 </table>
 
 ---
@@ -119,7 +119,7 @@ Reiter **Spiel**:
 - **Raum-PIN:** Ist sie gesetzt, kommen nur Spieler rein, die sie kennen. Wer schon drin ist, bleibt drin.
 - **Anzahl Spielerplätze:** Standard ist 5, möglich sind 1 bis 20. Belegte Plätze werden beim Verkleinern nie entfernt.
 
-Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. Einen Platz freigeben kannst du im Reiter **Spieler**.
+Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. Einen Platz freigeben kannst du im Reiter **Szenen** unter *Plätze*.
 
 <details>
 <summary>Spieler von zu Hause (Tailscale) einrichten</summary>
@@ -138,12 +138,16 @@ Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. 
 Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und eigenem Nebel, zum Beispiel *Waldweg* oder *Cragmaw-Höhle*.
 
 - **+ Neue Szene**, dann **Bild hochladen**. Große Bilder werden automatisch verkleinert, damit sie bei allen schnell laden.
+- **Jede Szene ist für sich:** Eine neue Szene ist **völlig leer**, ohne Karte, ohne Figuren und mit **leerer Porträtleiste**. Jede Szene hat ihre eigene Leiste mit eigenem Rundenzähler. Schaltest du eine andere Szene live, bleibt die Leiste der alten Szene dort liegen. Gehst du zurück, ist sie wieder da. Laufende Effekttimer behalten beim Wechsel ihre restlichen Runden.
+- **Plätze:** Unter der Szenenliste stehen die Spielerplätze mit ihrem *Ort* (siehe [Getrennte Gruppen](#12-getrennte-gruppen)) und *Freigeben*.
 - **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
 - **Fuß pro Feld** (Standard 5) braucht das Lineal.
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
-- **Licht malen** (nur bei Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort wird es für alle hell, mit warmem, orangefarbenem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. *Rückgängig* und *Alle Lichter löschen* stehen unter dem Nachtfilter.
+- **Licht malen** (nur bei Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort wird es für alle hell, mit warmem, orangefarbenem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. Mit **🌑 Licht radieren** wischst du über eine helle Stelle, und dort wird es wieder dunkel. Die Größe stellst du wie beim Licht unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen unter dem Nachtfilter.
+
+  <img src="docs/img/48-licht-radieren.webp" width="460" alt="Lagerfeuerschein mit einem wegradierten dunklen Streifen">
 - **Notiz zur Szene:** Raumbeschreibung, Fallen, Schätze. Nur du siehst sie.
 
 **Im Hintergrund vorbereiten:** Oben bei *Bearbeite* wählst du eine andere Szene aus. Die Spieler sehen weiter die alte, bis du **Live schalten** drückst.
@@ -175,7 +179,13 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 **NPC und Figur bleiben verbunden:** Benennst du einen NPC um oder gibst ihm ein anderes Bild, ändern sich seine Figuren auf der Karte mit. Löschst du den NPC, verschwindet auch seine Figur. Die App sagt das vorher im Löschen-Dialog. Das Gleiche gilt für Name und Porträt von Spielercharakteren.
 
-**Spielercharaktere** (Reiter *Spieler*): Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
+**Spielercharaktere** (Reiter *Spieler*): Unter *Gruppe* stehen alle Charaktere nebeneinander in einer Reihe. Gruppenkarte anklicken, Name, Porträt und HP eintragen, dann **Figur setzen**. Diese Figur darf nur der zugehörige Spieler bewegen. Du darfst immer alles.
+
+<img src="docs/img/49-npc-mehrfachauswahl.webp" width="340" align="right" alt="NPC-Liste mit zwei ausgewählten Ratten und der Leiste mit In Leiste, Als Gruppe, ± HP, Löschen">
+
+**NPC-Liste:** Jeder Eintrag hat rechts einen **🗑** zum Löschen. **Mehrere auswählen:** **Umschalt + Klick**, auf dem Handy **lang drücken**. Ist schon etwas ausgewählt, reicht ein normaler Klick. Oben erscheint dann eine Leiste mit **In Leiste**, **Als Gruppe**, **± HP**, **🗑 Löschen** und **Auswahl aufheben**.
+
+<br clear="right">
 
 **NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: ein Bild aus *Charaktere/NPCs* antippen → **📍 Als NPC auf die Karte setzen**. Ziehst du ein Bild direkt auf die Karte, wird es eine **Figur** (ohne Werte). Eine Figur ohne Bild setzt du im Reiter *Figuren* mit **Figur ohne Bild setzen**.
 
@@ -267,9 +277,12 @@ Unten erscheint *„4 markiert · Aktionen …“*:
 - **In die Leiste:** im Bogen „In Leiste“, im Figurenmenü „In Porträtleiste“, für mehrere Figuren *Aktionen → Einzeln in die Porträtleiste* oder im Reiter *Spieler* „Alle in Leiste“ (nimmt nur Charaktere, die mitspielen).
 - **Gleiche Gegner stehen einzeln** (Goblin A, Goblin B …) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
 - **Initiativwert** ins kleine Feld unter dem Porträt tippen, dann **Sortieren**. Der Höchste beginnt.
+- **🎲 NPCs** würfelt die Initiative aller NPCs und NPC-Gruppen in der Leiste automatisch: **W20 + Initiativebonus** (Geschicklichkeitsmodifikator aus den Attributen, bei Standardwert 10 also ein reiner W20). Die Werte der Spieler bleiben, wie sie sind. **Sortiert wird nicht automatisch**, das machst du mit *Sortieren*, wenn alle Werte da sind.
+
+  <img src="docs/img/51-npc-initiative.webp" alt="Porträtleiste nach dem automatischen Würfeln der NPC-Initiative">
 - **Reihenfolge ändern:** Porträt ziehen (Maus) oder **‹ ›** (Touch). **Weiter ▶** schaltet zum Nächsten. Ein Klick auf ein Porträt macht es zum aktuellen.
 - **Doppelklick auf ein Porträt** öffnet den Bogen dieses NPCs oder Spielercharakters rechts, wo du Schaden, Heilung und Zustände einträgst. Bei einer Gruppe öffnet er den ersten NPC daraus.
-- Die Knöpfe **Sortieren · ◀ · Weiter ▶ · Leeren** stehen links **über dem Rundenzähler**. So bleibt rechts mehr Platz für die Porträts.
+- Die Knöpfe **🎲 NPCs · Sortieren · ◀ · Weiter ▶ · Leeren** stehen links **über dem Rundenzähler**. So bleibt rechts mehr Platz für die Porträts.
 - **Am Porträt** steht alles über den Zustand, **die Figur auf der Karte bleibt unverändert** (nur „tot“ ändert sie):
 
   | Was | Anzeige am Porträt |
@@ -399,7 +412,7 @@ Mehrere Effekte gleichzeitig sind möglich, die App zählt sie zusammen. Ob sie 
 
 **Münzbilder:** Jede Münze hat ein Standardbild. Tippst du (als DM) auf das Bild einer Münze, kannst du ein **eigenes Bild hochladen** oder zum **Standardbild** zurück. Diese Bilder landen **nicht** in der Bildersammlung.
 
-Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spieler sehen es nicht. **Du** siehst im Reiter **Inventar** alle Charaktere und kannst etwas eintragen, z. B. gefundene Beute oder etwas, das du für später planst.
+Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spieler sehen es nicht. **Du** siehst im Reiter **Inventar** alle Charaktere nebeneinander in einer Reihe, antippen öffnet das Inventar. Dort kannst du etwas eintragen, z. B. gefundene Beute oder etwas, das du für später planst.
 
 <br clear="right">
 
@@ -434,7 +447,7 @@ Eigene Figuren sieht jeder Spieler immer, auch im Nebel.
 
 <img src="docs/img/09-getrennte-gruppen.webp" width="300" align="right" alt="Plätze mit Ort-Auswahl">
 
-Die Gruppe teilt sich auf? Im Reiter **Spieler** wählst du bei jedem Platz den **Ort**, also die Szene, die dieser Spieler sieht. Tom klettert allein in die Höhle, Mia bleibt am Waldweg.
+Die Gruppe teilt sich auf? Im Reiter **Szenen** wählst du unter *Plätze* bei jedem Platz den **Ort**, also die Szene, die dieser Spieler sieht. Tom klettert allein in die Höhle, Mia bleibt am Waldweg.
 
 - Die Kopfzeile zeigt dann *„Spieler sehen: Waldweg (Platz 2 woanders)“*.
 - In der Szenenliste steht, wie viele Spieler gerade wo sind.
@@ -636,7 +649,9 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Bild als NPC, Objekt, Karte, Weltkarte | *Bilder* → Bild antippen |
 | Spielerbild zuordnen | *Bilder* → *Charaktere/NPCs* → Bild antippen → **Porträt für …** |
 | Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
-| Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** |
+| Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** (zu viel? **🌑 Licht radieren**) |
+| NPCs würfeln Initiative | Leiste → **🎲 NPCs**, dann *Sortieren* |
+| Mehrere NPCs löschen | *NPCs* → Umschalt + Klick / lang drücken → **🗑 Löschen** |
 | Darkmode | **🌙** oben |
 | Felder im Bogen ändern | **✎ Bearbeiten**, danach **✓ Fertig** |
 | Menü einer Figur | Rechtsklick oder lange drücken |
@@ -649,7 +664,7 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Effekt mitzählen (Segen, Netz …) | Leiste links **+ ⏳** → Name, Runden |
 | Kampf beenden | **Leeren** (Runde 1, Effekte weg) |
 | Höhle erkunden | Szene → *Alles verdecken* → ☀▭ / ☀✎ Stück für Stück aufdecken |
-| Gruppe teilt sich | Reiter *Spieler* → *Ort* pro Platz |
+| Gruppe teilt sich | Reiter *Szenen* → *Plätze* → *Ort* pro Platz |
 | Nur einer bemerkt etwas | Figurenmenü → *Sichtbar für …* |
 | Krieger ohne Zauberplätze | Bogen → *⚙ Bogen anpassen* → Zauberplätze aus |
 | Beute verteilen | Reiter *Inventar* → Charakter wählen → Münzen / Gegenstände |
@@ -706,7 +721,7 @@ Umgebungsvariablen gehen auch: `PORT`, `DND_DM_PASSWORD`, `DND_PIN`, `DND_SEATS`
 <details>
 <summary><b>„Platz ist schon belegt“</b></summary>
 
-Reiter *Spieler* → bei dem Platz **Freigeben**. Danach kann sich der Spieler neu anmelden.
+Reiter *Szenen* → *Plätze* → bei dem Platz **Freigeben**. Danach kann sich der Spieler neu anmelden.
 </details>
 
 <details>

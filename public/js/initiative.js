@@ -72,7 +72,7 @@ function roundBox(opts) {
 
 /**
  * entries: [{ id, kind, name, portraitAssetId, value, visibility?, condition?, conditions?, count?, hiddenNow? }]
- * opts: { isDM, currentId, state, onReorder, onSetCurrent, onRemove, onNext, onPrev, onClear, onValue, onVisibility, onSort, onOpen }
+ * opts: { isDM, currentId, state, onReorder, onSetCurrent, onRemove, onNext, onPrev, onClear, onValue, onVisibility, onSort, onOpen, onRollNpcs }
  */
 export function renderInitiative(container, entries, opts) {
   // Beim Tippen eines Initiativwerts nicht neu aufbauen.
@@ -164,6 +164,7 @@ export function renderInitiative(container, entries, opts) {
     // Knöpfe direkt über Rundenzähler und Effekttimer (spart Platz rechts)
     box.prepend(h('div.ini-controls', {},
       info('initiative'),
+      opts.onRollNpcs && entries.some((e) => e.kind !== 'character') ? h('button.small', { onclick: opts.onRollNpcs, title: 'NPC-Initiative automatisch würfeln: jeder NPC bekommt W20 + Initiativebonus. Sortiert wird erst mit „Sortieren“.' }, '🎲 NPCs') : null,
       h('button.small', { onclick: opts.onSort, title: 'Nach Initiativwert sortieren, der Höchste beginnt' }, 'Sortieren'),
       h('button.small', { onclick: opts.onPrev, title: 'Zurück' }, '◀'),
       h('button.small.primary', { onclick: opts.onNext, title: 'Nächster ist dran' }, 'Weiter ▶'),

@@ -230,6 +230,13 @@ function normalizeState(raw) {
   let currentId = ini.currentId || null;
   if (!currentId && typeof ini.current === 'number' && entries[ini.current]) currentId = entries[ini.current].id;
   s.initiative = { entries, currentId, round: clampInt(ini.round, 1, 99999, 1) };
+  // Jede Szene hat ihre eigene Porträtleiste. Die der Live-Szene steht in state.initiative,
+  // die der übrigen Szenen in scene.initiative.
+  for (const sc of s.scenes) {
+    if (sc.id === s.activeSceneId || !sc.initiative) { delete sc.initiative; continue; }
+    const si = sc.initiative;
+    sc.initiative = { entries: (Array.isArray(si.entries) ? si.entries : []).map((e) => ({ value: null, visibility: 'auto', ...e })), currentId: si.currentId || null, round: clampInt(si.round, 1, 99999, 1) };
+  }
   s.effects = Array.isArray(raw.effects) ? raw.effects : [];
   s.party = { notes: str((raw.party || {}).notes, LONG_TEXT) }; // XP, Spieldatum und Gold gibt es nicht mehr
   s.quests = Array.isArray(raw.quests) ? raw.quests : [];
@@ -254,6 +261,35 @@ function guessFolder(state, id) {
   return 'misc';
 }
 
+/** Alle Porträtleisten: die der Live-Szene und die gespeicherten der anderen Szenen. */
+function allInitiatives(state) {
+  return [state.initiative, ...state.scenes.map((sc) => sc.initiative).filter(Boolean)];
+}
+
+/**
+ * Live-Szene wechseln: Die Leiste der bisherigen Szene wird bei ihr abgelegt, die der neuen geladen
+ * (eine neue Szene startet leer, Runde 1). Effekttimer behalten ihre restlichen Runden.
+ */
+function switchInitiative(state, newSceneId) {
+  if (newSceneId === state.activeSceneId) return;
+  const old = state.scenes.find((sc) => sc.id === state.activeSceneId);
+  const next = state.scenes.find((sc) => sc.id === newSceneId);
+  const oldRound = state.initiative.round;
+  if (old) old.initiative = state.initiative;
+  state.initiative = (next && next.initiative) || { entries: [], currentId: null, round: 1 };
+  if (next) delete next.initiative;
+  for (const e of state.effects) e.endRound = state.initiative.round + (e.endRound - oldRound);
+}
+
+function removeFromInitiatives(state, pred) {
+  for (const ini of allInitiatives(state)) {
+    ini.entries = ini.entries
+      .map((e) => (e.kind === 'group' ? { ...e, refIds: e.refIds.filter((r) => !pred({ kind: 'npc', refId: r })) } : e))
+      .filter((e) => !(e.kind !== 'group' && pred(e)) && !(e.kind === 'group' && e.refIds.length === 0));
+    if (ini.currentId && !ini.entries.some((e) => e.id === ini.currentId)) ini.currentId = ini.entries[0] ? ini.entries[0].id : null;
+  }
+}
+
 /** Änderungen an NPC/Charakter auf die zugehörigen Figuren übertragen (Name, Bild). */
 function syncTokens(state, kind, ent, patch) {
   const tk = kind === 'npc' ? 'npc' : 'player';
@@ -273,7 +309,7 @@ function changeSeatCount(state, wanted) {
     const removedChars = new Set(state.characters.filter((c) => c.seat > n).map((c) => c.id));
     state.seats = state.seats.filter((s) => s.seat <= n);
     state.characters = state.characters.filter((c) => c.seat <= n);
-    state.initiative.entries = state.initiative.entries.filter((e) => !(e.kind === 'character' && removedChars.has(e.refId)));
+    removeFromInitiatives(state, (e) => e.kind === 'character' && removedChars.has(e.refId));
     for (const seat of Object.keys(state.seatScenes)) if (Number(seat) > n) delete state.seatScenes[seat];
     for (const sc of state.scenes) for (const t of sc.tokens) {
       if (t.ownerSeat > n) t.ownerSeat = null;
@@ -671,6 +707,7 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const sc = findScene(action.id); must(sc);
       const copy = JSON.parse(JSON.stringify(sc));
+      delete copy.initiative;
       copy.id = newId('sc_');
       copy.name = `${sc.name} (${L('copy')})`;
       copy.tokens.forEach((t) => { t.id = newId('t_'); });
@@ -682,8 +719,13 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       if (state.scenes.length <= 1) throw new ActionError('Die letzte Szene kann nicht gelöscht werden');
       const i = state.scenes.findIndex((s) => s.id === action.id); must(i >= 0);
+      if (state.activeSceneId === action.id) {
+        const other = state.scenes[i === 0 ? 1 : 0];
+        state.scenes[i].initiative = null; // Leiste der gelöschten Szene verwerfen
+        switchInitiative(state, other.id);
+        state.activeSceneId = other.id;
+      }
       state.scenes.splice(i, 1);
-      if (state.activeSceneId === action.id) state.activeSceneId = state.scenes[0].id;
       for (const [seat, sid] of Object.entries(state.seatScenes)) if (sid === action.id) delete state.seatScenes[seat];
       return {};
     }
@@ -699,6 +741,7 @@ function applyAction(state, who, action) {
       // "Live schalten": alle Spieler sehen diese Szene (getrennte Gruppen werden zusammengeführt).
       if (!isDM) deny();
       must(findScene(action.id));
+      switchInitiative(state, action.id);
       state.activeSceneId = action.id;
       state.seatScenes = {};
       return {};
@@ -749,7 +792,9 @@ function applyAction(state, who, action) {
       const sh = action.light || {};
       const points = (Array.isArray(sh.points) ? sh.points : []).slice(0, 4000).map((v) => Math.round(num(v)));
       must(points.length >= 2, 'Licht ohne Punkte');
-      sc.lights.push({ id: newId('l_'), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) });
+      const light = { id: newId('l_'), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) };
+      if (sh.erase) light.erase = true; // Radierstrich: macht die Stelle wieder dunkel
+      sc.lights.push(light);
       return {};
     }
     case 'light.undo': {
@@ -1005,9 +1050,7 @@ function applyAction(state, who, action) {
     case 'npc.delete': {
       if (!isDM) deny();
       state.npcs = state.npcs.filter((n) => n.id !== action.id);
-      state.initiative.entries = state.initiative.entries
-        .map((e) => (e.kind === 'group' ? { ...e, refIds: e.refIds.filter((r) => r !== action.id) } : e))
-        .filter((e) => e.refId !== action.id && !(e.kind === 'group' && e.refIds.length === 0));
+      removeFromInitiatives(state, (e) => e.kind === 'npc' && e.refId === action.id);
       // Die Figuren des NPCs verschwinden mit ihm von der Karte
       let removedTokens = 0;
       for (const sc of state.scenes) {
@@ -1105,6 +1148,21 @@ function applyAction(state, who, action) {
         state.initiative.currentId = list[(i + (forward ? 1 : n - 1)) % n].id;
       }
       return { round: state.initiative.round };
+    }
+    case 'initiative.rollNpcs': {
+      // Alle NPCs (und NPC-Gruppen) in der Leiste bekommen einen zufälligen Wert: W20 + Initiativebonus (GE).
+      // Die Reihenfolge bleibt, sortiert wird erst mit „Sortieren“.
+      if (!isDM) deny();
+      const rolls = [];
+      for (const e of state.initiative.entries) {
+        if (e.kind !== 'npc' && e.kind !== 'group') continue;
+        const n = state.npcs.find((x) => x.id === (e.kind === 'group' ? e.refIds[0] : e.refId));
+        const bonus = n && n.abilities ? Math.floor((clampInt(n.abilities.dex, 1, 30, 10) - 10) / 2) : 0;
+        const d20 = crypto.randomInt(1, 21);
+        e.value = d20 + bonus;
+        rolls.push({ id: e.id, d20, bonus, value: e.value });
+      }
+      return { rolls };
     }
     case 'initiative.round': {
       if (!isDM) deny();
