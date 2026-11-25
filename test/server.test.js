@@ -310,14 +310,14 @@ test('Mehrfach setzen: 5 Goblins mit eigenen HP und Kennungen (P8)', async () =>
   assert.equal(res.result.created.length, 5);
   const s = inst.getState();
   const names = res.result.created.map((c) => s.npcs.find((n) => n.id === c.npcId).name);
-  assert.deepEqual(names, ['Goblin A', 'Goblin B', 'Goblin C', 'Goblin D', 'Goblin E']);
+  assert.deepEqual(names, ['Goblin', 'Goblin', 'Goblin', 'Goblin', 'Goblin'], 'Kennung steht nur am Marker, nicht im Namen');
   assert.equal(new Set(res.result.created.map((c) => c.npcId)).size, 5, 'jeder Goblin hat eigene HP');
   const toks = s.scenes.find((x) => x.id === sceneId).tokens.filter((t) => res.result.created.some((c) => c.tokenId === t.id));
   assert.ok(toks.every((t) => t.hidden));
   assert.deepEqual(toks.map((t) => t.label), ['A', 'B', 'C', 'D', 'E']);
-  // Zweite Welle: Namen wachsen nicht ("Goblin A 1")
+  // Zweite Welle: Namen wachsen nicht
   const again = await act(dm.c, { type: 'npc.spawn', sceneId, npcId: base, labels: ['F'], x: 0, y: 0 });
-  assert.equal(inst.getState().npcs.find((n) => n.id === again.result.created[0].npcId).name, 'Goblin F');
+  assert.equal(inst.getState().npcs.find((n) => n.id === again.result.created[0].npcId).name, 'Goblin');
 });
 
 // ---------------------------------------------------------------- Stufe 2
@@ -681,7 +681,7 @@ test('Farbmarker: mehrere NPCs bekommen verschiedene, zufällige Farben ohne Ken
   assert.ok(toks.every((t) => /^#[0-9a-f]{6}$/.test(t.badgeColor) && t.label === ''));
   assert.equal(new Set(toks.map((t) => t.badgeColor)).size, 4, 'alle verschieden');
   const names = sp.result.created.map((c) => st.npcs.find((n) => n.id === c.npcId).name);
-  assert.equal(new Set(names).size, 4, 'Namen unterscheidbar');
+  assert.deepEqual(names, ['Goblin', 'Goblin', 'Goblin', 'Goblin'], 'Farbe steht nicht im Namen');
   for (const c of sp.result.created) await act(dm.c, { type: 'npc.delete', id: c.npcId });
   dm.c.close();
 });

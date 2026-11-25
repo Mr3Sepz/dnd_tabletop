@@ -639,6 +639,7 @@ function renderInitiativeBar() {
       condition: e.kind === 'npc' && src ? src.condition : undefined, conditions: src ? src.conditions : [],
       color: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.color)?.color || null,
       badgeColor: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.badgeColor)?.badgeColor || null,
+      label: state.scenes.flatMap((x) => x.tokens).find((t) => t.refId === e.refId && t.label)?.label || '',
       hiddenNow: e.kind !== 'character' && !e.visibleSeats.length };
   });
   renderInitiative($('#initiative'), entries, {
@@ -943,6 +944,14 @@ function seatsSection() {
 
 // ================================================================ Tab: NPCs (N1–N8)
 
+/** Marker der Figur eines NPCs (Farbe oder Kennung), damit gleichnamige NPCs unterscheidbar bleiben. */
+function npcMark(id) {
+  const t = state.scenes.flatMap((x) => x.tokens).find((k) => k.refId === id && (k.badgeColor || k.label));
+  if (!t) return null;
+  return t.badgeColor ? h('span.npc-mark', { style: { background: t.badgeColor }, title: 'Farbmarker der Figur' })
+    : h('span.npc-mark.text', { title: 'Kennung der Figur', 'data-raw': '' }, t.label);
+}
+
 /** Mehrfachauswahl in der NPC-Liste (Umschalt + Klick, lang drücken auf dem Handy). */
 const npcSel = new Set();
 
@@ -992,6 +1001,7 @@ function tabNpcs() {
     npcSel.size ? h('span.sel-box', { 'aria-hidden': 'true' }, npcSel.has(n.id) ? '✓' : '') : null,
     n.portraitAssetId ? h('img.mini', { src: assetUrl(state, n.portraitAssetId), alt: '' }) : h('span.mini.ph', {}, initials(n.name)),
     h('button.link', { onclick: () => openSheet('npcs', n.id) }, n.name),
+    npcMark(n.id),
     h('span.spacer'),
     n.conditions.length ? h('span.mini-dots', {}, ...n.conditions.slice(0, 4).map((x) => h('span', { style: { background: x.color }, title: x.label }))) : null,
     h('span.hpbar.small', { title: n.condition, style: { outline: `2px solid ${HEALTH_COLORS[n.condition] || 'transparent'}` } }, h('span', { style: { width: `${Math.max(0, Math.min(1, r)) * 100}%` } })),
@@ -1051,6 +1061,7 @@ function sheetFor(kind, src) {
       onPatch: (patch) => act({ type: isNpc ? 'npc.update' : 'character.update', id: src.id, patch }),
       onConditions: (list) => act({ type: 'conditions.set', target: { kind: isNpc ? 'npc' : 'character', id: src.id }, conditions: list }),
       actions: sheetActions(kind, src.id),
+      mark: () => npcMark(src.id), // Marker der Figur am Porträt
     });
     entry = { sheet, el };
     sheets.set(src.id, entry);

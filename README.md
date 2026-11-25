@@ -210,8 +210,8 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 Beim Setzen eines NPCs wählst du:
 - **Anzahl:** 4 Goblins auf einmal. Jeder bekommt eigene HP.
-- **Kennungen 1, 2, 3 … oder A, B, C …:** im Dialog auswählbar, vorgeschlagen und frei änderbar. Sie stehen als Abzeichen auf der Figur.
-- **Farbmarker (Standard):** Statt Zahl oder Buchstabe wird der kleine Kreis **eingefärbt**. Das ist voreingestellt; Zahlen oder Buchstaben wählst du im Dialog. Ein einzelner NPC bekommt keinen Marker, erst wenn es mehrere gleiche gibt. Die Farben werden **jedes Mal zufällig** vergeben. So lernen die Spieler keine feste Reihenfolge wie „Rot ist immer der Erste“. Die NPCs heißen dann z. B. *Ratte Grün* und *Ratte Marine*. Unter *Bearbeiten …* kannst du die Farbe einer Figur auch von Hand setzen oder entfernen.
+- **Kennungen 1, 2, 3 … oder A, B, C …:** im Dialog auswählbar, vorgeschlagen und frei änderbar. Sie stehen als Abzeichen auf der Figur, **nicht im Namen**.
+- **Farbmarker (Standard):** Statt Zahl oder Buchstabe wird der kleine Kreis **eingefärbt**. Das ist voreingestellt; Zahlen oder Buchstaben wählst du im Dialog. Ein einzelner NPC bekommt keinen Marker, erst wenn es mehrere gleiche gibt. Die Farben werden **jedes Mal zufällig** vergeben. So lernen die Spieler keine feste Reihenfolge wie „Rot ist immer der Erste“. Die **Namen bleiben gleich** (alle heißen *Ratte*); unterschieden wird nur über den Marker. Den siehst du auch in der Porträtleiste, in der NPC-Liste und am Porträt im Bogen. Unter *Bearbeiten …* kannst du die Farbe einer Figur auch von Hand setzen oder entfernen.
 
 <img src="docs/img/45-farbmarker.webp" width="400" alt="Drei Ratten mit farbigen Kreisen statt Kennungen">
 - **Versteckt setzen:** für einen Hinterhalt. Nur du siehst die Figuren, halb durchsichtig.
@@ -281,7 +281,7 @@ Unten erscheint *„4 markiert · Aktionen …“*:
 <img src="docs/img/02-portraetleiste.webp" alt="Porträtleiste mit einzelnen Goblins und Initiativwerten">
 
 - **In die Leiste:** im Bogen „In Leiste“, im Figurenmenü „In Porträtleiste“, für mehrere Figuren *Aktionen → Einzeln in die Porträtleiste* oder im Reiter *Spieler* „Alle in Leiste“ (nimmt nur Charaktere, die mitspielen).
-- **Gleiche Gegner stehen einzeln** (Goblin A, Goblin B …) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
+- **Gleiche Gegner stehen einzeln** (vier *Goblin* mit den Markern A, B, C, D oder vier Farben) und lassen sich einzeln sortieren. Wer lieber einen Sammeleintrag „Goblins ×4“ möchte, nimmt *Aktionen → Als Gruppe in die Porträtleiste*. Das ist freiwillig.
 - **Initiativwert** ins kleine Feld unter dem Porträt tippen, dann **Sortieren**. Der Höchste beginnt.
 - **🎲 NPCs** würfelt die Initiative aller NPCs und NPC-Gruppen in der Leiste automatisch: **W20 + Initiativebonus** (Geschicklichkeitsmodifikator aus den Attributen, bei Standardwert 10 also ein reiner W20). Die Werte der Spieler bleiben, wie sie sind. **Sortiert wird nicht automatisch**, das machst du mit *Sortieren*, wenn alle Werte da sind.
 

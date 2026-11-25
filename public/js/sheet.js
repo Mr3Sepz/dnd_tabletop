@@ -134,7 +134,7 @@ export class Sheet {
         title: o.canPickPortrait ? 'Porträt wählen' : '',
         disabled: !o.canPickPortrait,
         onclick: () => o.onPickPortrait?.(),
-      }, portraitUrl ? h('img', { src: portraitUrl, alt: '' }) : h('span', {}, initials(d.name))),
+      }, portraitUrl ? h('img', { src: portraitUrl, alt: '' }) : h('span', {}, initials(d.name)), o.mark ? o.mark() : null),
       h('input.name', { 'data-bind': 'name', 'data-lock': '', value: d.name, 'aria-label': 'Name', onchange: (e) => this.patch({ name: e.target.value }) }),
       ...(o.actions || []).map((a) => h('button.small', { onclick: a.onClick, title: a.title || '' }, a.label)),
       lockButton(),

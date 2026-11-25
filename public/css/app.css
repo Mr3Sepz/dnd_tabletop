@@ -625,3 +625,11 @@ small.term-en.under { display: block; margin-top: 1px; padding-left: 4px; font-s
 .crop-view:active { cursor: grabbing; }
 .crop-zoom { width: 100%; }
 .crop-zoom input { width: 100%; accent-color: var(--accent); }
+
+/* Marker statt Kennung im Namen: Farbe oder Zahl/Buchstabe im Kreis */
+.ini-badge.text { background: #fff; color: #222; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; width: 17px; height: 17px; border: 1.5px solid #222; }
+.npc-mark { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.5); display: inline-flex; align-items: center; justify-content: center; }
+.npc-mark.text { background: #fff; color: #222; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border: 1.5px solid #222; box-shadow: none; }
+.sheet-head .portrait { position: relative; overflow: visible; }
+.sheet-head .portrait img { border-radius: 50%; }
+.sheet-head .portrait .npc-mark { position: absolute; right: -2px; bottom: -2px; }

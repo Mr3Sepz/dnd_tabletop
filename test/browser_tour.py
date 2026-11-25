@@ -66,7 +66,8 @@ def drag_world(page, a, b):
 
 
 def token_pos(page, name):
-    return page.evaluate("""(name) => { const t = window.dnd.board.scene.tokens.find((k) => k.name === name); return t ? [t.x, t.y] : null; }""", name)
+    # „Goblin A“ = NPC „Goblin“ mit Kennung A (die Kennung steht nur am Marker, nicht im Namen)
+    return page.evaluate("""(name) => { const t = window.dnd.board.scene.tokens.find((k) => k.name === name || (k.label && `${k.name} ${k.label}` === name)); return t ? [t.x, t.y] : null; }""", name)
 
 
 def dialog_ok(page):
@@ -318,7 +319,7 @@ try:
         rid = dm.evaluate("window.dnd.board.state.npcs.find(n => n.name.startsWith('Ratte')).id")
         dm.evaluate("([id]) => { document.querySelector('#tabs button[data-tab=npcs]').click(); }", [rid])
         first_rat = dm.evaluate("window.dnd.board.state.npcs.find(n => n.name.startsWith('Ratte')).name")
-        dm.locator('#tabBody button.link', has_text=first_rat).click(); time.sleep(0.3)
+        dm.locator('#tabBody button.link', has_text=first_rat).first.click(); time.sleep(0.3)
         dm.fill('.sheet .name', 'Riesenratte'); dm.press('.sheet .name', 'Tab'); time.sleep(0.4)
         dm.click('.sheet .portrait'); dm.select_option('.dialog select', label='wolf'); dialog_ok(dm); time.sleep(0.4)
         tok = dm.evaluate("window.dnd.board.scene.tokens.find(t => t.refId === window.dnd.board.state.npcs.find(n => n.name === 'Riesenratte').id)")
@@ -389,9 +390,10 @@ try:
 
         step('Doppelklick aufs Porträt in der Leiste öffnet den Reiter')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.2)
-        dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Goblin B')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
+        dm.locator('.ini-item', has=dm.locator('.ini-badge', has_text='B')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
         assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'npcs'
-        assert dm.locator('.sheet .name').input_value() == 'Goblin B'
+        assert dm.locator('.sheet .name').input_value() == 'Goblin'
+        assert dm.locator('.sheet-head .npc-mark').inner_text() == 'B', 'Marker am Porträt im Bogen'
         dm.locator('.ini-item', has=dm.locator('.ini-name', has_text='Borin')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
         assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'players'
         ini = dm.locator('#initiative').bounding_box()
@@ -674,7 +676,7 @@ try:
 
         step('NPC-Bogen am Boden')
         dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
-        dm.locator('#tabBody li button.link', has_text='Goblin A').click(); time.sleep(0.4)
+        dm.locator('#tabBody li', has=dm.locator('.npc-mark', has_text='A')).locator('button.link').click(); time.sleep(0.4)
         panel_shot(dm, '11-npc-bogen.png', 750)
 
         step('Spielersicht-Vorschau (Platz 2)')
@@ -699,7 +701,7 @@ try:
         dm.locator('.sheet-head button', has_text='Figur setzen').click()
         click_world(dm, G * 4.5, G * 4.5)
         dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
-        dm.locator('#tabBody li button.link', has_text='Goblin B').click(); time.sleep(0.3)
+        dm.locator('#tabBody li', has=dm.locator('.npc-mark', has_text='B')).locator('button.link').click(); time.sleep(0.3)
         # Ein Wolf im Nebel (soll bei Tom nicht ankommen)
         dm.click('#tabs button[data-tab=images]'); time.sleep(0.2)
         asset_action(dm, 'goblin', '📍 Als NPC auf die Karte setzen')

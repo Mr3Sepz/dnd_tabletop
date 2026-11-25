@@ -133,7 +133,8 @@ export function renderInitiative(container, entries, opts) {
         const a = (-90 + k * (360 / n)) * Math.PI / 180;
         return h('span.ini-pearl', { title: c.label, style: { background: c.color, width: `${pearl}px`, height: `${pearl}px`, margin: `${-pearl / 2}px 0 0 ${-pearl / 2}px`, left: `${23 + R * Math.cos(a)}px`, top: `${23 + R * Math.sin(a)}px` } });
       }),
-      e.badgeColor ? h('span.ini-badge', { style: { background: e.badgeColor }, title: 'Farbmarkierung der Figur' }) : null),
+      e.badgeColor ? h('span.ini-badge', { style: { background: e.badgeColor }, title: 'Farbmarkierung der Figur' })
+        : e.label ? h('span.ini-badge.text', { title: 'Kennung der Figur', 'data-raw': '' }, e.label) : null),
     h('div.ini-name', {}, e.name),
     opts.isDM
       ? h('div.ini-tools', {},

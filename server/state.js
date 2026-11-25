@@ -347,6 +347,11 @@ function normalizeSlots(slots) {
 // ---------- Sichtbarkeit ----------
 
 /** Farbe der Figur zu einem Charakter/NPC (Hintergrund hinter durchsichtigen Porträts). */
+function tokenLabelFor(state, refId) {
+  for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === refId && t.label) return t.label;
+  return '';
+}
+
 function tokenBadgeFor(state, refId) {
   for (const sc of state.scenes) for (const t of sc.tokens) if (t.refId === refId && t.badgeColor) return t.badgeColor;
   return null;
@@ -902,8 +907,8 @@ function applyAction(state, who, action) {
           state.npcs.splice(insertAt++, 0, npc);
         }
         const col = useColors ? colors[i % colors.length] : null;
-        const tag = col ? `${LANG === 'en' ? col[2] : col[1]}${i >= colors.length ? ` ${Math.floor(i / colors.length) + 1}` : ''}` : labels[i];
-        if (count > 1 || baseHasToken || col) { npc.baseName = baseName; npc.name = `${baseName} ${tag}`.trim(); }
+        // Name bleibt ohne Farbe, Zahl oder Buchstabe – unterschieden wird über den Marker an der Figur
+        if (count > 1 || baseHasToken || col) { npc.baseName = baseName; npc.name = baseName; }
         const t = {
           id: newId('t_'), kind: 'npc', refId: npc.id, name: npc.name, label: labels[i], assetId: npc.portraitAssetId,
           x: num(action.x) + (i % perRow) * g, y: num(action.y) + Math.floor(i / perRow) * g,
@@ -1448,6 +1453,7 @@ function viewForPlayer(state, seatNo) {
       conditions: src ? src.conditions : [],
       color: tokenColorFor(state, e.refId),
       badgeColor: tokenBadgeFor(state, e.refId),
+      label: tokenLabelFor(state, e.refId),
     };
   });
   const currentVisible = entries.some((e) => e.id === state.initiative.currentId);
