@@ -466,11 +466,18 @@ try:
         step('Spieler treten bei: Mia (Handy) und Tom (Laptop)')
         mia = b.new_page(locale='de-DE', viewport={'width': 390, 'height': 820}, is_mobile=True, has_touch=True, device_scale_factor=2)
         watch(mia, 'mia')
-        mia.goto(BASE + '/'); mia.click('.seat >> nth=0'); mia.fill('input[name=playerName]', 'Mia'); mia.click('#joinForm button')
+        mia.goto(BASE + '/'); mia.click('.seat >> nth=0'); mia.fill('input[name=playerName]', 'Mia')
+        mia.click('#joinForm button[type=submit]'); time.sleep(0.2)
+        assert 'Farbe' in mia.locator('#msg').inner_text(), 'ohne Farbe kein Beitritt'
+        mia.click('.swatch[data-color="#a71313"]')
+        shot(mia, '56-farbe-waehlen.png')
+        mia.click('#joinForm button[type=submit]')
         mia.wait_for_url('**/player?seat=1'); mia.wait_for_selector('.ini-item'); time.sleep(0.8)
         tom = b.new_page(locale='de-DE', viewport={'width': 1280, 'height': 800})
         watch(tom, 'tom')
-        tom.goto(BASE + '/'); tom.click('.seat >> nth=1'); tom.fill('input[name=playerName]', 'Tom'); tom.click('#joinForm button')
+        tom.goto(BASE + '/'); tom.click('.seat >> nth=1'); tom.fill('input[name=playerName]', 'Tom')
+        assert tom.locator('.swatch[data-color="#a71313"]').is_disabled(), 'Rot hat schon Mia'
+        tom.click('.swatch[data-color="#2b53a7"]'); tom.click('#joinForm button[type=submit]')
         tom.wait_for_url('**/player?seat=2'); tom.wait_for_selector('.ini-item'); time.sleep(0.8)
         mia_names = mia.evaluate("window.dnd.board.scene.tokens.map(t => t.name + (t.label ? ' ' + t.label : ''))")
         tom_names = tom.evaluate("window.dnd.board.scene.tokens.map(t => t.name + (t.label ? ' ' + t.label : ''))")
@@ -599,6 +606,53 @@ try:
         shot(dm, '48-licht-radieren.png', clip={'x': lx - 330, 'y': ly - 170, 'width': 660, 'height': 340})
         dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
 
+        step('Licht am Tag in Blau, Nebel/Wolken malen und radieren')
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        assert dm.locator('label.check', has_text='Nachtfilter').locator('input').is_checked() is False
+        dm.get_by_role('button', name='🕯️ Licht malen').click(); time.sleep(0.2)
+        dm.locator('#toolbar input[type=color]').first.evaluate("(el) => { el.value = '#4aa8ff'; el.dispatchEvent(new Event('change')); }")
+        click_world(dm, G * 15.5, G * 9.5); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.lights.at(-1).color") == '#4aa8ff'
+        dm.get_by_role('button', name='🌫️ Nebel malen').click(); time.sleep(0.2)
+        drag_world(dm, (G * 2, G * 3), (G * 9, G * 4.5)); time.sleep(0.4)
+        drag_world(dm, (G * 3, G * 5), (G * 8, G * 5.5)); time.sleep(0.4)
+        dm.get_by_role('button', name='💨 Nebel radieren').click(); time.sleep(0.2)
+        drag_world(dm, (G * 5.5, G * 2), (G * 5.5, G * 6.5)); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.board.scene.clouds.length") == 3
+        assert mia.evaluate("window.dnd.board.scene.clouds.length") == 3, 'Spieler sehen den Nebel'
+        dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
+        shot(dm, '57-nebel-und-tageslicht.png')
+        dm.get_by_role('button', name='Allen Nebel löschen').click(); dialog_ok(dm); time.sleep(0.3)
+        dm.get_by_role('button', name='Alle Lichter löschen').click(); dialog_ok(dm); time.sleep(0.3)
+
+        step('Ping: Mia (Rot) und DM (Lila) markieren Stellen, alle sehen es')
+        mia.click('#toolbar button.tool[title^="Ping"]'); time.sleep(0.1)
+        mx, my = world(mia, G * 14, G * 11)
+        mia.mouse.click(mx, my); time.sleep(0.5)
+        assert dm.evaluate("window.dnd.lastPing.color") == '#a71313'
+        assert tom.evaluate("window.dnd.lastPing.color") == '#a71313', tom.evaluate("window.dnd.lastPing")
+        time.sleep(0.35)
+        dx, dy = world(dm, G * 18, G * 7)
+        dm.keyboard.down('Alt'); dm.mouse.click(dx, dy); dm.keyboard.up('Alt'); time.sleep(0.4)
+        assert mia.evaluate("window.dnd.lastPing.color") == '#c99be0'
+        time.sleep(0.5)
+        shot(tom, '58-ping.png')
+
+        step('Bearbeitungsmodus: Spieler sehen den letzten Live-Stand, bis der DM live schaltet')
+        assert dm.locator('#goLive').inner_text().endswith('Ist live')
+        dm.click('#goLive'); time.sleep(0.4)
+        assert 'Bearbeitung' in dm.locator('#goLive').inner_text()
+        n_mia = mia.evaluate("window.dnd.board.scene.drawings.length")
+        dm.click('button.tool[title="Rechteck zeichnen"]')
+        drag_world(dm, (G * 20, G * 2), (G * 24, G * 4)); time.sleep(0.4)
+        dm.click('button.tool[title="Auswählen und Verschieben"]')
+        assert mia.evaluate("window.dnd.board.scene.drawings.length") == n_mia, 'Spieler sehen die Änderung noch nicht'
+        shot(dm, '59-bearbeitungsmodus.png', clip={'x': 0, 'y': 0, 'width': 1440, 'height': 140})
+        dm.click('#goLive'); time.sleep(0.5)
+        assert mia.evaluate("window.dnd.board.scene.drawings.length") == n_mia + 1, 'nach Live sichtbar'
+        assert dm.locator('#goLive').inner_text().endswith('Ist live')
+        dm.evaluate("window.dnd.act({ type: 'drawing.delete', sceneId: window.dnd.board.scene.id, id: window.dnd.board.scene.drawings.at(-1).id })"); time.sleep(0.3)
+
         step('Themes: Nacht und die Stil-Themes')
         def pick_theme(page, tid):
             page.click('.theme-switch'); time.sleep(0.2)
@@ -623,6 +677,53 @@ try:
         assert dm.evaluate("document.documentElement.dataset.skin") == 'console'
         pick_theme(dm, 'light'); pick_theme(mia, 'light')
         assert dm.evaluate("document.documentElement.dataset.skin") is None
+
+        step('Sechseck-Raster und genaue Feldgröße per Zahlenfeld')
+        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        old_size = dm.evaluate("window.dnd.board.scene.grid.size")
+        dm.select_option('#tabBody select[name=gridType]', 'hex'); time.sleep(0.4)
+        spin = dm.locator('#tabBody input.spin[name=gridSize]')
+        spin.fill(str(old_size + 0.5)); spin.press('Enter'); spin.blur(); time.sleep(0.4)
+        assert dm.evaluate("window.dnd.board.scene.grid.size") == old_size + 0.5
+        assert dm.evaluate("window.dnd.board.scene.grid.type") == 'hex'
+        assert mia.evaluate("window.dnd.board.scene.grid.type") == 'hex'
+        shot(dm, '60-sechseck-raster.png')
+        sp = dm.locator('#tabBody .slider-spin').first.bounding_box()
+        shot(dm, '61-zahlenfelder.png', clip={'x': sp['x'] - 8, 'y': sp['y'] - 8, 'width': sp['width'] + 16, 'height': 70})
+        dm.select_option('#tabBody select[name=gridType]', 'square'); time.sleep(0.3)
+        spin = dm.locator('#tabBody input.spin[name=gridSize]')
+        spin.fill(str(old_size)); spin.press('Enter'); spin.blur(); time.sleep(0.3)
+
+        step('Gegner: eigener Unterreiter, Angriffe, Werte über den Attributen, Liste einklappbar')
+        dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
+        dm.click('.subtabs button[data-cat=enemy]'); time.sleep(0.2)
+        dm.get_by_role('button', name='+ Neuer Gegner').click(); dm.fill('.dialog input[name=name]', 'Bugbear'); dialog_ok(dm); time.sleep(0.4)
+        assert dm.evaluate("window.dnd.board.state.npcs.find(n => n.name === 'Bugbear').category") == 'enemy'
+        if not dm.locator('.sheet .name').is_editable(): dm.click('.sheet .lock-toggle'); time.sleep(0.2)
+        dm.get_by_role('button', name='+ Angriff').click(); time.sleep(0.3)
+        dm.locator('.sheet .attacks input').nth(0).fill('Morgenstern'); dm.locator('.sheet .attacks input').nth(0).press('Tab')
+        dm.locator('.sheet .attacks input').nth(1).fill('+4'); dm.locator('.sheet .attacks input').nth(1).press('Tab')
+        dm.locator('.sheet .attacks input').nth(2).fill('2W8+2 Stich'); dm.locator('.sheet .attacks input').nth(2).press('Tab'); time.sleep(0.4)
+        assert dm.evaluate("window.dnd.board.state.npcs.find(n => n.name === 'Bugbear').weapons[0].damage") == '2W8+2 Stich'
+        order = dm.evaluate("[...document.querySelectorAll('.sheet > section h4')].map(x => x.textContent.split(' ')[0])")
+        assert order.index('Angriffe') < order.index('Zauberplätze') if 'Zauberplätze' in order else True, order
+        assert order[-1].startswith('Werte'), order
+        assert dm.locator('.subtabs button[data-cat=npc]').inner_text().startswith('NPCs')
+        assert dm.locator('.npc-list li', has_text='Goblin').count() == 0, 'Goblins stehen unter NPCs'
+        dm.locator('.npc-list-box > summary').click(); time.sleep(0.2)
+        assert dm.locator('.npc-list-box').get_attribute('open') is None, 'Liste eingeklappt'
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        panel_shot(dm, '62-gegner-angriffe.png', 900)
+        dm.locator('.npc-list-box > summary').click(); time.sleep(0.2)
+        dm.click('.subtabs button[data-cat=npc]'); time.sleep(0.2)
+
+        step('Figur eines Goblins kopieren: eigener NPC mit nächstem freien Buchstaben')
+        gx, gy = token_pos(dm, 'Goblin C')
+        click_world(dm, gx, gy, button='right')
+        dm.get_by_role('button', name='Kopieren').click(); time.sleep(0.5)
+        labels = dm.evaluate("window.dnd.board.scene.tokens.filter(t => t.name === 'Goblin').map(t => t.label)")
+        assert len(labels) == len(set(labels)), labels
+        assert 'E' in labels, labels
 
         step('Szene drehen')
         dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)

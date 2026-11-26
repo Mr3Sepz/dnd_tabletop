@@ -3,7 +3,7 @@
 // Nebel · Figuren · Werkzeuge (Messen, Auswahlrahmen, Vorschau).
 
 /* global Konva */
-import { assetUrl, throttle, gridDistance } from './util.js';
+import { assetUrl, throttle, gridDistance, isHex, hexFromPixel, hexToPixel, hexCorners } from './util.js';
 import { LANG } from './i18n.js';
 
 const imageCache = new Map();
@@ -32,9 +32,12 @@ export const TOOLS = {
   'fog-brush-hide': 'Nebel verdecken (Pinsel)',
   'place-template': 'Zauberschablone setzen',
   'place-image': 'Objekt setzen',
-  'light-brush': 'Licht malen (Nachtmodus)',
+  'light-brush': 'Licht malen',
   eraser: 'Radierer: über Freihandlinien wischen',
-  'light-eraser': 'Licht radieren (Nachtmodus)',
+  'light-eraser': 'Licht radieren',
+  'cloud-brush': 'Nebel/Wolken malen',
+  ping: 'Ping: Stelle auf der Karte für alle markieren (auch Alt + Klick)',
+  'cloud-eraser': 'Nebel/Wolken radieren',
 };
 
 export class Board {
@@ -76,6 +79,8 @@ export class Board {
     this.drawStyle = { stroke: '#2b2118', fill: null, strokeWidth: 4 };
     this.brushRadius = 60;
     this.eraserRadius = 18;
+    this.lightColor = '#ff8c1e'; // Feuerschein
+    this.cloudColor = '#e8eef2'; // Nebelweiß
 
     new ResizeObserver(() => {
       this.stage.size({ width: container.clientWidth, height: container.clientHeight });
@@ -171,6 +176,7 @@ export class Board {
   snap(pos, size = 1) {
     const g = this.scene && this.scene.grid;
     if (!g || !g.enabled || !g.snap) return pos;
+    if (isHex(g)) { const c = hexFromPixel(pos.x, pos.y, g); return hexToPixel(c.q, c.r, g); }
     const off = Math.round(size) % 2 === 1 || size < 1 ? 0.5 : 0;
     return {
       x: Math.round((pos.x - g.offsetX) / g.size - off) * g.size + g.offsetX + off * g.size,
@@ -217,7 +223,27 @@ export class Board {
       }
     }
     const g = scene.grid;
-    if (g.enabled && g.size >= 10) {
+    if (g.enabled && g.size >= 10 && isHex(g)) {
+      // Sechsecke als eine Form zeichnen (schnell, auch bei großen Karten)
+      layer.add(new Konva.Shape({ opacity: g.opacity, listening: false, stroke: g.color, strokeWidth: 1,
+        sceneFunc: (ctx, shape) => {
+          const c0 = hexFromPixel(0, 0, g); const c1 = hexFromPixel(w, h, g);
+          const c2 = hexFromPixel(w, 0, g); const c3 = hexFromPixel(0, h, g);
+          const qs = [c0.q, c1.q, c2.q, c3.q]; const rs = [c0.r, c1.r, c2.r, c3.r];
+          ctx.beginPath();
+          for (let q = Math.min(...qs) - 2; q <= Math.max(...qs) + 2; q++) {
+            for (let r = Math.min(...rs) - 2; r <= Math.max(...rs) + 2; r++) {
+              const p = hexToPixel(q, r, g);
+              if (p.x < -g.size || p.y < -g.size || p.x > w + g.size || p.y > h + g.size) continue;
+              const k = hexCorners(p.x, p.y, g);
+              ctx.moveTo(k[0], k[1]);
+              for (let i = 2; i < 12; i += 2) ctx.lineTo(k[i], k[i + 1]);
+              ctx.closePath();
+            }
+          }
+          ctx.strokeShape(shape);
+        } }));
+    } else if (g.enabled && g.size >= 10) {
       const lines = new Konva.Group({ opacity: g.opacity, listening: false });
       const ox = ((g.offsetX % g.size) + g.size) % g.size;
       const oy = ((g.offsetY % g.size) + g.size) % g.size;
@@ -225,32 +251,38 @@ export class Board {
       for (let y = oy; y <= h; y += g.size) lines.add(new Konva.Line({ points: [0, y, w, y], stroke: g.color, strokeWidth: 1 }));
       layer.add(lines);
     }
-    if (scene.night) layer.add(this.#nightOverlay(scene, w, h));
+    if ((scene.clouds || []).length) layer.add(this.#cloudOverlay(scene, w, h));
+    if (scene.night || (scene.lights || []).length) layer.add(this.#nightOverlay(scene, w, h));
     layer.draw();
   }
 
   /**
-   * Nachtfilter mit Lichtern: Die Dunkelheit bekommt an den gemalten Stellen weiche Löcher,
-   * darüber liegt ein warmer, orangefarbener Schein wie von Feuer.
+   * Licht: Bei Nacht bekommt die Dunkelheit an den gemalten Stellen weiche Löcher, darüber liegt ein
+   * farbiger Schein (Standard: Feuer-Orange). Am Tag gibt es nur den Schein.
    */
   #nightOverlay(scene, w, h) {
+    const night = !!scene.night;
     const group = new Konva.Group({ listening: false });
-    group.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.62 }));
+    if (night) group.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.62 }));
     const lights = scene.lights || [];
     if (!lights.length) return group;
     const radial = (x, y, r, stops) => new Konva.Circle({ x, y, radius: r * 1.35,
       fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
       fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r * 1.35, fillRadialGradientColorStops: stops });
     // Striche der Reihe nach: Lichtstriche hintereinander bilden einen Abschnitt (erst Löcher, dann Schein),
-    // ein Radierstrich macht an seiner Stelle wieder dunkel. Spätere Lichter können dort neu leuchten.
+    // ein Radierstrich nimmt das Licht an seiner Stelle wieder weg. Spätere Lichter können dort neu leuchten.
     let blobs = [];
     const flush = () => {
-      for (const [x, y, r] of blobs) {
+      if (night) for (const [x, y, r] of blobs) {
         const hole = radial(x, y, r, [0, 'rgba(0,0,0,1)', 0.55, 'rgba(0,0,0,0.85)', 1, 'rgba(0,0,0,0)']);
         hole.globalCompositeOperation('destination-out');
         group.add(hole);
       }
-      for (const [x, y, r] of blobs) group.add(radial(x, y, r, [0, 'rgba(255,140,30,0.38)', 0.55, 'rgba(240,90,20,0.18)', 1, 'rgba(220,70,10,0)']));
+      for (const [x, y, r, c] of blobs) {
+        const [R, G, B] = rgb(c || '#ff8c1e');
+        const a = night ? [0.38, 0.18] : [0.42, 0.2];
+        group.add(radial(x, y, r, [0, `rgba(${R},${G},${B},${a[0]})`, 0.55, `rgba(${Math.round(R * 0.94)},${Math.round(G * 0.7)},${Math.round(B * 0.7)},${a[1]})`, 1, `rgba(${R},${G},${B},0)`]));
+      }
       blobs = [];
     };
     for (const l of lights) {
@@ -261,19 +293,43 @@ export class Board {
         const cut = new Konva.Line({ ...line, stroke: '#000' });
         cut.globalCompositeOperation('destination-out');
         group.add(cut);
-        group.add(new Konva.Line({ ...line, stroke: '#0a1440', opacity: 0.62 }));
+        if (night) group.add(new Konva.Line({ ...line, stroke: '#0a1440', opacity: 0.62 }));
         continue;
       }
-      // Punkte entlang der Pinselstriche, nicht zu dicht
-      const step = Math.max(8, l.r * 0.45);
-      let lx = null; let ly = null;
-      for (let i = 0; i + 1 < l.points.length; i += 2) {
-        const x = l.points[i]; const y = l.points[i + 1];
-        if (lx === null || Math.hypot(x - lx, y - ly) >= step || i + 2 >= l.points.length) { blobs.push([x, y, l.r]); lx = x; ly = y; }
-      }
+      for (const [x, y] of strokeBlobs(l.points, l.r)) blobs.push([x, y, l.r, l.color]);
     }
     flush();
     // Zwischenspeichern, damit die Löcher nur die Dunkelheit treffen und nicht die Karte
+    group.cache({ x: 0, y: 0, width: w, height: h, pixelRatio: Math.min(1, 2400 / Math.max(w, h)) });
+    return group;
+  }
+
+  /** Nebel/Wolken: weiche, wolkige Flecken entlang der Pinselstriche; Radierstriche nehmen sie weg. */
+  #cloudOverlay(scene, w, h) {
+    const group = new Konva.Group({ listening: false });
+    let seed = 1;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; // fest, damit nichts flackert
+    for (const c of scene.clouds) {
+      if (c.erase) {
+        const pts = c.points.length === 2 ? [...c.points, c.points[0] + 0.1, c.points[1]] : c.points;
+        const cut = new Konva.Line({ points: pts, strokeWidth: c.r * 2, lineCap: 'round', lineJoin: 'round', stroke: '#000' });
+        cut.globalCompositeOperation('destination-out');
+        group.add(cut);
+        continue;
+      }
+      const [R, G, B] = rgb(c.color || '#e8eef2');
+      for (const [x, y] of strokeBlobs(c.points, c.r)) {
+        // mehrere versetzte Flecken je Punkt ergeben einen wolkigen Rand
+        for (let k = 0; k < 4; k++) {
+          const rr = c.r * (0.55 + rnd() * 0.6);
+          const ox = (rnd() - 0.5) * c.r * 0.9; const oy = (rnd() - 0.5) * c.r * 0.9;
+          group.add(new Konva.Circle({ x: x + ox, y: y + oy, radius: rr,
+            fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+            fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: rr,
+            fillRadialGradientColorStops: [0, `rgba(${R},${G},${B},0.42)`, 0.6, `rgba(${R},${G},${B},0.22)`, 1, `rgba(${R},${G},${B},0)`] }));
+        }
+      }
+    }
     group.cache({ x: 0, y: 0, width: w, height: h, pixelRatio: Math.min(1, 2400 / Math.max(w, h)) });
     return group;
   }
@@ -371,6 +427,36 @@ export class Board {
     }
     this.selectDrawing(this.selectedDrawing && this.drawingNodes.has(this.selectedDrawing) ? this.selectedDrawing : null);
     layer.draw();
+  }
+
+  /** Ping anzeigen: Ringe in der Farbe des Spielers (bzw. des DM), mit Namen, für ein paar Sekunden. */
+  showPing(x, y, color, name) {
+    const k = 1 / this.stage.scaleX();
+    const g = new Konva.Group({ x, y, listening: false });
+    const dot = new Konva.Circle({ radius: 9 * k, fill: color, stroke: '#fff', strokeWidth: 2.5 * k, shadowColor: '#000', shadowBlur: 6 * k, shadowOpacity: 0.6 });
+    g.add(dot);
+    const rings = [0, 1, 2].map(() => new Konva.Circle({ radius: 10 * k, stroke: color, strokeWidth: 4 * k, opacity: 0 }));
+    rings.forEach((r) => g.add(r));
+    if (name) {
+      const label = new Konva.Label({ y: -34 * k, opacity: 0.95 });
+      label.add(new Konva.Tag({ fill: color, cornerRadius: 4 * k, stroke: '#fff', strokeWidth: 1.5 * k }));
+      label.add(new Konva.Text({ text: name, fontSize: 14 * k, padding: 4 * k, fill: luminance(color) > 0.6 ? '#1b1b1b' : '#fff', fontStyle: 'bold' }));
+      label.x(-label.width() / 2);
+      g.add(label);
+    }
+    this.uiLayer.add(g);
+    const t0 = performance.now();
+    const anim = new Konva.Animation((frame) => {
+      const t = (frame.time) / 1000;
+      rings.forEach((r, i) => {
+        const p = ((t - i * 0.35) % 1.05);
+        if (t < i * 0.35) return;
+        r.radius((10 + p * 70) * k);
+        r.opacity(Math.max(0, 1 - p));
+      });
+      if (performance.now() - t0 > 3200) { anim.stop(); g.destroy(); this.uiLayer.batchDraw(); }
+    }, this.uiLayer);
+    anim.start();
   }
 
   /**
@@ -570,7 +656,7 @@ export class Board {
       const dx = group.x() - start.x; const dy = group.y() - start.y;
       this.sendMove(t, group.x(), group.y());
       for (const o of others) o.node.position({ x: o.start.x + dx, y: o.start.y + dy });
-      const dist = gridDistance(dx, dy, this.scene.grid);
+      const dist = gridDistance(dx, dy, this.scene.grid, start);
       this.#showDragInfo(group.x(), group.y() - r - 18, `${dist.feet} ft`);
     });
     group.on('dragend', (e) => {
@@ -688,6 +774,15 @@ export class Board {
       const p = this.pointer();
       const tool = this.tool;
 
+      // Ping: Werkzeug 📍 (einmal antippen) oder Alt + Klick
+      if (tool === 'ping' || (e.evt.altKey && this.opts.onPing)) {
+        e.evt.preventDefault?.();
+        stage.stopDrag?.();
+        this.opts.onPing?.(p);
+        if (tool === 'ping') { this.setTool('select'); this.opts.onToolDone?.(); }
+        return;
+      }
+
       if (tool === 'select') {
         // Umschalt + Ziehen auf leerer Fläche: Auswahlrahmen (nur DM)
         if (this.opts.isDM && e.evt.shiftKey && onEmpty(e)) {
@@ -717,13 +812,15 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
-      if (tool === 'line' || tool.startsWith('fog-brush') || tool === 'light-brush' || tool === 'light-eraser') {
+      if (tool === 'line' || tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-')) {
         const fog = tool.startsWith('fog');
         const light = tool === 'light-brush';
-        const lightErase = tool === 'light-eraser';
-        const width = fog || light || lightErase ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
+        const lightErase = tool === 'light-eraser' || tool === 'cloud-eraser';
+        const cloud = tool === 'cloud-brush';
+        const width = fog || light || lightErase || cloud ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
+        const [R, G, B] = rgb(light ? this.lightColor : this.cloudColor);
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
-          stroke: lightErase ? 'rgba(10,20,64,0.6)' : light ? 'rgba(255,170,60,0.45)' : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
+          stroke: lightErase ? 'rgba(10,20,64,0.6)' : light || cloud ? `rgba(${R},${G},${B},0.5)` : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);
         return;
       }
@@ -741,7 +838,7 @@ export class Board {
         draft.node.setAttrs({ x: Math.min(p.x, draft.start.x), y: Math.min(p.y, draft.start.y), width: Math.abs(p.x - draft.start.x), height: Math.abs(p.y - draft.start.y) });
       } else if (draft.kind === 'measure') {
         draft.line.points([draft.start.x, draft.start.y, p.x, p.y]);
-        const dist = gridDistance(p.x - draft.start.x, p.y - draft.start.y, this.scene.grid);
+        const dist = gridDistance(p.x - draft.start.x, p.y - draft.start.y, this.scene.grid, draft.start);
         this.#showDragInfo(p.x, p.y - 14 / stage.scaleX(), `${dist.feet} ft (${dist.cells} ${LANG === 'en' ? (dist.cells === 1 ? 'square' : 'squares') : (dist.cells === 1 ? 'Feld' : 'Felder')})`);
       } else {
         const last = draft.points.slice(-2);
@@ -782,7 +879,9 @@ export class Board {
       } else if (d.kind.startsWith('fog-brush')) {
         this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
       } else if (d.kind === 'light-brush' || d.kind === 'light-eraser') {
-        this.opts.onLight?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'light-eraser' });
+        this.opts.onLight?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'light-eraser', color: this.lightColor });
+      } else if (d.kind === 'cloud-brush' || d.kind === 'cloud-eraser') {
+        this.opts.onCloud?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'cloud-eraser', color: this.cloudColor });
       } else if (d.kind === 'eraser') {
         this.#erase(d.points, this.eraserRadius);
       }
@@ -810,4 +909,26 @@ function densify(points, step) {
     for (let k = 1; k <= n; k++) out.push(x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n);
   }
   return out;
+}
+
+/** Punkte entlang eines Pinselstrichs, nicht zu dicht (für Licht und Nebel). */
+function strokeBlobs(points, r) {
+  const out = [];
+  const step = Math.max(8, r * 0.45);
+  let lx = null; let ly = null;
+  for (let i = 0; i + 1 < points.length; i += 2) {
+    const x = points[i]; const y = points[i + 1];
+    if (lx === null || Math.hypot(x - lx, y - ly) >= step || i + 2 >= points.length) { out.push([x, y]); lx = x; ly = y; }
+  }
+  return out;
+}
+
+function luminance(hex) {
+  const [r, g, b] = rgb(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+function rgb(hex) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || '');
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [255, 140, 30];
 }

@@ -644,7 +644,55 @@
   "8-Bit": "8-bit",
   "Retro-Videospiel": "Retro video game",
   "Konsole": "Console",
-  "Raumschiff-Bedienpult": "Starship control panel"
+  "Raumschiff-Bedienpult": "Starship control panel",
+  "Licht malen": "Paint light",
+  "Licht radieren": "Erase light",
+  "Nebel/Wolken malen": "Paint fog/clouds",
+  "Nebel/Wolken radieren": "Erase fog/clouds",
+  "Ping: Stelle auf der Karte für alle markieren (auch Alt + Klick)": "Ping: mark a spot on the map for everyone (also Alt + click)",
+  "Farbe des Lichtscheins": "Colour of the light",
+  "Farbe des Nebels": "Colour of the fog",
+  "🌫️ Nebel malen": "🌫️ Paint fog",
+  "💨 Nebel radieren": "💨 Erase fog",
+  "Allen Nebel löschen": "Clear all fog",
+  "Allen Nebel löschen?": "Clear all fog?",
+  "🕯️ Licht": "🕯️ Light",
+  "🌫️ Nebel und Wolken": "🌫️ Fog and clouds",
+  "Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.": "Paint over torches, campfires or windows: it glows there for everyone, and at night it becomes bright there. Pick the colour of the glow below the tool. Tap without dragging = round circle of light.",
+  "Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.": "Paint mist, smoke or clouds over the map; everyone sees them. Colour below the tool, e.g. greenish for poison gas. Tokens stay visible above.",
+  "Rasterform": "Grid shape",
+  "Quadrate": "Squares",
+  "Sechsecke (Spitze oben)": "Hexes (pointy top)",
+  "Sechsecke (flache Seite oben)": "Hexes (flat top)",
+  "Kartengröße": "Map size",
+  "Feldgröße": "Cell size",
+  "Gegner": "Enemies",
+  "+ Neuer Gegner": "+ New enemy",
+  "Neuer Gegner": "New enemy",
+  "→ zu Gegnern": "→ to enemies",
+  "→ zu NPCs": "→ to NPCs",
+  "In den anderen Unterreiter verschieben": "Move to the other sub-tab",
+  "Angriffe": "Attacks",
+  "+ Angriff": "+ Attack",
+  "Angriff entfernen": "Remove attack",
+  "Keine. Mit „+ Angriff“ z. B. Krummsäbel, Kurzbogen oder Biss eintragen.": "None. Use “+ Attack” to add e.g. scimitar, shortbow or bite.",
+  "Noch keine Gegner. Spieler sehen nie die genauen Werte, nur einen groben Zustand.": "No enemies yet. Players never see exact stats, only a rough condition.",
+  "🟢 Ist live": "🟢 Live",
+  "✏️ Bearbeitung · Live schalten": "✏️ Editing · go live",
+  "Jetzt live schalten": "Go live now",
+  "✏️ Bearbeitungsmodus: Die Spieler sehen die Karte so, wie sie zuletzt live war. Deine Änderungen erscheinen bei ihnen erst, wenn du wieder live schaltest.": "✏️ Edit mode: players see the map as it was when last live. Your changes appear for them once you go live again.",
+  "Bearbeitungsmodus: Die Spieler sehen noch den letzten Live-Stand. Antippen = alle Änderungen sofort für die Spieler freigeben.": "Edit mode: players still see the last live state. Tap = release all changes to the players at once.",
+  "Die Spieler sehen jede Änderung sofort. Antippen = Bearbeitungsmodus: Die Karte bleibt für die Spieler auf dem jetzigen Stand, bis du wieder live schaltest.": "Players see every change immediately. Tap = edit mode: the map stays as it is now for the players until you go live again.",
+  "Deine Farbe (für Pings auf der Karte)": "Your colour (for pings on the map)",
+  "Bitte eine Farbe wählen.": "Please pick a colour.",
+  "Alle Farben sind schon vergeben. Deine Pings erscheinen grau.": "All colours are taken. Your pings will appear grey.",
+  "Rot": "Red",
+  "Grün": "Green",
+  "Blau": "Blue",
+  "Gelb": "Yellow",
+  "Weiß": "White",
+  "Ping-Farbe": "Ping colour",
+  "Diese Farbe hat schon jemand anderes. Bitte eine andere wählen.": "Someone else already has this colour. Please pick another one."
  },
  "patterns": [
   [
@@ -1050,6 +1098,26 @@
   [
    "Ausschnitt: (.+)",
    "Crop: $1"
+  ],
+  [
+   "Liste \\((\\d+)\\)",
+   "List ($1)"
+  ],
+  [
+   "NPCs \\((\\d+)\\)",
+   "NPCs ($1)"
+  ],
+  [
+   "Gegner \\((\\d+)\\)",
+   "Enemies ($1)"
+  ],
+  [
+   "(\\d+) Nebelstrich\\(e\\)",
+   "$1 fog stroke(s)"
+  ],
+  [
+   "(.+) \\(schon vergeben\\)",
+   "$1 (already taken)"
   ]
  ]
 }

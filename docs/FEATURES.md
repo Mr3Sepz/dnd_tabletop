@@ -113,6 +113,11 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Licht radieren | ✅ | 🌑 macht gemalte Lichtstellen wieder dunkel |
 | — | NPC-Liste | ✅ | 🗑 pro Eintrag, Mehrfachauswahl (Umschalt + Klick, lang drücken) mit Sammelaktionen |
 | — | Bildausschnitt | ✅ | Porträt im runden Rahmen verschieben und zoomen, gilt überall |
+| — | Licht am Tag, Lichtfarbe, Nebel/Wolken malen | ✅ | 🕯️/🌑 und 🌫️/💨, Farbe pro Strich |
+| — | Sechseck-Raster | ✅ | Quadrate, Sechsecke (Spitze oder flache Seite oben); Einrasten und Lineal zählen Sechsecke |
+| — | Bearbeitungsmodus | ✅ | Spieler sehen den letzten Live-Stand, bis der DM live schaltet |
+| — | NPCs/Gegner | ✅ | Unterreiter, Angriffe, Werte über Attributen, einklappbare Liste, Kopien im aktuellen Zustand mit freiem Marker |
+| — | Ping | ✅ | 📍 oder Alt + Klick; Spielerfarbe beim Einloggen (je Farbe einmal), DM lila |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Themes | ✅ | Standard, Nacht (Darkmode), Pergament, Gruft, Messing, Zukunft, Neon, 8-Bit, Konsole; pro Gerät, Schriften lokal (OFL/Apache) |

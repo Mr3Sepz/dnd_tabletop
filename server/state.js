@@ -18,6 +18,10 @@ const NAMES = {
   de: { character: 'Charakter', ac: 'RK', npc: 'Neuer NPC', scene: 'Neue Szene', firstScene: 'Erste Szene', copy: 'Kopie' },
   en: { character: 'Character', ac: 'AC', npc: 'New NPC', scene: 'New scene', firstScene: 'First scene', copy: 'copy' },
 };
+// Ping-Farben: Spieler wählen beim Einloggen eine davon (jede nur einmal), der DM hat Lila
+const PING_COLORS = ['#a71313', '#006D5B', '#2b53a7', '#d6a444', '#e3ded5'];
+const DM_PING_COLOR = '#c99be0';
+
 // Farbmarker für mehrere gleiche NPCs (statt Zahl oder Buchstabe), zufällig vergeben
 const BADGE_COLORS = [
   ['#e53935', 'Rot', 'Red'], ['#1e88e5', 'Blau', 'Blue'], ['#43a047', 'Grün', 'Green'], ['#fdd835', 'Gelb', 'Yellow'],
@@ -133,6 +137,8 @@ function newNpc(name = L('npc')) {
     slots: emptySlots(),
     counters: [],
     sheetPrefs: { slots: true, counters: true },
+    category: 'npc', // 'npc' oder 'enemy' (Unterreiter „NPCs“ und „Gegner“)
+    weapons: [], // Angriffe
     ...newAbilitySheet(), // auch ein Pferd hat Werte
   };
 }
@@ -146,7 +152,8 @@ function newScene(name = L('scene')) {
     rotation: 0, // 0, 90, 180, 270: Karte samt Figuren, Zeichnungen und Nebel gedreht
     grid: { enabled: true, size: 70, offsetX: 0, offsetY: 0, color: '#000000', opacity: 0.35, feet: 5, snap: true },
     night: false,
-    lights: [], // im Nachtmodus von Hand gemalte, beleuchtete Stellen
+    lights: [], // von Hand gemalte, beleuchtete Stellen (Tag und Nacht), mit Farbe des Scheins
+    clouds: [], // von Hand gemalter Nebel bzw. Wolken
     notes: '',
     fog: { enabled: false, shapes: [] },
     drawings: [],
@@ -194,6 +201,7 @@ function normalizeState(raw) {
     fog: { enabled: !!(sc.fog && sc.fog.enabled), shapes: Array.isArray(sc.fog && sc.fog.shapes) ? sc.fog.shapes : [] },
     drawings: Array.isArray(sc.drawings) ? sc.drawings : [],
     lights: Array.isArray(sc.lights) ? sc.lights : [],
+    clouds: Array.isArray(sc.clouds) ? sc.clouds : [],
     tokens: (Array.isArray(sc.tokens) ? sc.tokens : []).map((t) => ({ ...t, visibleTo: t.visibleTo ?? null, conditions: Array.isArray(t.conditions) ? t.conditions : [] })),
   }));
   if (!s.scenes.some((sc) => sc.id === s.activeSceneId)) s.activeSceneId = s.scenes[0].id;
@@ -289,6 +297,40 @@ function removeFromInitiatives(state, pred) {
       .filter((e) => !(e.kind !== 'group' && pred(e)) && !(e.kind === 'group' && e.refIds.length === 0));
     if (ini.currentId && !ini.entries.some((e) => e.id === ini.currentId)) ini.currentId = ini.entries[0] ? ini.entries[0].id : null;
   }
+}
+
+/** Gruppenname eines NPCs (Kopien teilen ihn), für Marker ohne Doppelbelegung. */
+const npcGroup = (n) => (n && (n.baseName || n.name)) || '';
+
+/**
+ * Neuer Marker für die Kopie eines NPCs, passend zur Art des Originals: zufällige freie Farbe,
+ * nächste freie Zahl oder nächster freier Buchstabe – frei innerhalb der gleichnamigen NPCs der Szene.
+ */
+function nextMarker(state, sc, origToken, group) {
+  if (!origToken || (!origToken.badgeColor && !origToken.label)) return { badgeColor: null, label: '' };
+  const same = sc.tokens.filter((t) => t.kind === 'npc' && npcGroup(state.npcs.find((n) => n.id === t.refId)) === group);
+  if (origToken.badgeColor) {
+    const taken = new Set(same.map((t) => t.badgeColor).filter(Boolean));
+    const free = BADGE_COLORS.filter((c) => !taken.has(c[0]));
+    const pool = free.length ? free : BADGE_COLORS;
+    return { badgeColor: pool[crypto.randomInt(pool.length)][0], label: '' };
+  }
+  const used = new Set(same.map((t) => t.label).filter(Boolean));
+  if (/^\d+$/.test(origToken.label)) { let i = 1; while (used.has(String(i))) i++; return { badgeColor: null, label: String(i) }; }
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const free = letters.find((l) => !used.has(l) && !used.has(l.toLowerCase()));
+  if (free) return { badgeColor: null, label: /[a-z]/.test(origToken.label) ? free.toLowerCase() : free };
+  let i = 1; while (used.has(`A${i}`)) i++;
+  return { badgeColor: null, label: `A${i}` };
+}
+
+/** NPC kopieren – im aktuellen Zustand (Werte, HP, Zustände), gleicher Name ohne „(Kopie)“. */
+function copyNpc(state, n) {
+  const copy = JSON.parse(JSON.stringify(n));
+  copy.id = newId('n_');
+  copy.baseName = npcGroup(n);
+  state.npcs.splice(state.npcs.indexOf(n) + 1, 0, copy);
+  return copy;
 }
 
 /** Änderungen an NPC/Charakter auf die zugehörigen Figuren übertragen (Name, Bild). */
@@ -390,12 +432,14 @@ function rotateScene(sc, state, dir) {
       f.points = out;
     }
   }
-  for (const l of sc.lights || []) {
+  for (const l of [...(sc.lights || []), ...(sc.clouds || [])]) {
     const out = [];
     for (let i = 0; i + 1 < l.points.length; i += 2) out.push(...pt(l.points[i], l.points[i + 1]));
     l.points = out;
   }
   const g = sc.grid; const size = g.size || 70;
+  // Sechsecke drehen mit: Spitze oben wird zu flacher Seite oben und umgekehrt
+  if (g.type === 'hex') g.type = 'hexflat'; else if (g.type === 'hexflat') g.type = 'hex';
   const mod = (v) => ((v % size) + size) % size;
   [g.offsetX, g.offsetY] = dir === 1 ? [mod(H - g.offsetY), mod(g.offsetX)] : [mod(g.offsetY), mod(W - g.offsetX)];
   sc.rotation = (((sc.rotation || 0) + 90 * dir) % 360 + 360) % 360;
@@ -691,6 +735,7 @@ function applyAction(state, who, action) {
         if ('offsetY' in p.grid) g.offsetY = num(p.grid.offsetY);
         if ('opacity' in p.grid) g.opacity = Math.min(1, Math.max(0, num(p.grid.opacity, 0.35)));
         if ('color' in p.grid) g.color = color(p.grid.color, g.color);
+        if ('type' in p.grid) g.type = ['square', 'hex', 'hexflat'].includes(p.grid.type) ? p.grid.type : 'square';
         sc.grid = g;
       }
       return {};
@@ -747,6 +792,7 @@ function applyAction(state, who, action) {
       // "Live schalten": alle Spieler sehen diese Szene (getrennte Gruppen werden zusammengeführt).
       if (!isDM) deny();
       must(findScene(action.id));
+      state.editMode = false; delete state.liveSnapshot; // Live schalten veröffentlicht alles
       switchInitiative(state, action.id);
       state.activeSceneId = action.id;
       state.seatScenes = {};
@@ -790,29 +836,32 @@ function applyAction(state, who, action) {
       return {};
     }
 
-    // ---------- Lichter im Nachtmodus ----------
-    case 'light.add': {
+    // ---------- Licht und Nebel/Wolken malen (Tag und Nacht) ----------
+    case 'light.add': case 'cloud.add': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      if (sc.lights.length >= 500) throw new ActionError('Zu viele Lichter');
-      const sh = action.light || {};
+      const key = action.type === 'light.add' ? 'lights' : 'clouds';
+      if (!Array.isArray(sc[key])) sc[key] = [];
+      if (sc[key].length >= 500) throw new ActionError('Zu viele Striche');
+      const sh = action.light || action.cloud || {};
       const points = (Array.isArray(sh.points) ? sh.points : []).slice(0, 4000).map((v) => Math.round(num(v)));
-      must(points.length >= 2, 'Licht ohne Punkte');
-      const light = { id: newId('l_'), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) };
-      if (sh.erase) light.erase = true; // Radierstrich: macht die Stelle wieder dunkel
-      sc.lights.push(light);
+      must(points.length >= 2, 'Strich ohne Punkte');
+      const stroke = { id: newId(key === 'lights' ? 'l_' : 'cl_'), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) };
+      if (sh.erase) stroke.erase = true; // Radierstrich: nimmt Licht bzw. Nebel an dieser Stelle wieder weg
+      else if (sh.color) stroke.color = color(sh.color, key === 'lights' ? '#ff8c1e' : '#e8eef2');
+      sc[key].push(stroke);
       return {};
     }
-    case 'light.undo': {
+    case 'light.undo': case 'cloud.undo': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      sc.lights.pop();
+      (sc[action.type === 'light.undo' ? 'lights' : 'clouds'] || []).pop();
       return {};
     }
-    case 'light.clear': {
+    case 'light.clear': case 'cloud.clear': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      sc.lights = [];
+      sc[action.type === 'light.clear' ? 'lights' : 'clouds'] = [];
       return {};
     }
 
@@ -849,7 +898,23 @@ function applyAction(state, who, action) {
       }
       t.x = num(action.x, t.x);
       t.y = num(action.y, t.y);
+      // Bearbeitungsmodus: Spieler ziehen ihre Figur auf dem Stand, den sie sehen – dort mitziehen
+      if (state.editMode && state.liveSnapshot && !isDM) {
+        const ls = state.liveSnapshot.scenes.find((x) => x.id === sc.id);
+        const lt = ls && ls.tokens.find((x) => x.id === t.id);
+        if (lt) { lt.x = t.x; lt.y = t.y; }
+      }
       return {};
+    }
+    case 'live.set': {
+      // Live: Spieler sehen jede Änderung sofort. Bearbeiten: Spieler sehen den letzten Live-Stand,
+      // bis der DM wieder auf Live schaltet – dann erscheinen alle Änderungen auf einmal.
+      if (!isDM) deny();
+      if (action.live) { state.editMode = false; delete state.liveSnapshot; } else if (!state.editMode) {
+        state.editMode = true;
+        state.liveSnapshot = JSON.parse(JSON.stringify({ scenes: state.scenes, activeSceneId: state.activeSceneId, seatScenes: state.seatScenes }));
+      }
+      return { live: !state.editMode };
     }
     case 'token.toFront': {
       if (!isDM) deny();
@@ -861,6 +926,14 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); const t = findToken(sc, action.id); must(t);
       const copy = { ...JSON.parse(JSON.stringify(t)), id: newId('t_'), x: t.x + sc.grid.size, y: t.y };
+      // Figur eines NPCs kopieren = eigener NPC (eigene HP) im aktuellen Zustand, mit neuem Marker
+      const orig = t.kind === 'npc' && state.npcs.find((n) => n.id === t.refId);
+      if (orig) {
+        const n = copyNpc(state, orig);
+        Object.assign(copy, { refId: n.id, name: n.name }, nextMarker(state, sc, t, npcGroup(orig)));
+        sc.tokens.push(copy);
+        return { id: copy.id, npcId: n.id };
+      }
       sc.tokens.push(copy);
       return { id: copy.id };
     }
@@ -887,7 +960,7 @@ function applyAction(state, who, action) {
       // Farben zufällig mischen; Farben, die gleichnamige Figuren in der Szene schon tragen, zuletzt
       let colors = [];
       if (useColors) {
-        const taken = new Set(sc.tokens.filter((t) => t.badgeColor).map((t) => t.badgeColor));
+        const taken = new Set(sc.tokens.filter((t) => t.badgeColor && t.kind === 'npc' && npcGroup(state.npcs.find((n) => n.id === t.refId)) === npcGroup(base)).map((t) => t.badgeColor));
         const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
         colors = [...shuffle(BADGE_COLORS.filter((c) => !taken.has(c[0]))), ...shuffle(BADGE_COLORS.filter((c) => taken.has(c[0])))];
       }
@@ -901,9 +974,9 @@ function applyAction(state, who, action) {
         // Der Original-NPC wird für die erste Figur genutzt, solange er noch keine hat.
         let npc = base;
         if (i > 0 || baseHasToken) {
+          // Kopie im aktuellen Zustand des NPCs (auch nach dem Bearbeiten), nicht frisch zurückgesetzt
           npc = JSON.parse(JSON.stringify(base));
           npc.id = newId('n_');
-          npc.hp.cur = npc.hp.max; npc.dead = false; npc.conditions = []; npc.deathSaves = { success: 0, fail: 0 };
           state.npcs.splice(insertAt++, 0, npc);
         }
         const col = useColors ? colors[i % colors.length] : null;
@@ -1042,6 +1115,7 @@ function applyAction(state, who, action) {
     case 'npc.create': {
       if (!isDM) deny();
       const n = newNpc(str(action.name, 80) || L('npc'));
+      n.category = action.category === 'enemy' ? 'enemy' : 'npc';
       state.npcs.push(n);
       return { id: n.id };
     }
@@ -1049,18 +1123,27 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const n = state.npcs.find((x) => x.id === action.id); must(n);
       applySheetPatch(n, action.patch || {}, { allowPrivateNotes: false, allowInventory: false, allowNote: true, allowAbilities: true });
+      if (action.patch && 'category' in action.patch) n.category = action.patch.category === 'enemy' ? 'enemy' : 'npc';
       syncTokens(state, 'npc', n, action.patch || {});
       return {};
     }
     case 'npc.duplicate': {
       if (!isDM) deny();
       const n = state.npcs.find((x) => x.id === action.id); must(n);
-      const copy = JSON.parse(JSON.stringify(n));
-      copy.id = newId('n_');
-      copy.name = str(action.name, 80) || `${n.name} (${L('copy')})`;
-      copy.hp.cur = copy.hp.max; copy.dead = false; copy.conditions = [];
-      state.npcs.splice(state.npcs.indexOf(n) + 1, 0, copy);
-      return { id: copy.id };
+      const copy = copyNpc(state, n);
+      if (action.name) copy.name = str(action.name, 80) || copy.name;
+      // Steht das Original auf einer Karte, kommt die Kopie gleich daneben – mit eigenem Marker
+      let tokenId = null;
+      for (const sc of state.scenes) {
+        const t = sc.tokens.find((x) => x.kind === 'npc' && x.refId === n.id);
+        if (!t) continue;
+        const mk = nextMarker(state, sc, t, npcGroup(n));
+        const nt = { ...JSON.parse(JSON.stringify(t)), id: newId('t_'), refId: copy.id, name: copy.name, x: t.x + sc.grid.size, y: t.y, ...mk };
+        sc.tokens.push(nt);
+        tokenId = nt.id;
+        break;
+      }
+      return { id: copy.id, tokenId };
     }
     case 'npc.delete': {
       if (!isDM) deny();
@@ -1346,6 +1429,7 @@ function applyAction(state, who, action) {
       if (!isDM) deny();
       const seat = state.seats.find((s) => s.seat === action.seat); must(seat);
       seat.claimToken = null;
+      seat.color = null; // Ping-Farbe wird wieder frei
       return { releasedSeat: seat.seat };
     }
     case 'settings.update': {
@@ -1384,6 +1468,8 @@ function viewForDM(state) {
   s.characters.forEach((c) => { delete c.privateNotes; });
   s.seats.forEach((seat) => { seat.taken = !!seat.claimToken; delete seat.claimToken; seat.sceneId = sceneIdForSeat(state, seat.seat); });
   delete s.settings.pin; // wird separat über "info" übertragen
+  delete s.liveSnapshot; // groß und für den DM unnötig
+  s.editMode = !!state.editMode;
   s.settings.pinSet = !!state.settings.pin;
   s.npcs.forEach((n) => { n.condition = roughCondition(n.hp, n.dead); });
   // Für welche Plätze ist ein Leisteneintrag gerade sichtbar? (DM sieht das in der Leiste)
@@ -1410,7 +1496,9 @@ function sharedForPlayers(state, usedAssets) {
 
 /** Sicht eines Spielers: nur seine Szene, nichts Verstecktes, keine NPC-Werte. */
 function viewForPlayer(state, seatNo) {
-  const scene = state.scenes.find((s) => s.id === sceneIdForSeat(state, seatNo));
+  // Bearbeitungsmodus: Spieler sehen die Karten so, wie sie zuletzt live waren
+  const live = state.editMode && state.liveSnapshot ? state.liveSnapshot : state;
+  const scene = live.scenes.find((s) => s.id === sceneIdForSeat(live, seatNo)) || state.scenes.find((s) => s.id === sceneIdForSeat(state, seatNo));
   const npcById = new Map(state.npcs.map((n) => [n.id, n]));
   const charById = new Map(state.characters.map((c) => [c.id, c]));
   const usedAssets = new Set();
@@ -1469,10 +1557,10 @@ function viewForPlayer(state, seatNo) {
     activeSceneId: scene.id,
     scenes: [{
       id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale, rotation: scene.rotation || 0,
-      grid: scene.grid, night: scene.night, lights: scene.night ? scene.lights : [], tokens, drawings,
+      grid: scene.grid, night: scene.night, lights: scene.lights || [], clouds: scene.clouds || [], tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
-    seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken })),
+    seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken, color: s.claimToken ? s.color || null : null })),
     characters,
     initiative: { entries, currentId: currentVisible ? state.initiative.currentId : null, round: state.initiative.round },
     party: state.party,
@@ -1506,5 +1594,5 @@ function exportableState(state) {
 module.exports = {
   MAX_SEATS, configureSeats, seatCount, createInitialState, normalizeState, applyAction, ActionError,
   configureLanguage, viewForDM, viewForPlayer, viewForSpectator, exportableState, SPECTATOR, CHAT_MAX, ABILITIES, SKILLS, roughCondition, newId,
-  sceneIdForSeat, tokenVisibleToSeat, pointRevealed,
+  sceneIdForSeat, tokenVisibleToSeat, pointRevealed, PING_COLORS, DM_PING_COLOR,
 };

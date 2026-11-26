@@ -711,7 +711,7 @@ test('Attribut-Effekte: Spieler nur für den eigenen Charakter, DM für alle, au
   dm.c.close(); p.c.close();
 });
 
-test('Lichter im Nachtmodus: nur der DM malt; Spieler bekommen sie nur bei Nacht; drehen mit', async () => {
+test('Lichter: nur der DM malt; Spieler sehen sie bei Tag und Nacht; drehen mit', async () => {
   const dm = await joinDM();
   const p = await joinPlayer(4);
   const st = inst.getState();
@@ -720,7 +720,7 @@ test('Lichter im Nachtmodus: nur der DM malt; Spieler bekommen sie nur bei Nacht
   assert.equal((await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [100, 200, 120, 210], r: 80 } })).ok, true);
   assert.equal((await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [], r: 80 } })).ok, false);
   const { viewForPlayer } = require('../server/state');
-  assert.deepEqual(viewForPlayer(st, 4).scenes[0].lights, [], 'am Tag keine Lichter');
+  assert.equal(viewForPlayer(st, 4).scenes[0].lights.length, 1, 'Licht auch am Tag');
   await act(dm.c, { type: 'scene.update', id: sc.id, patch: { night: true } });
   assert.equal(viewForPlayer(st, 4).scenes[0].lights.length, 1);
   await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 });
@@ -985,4 +985,139 @@ test('Farbmarker: ein einzelner NPC bleibt ohne Marker und behält seinen Namen'
   assert.equal(st.npcs.find((n) => n.id === r.result.id).name, 'Einsiedler');
   await act(dm.c, { type: 'npc.delete', id: r.result.id });
   dm.c.close();
+});
+
+test('Licht mit Farbe, Nebel/Wolken malen und radieren', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(1);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  await act(dm.c, { type: 'light.add', sceneId: sc.id, light: { points: [10, 10], r: 40, color: '#33aaff' } });
+  assert.equal(sc.lights.at(-1).color, '#33aaff');
+  assert.equal((await act(p.c, { type: 'cloud.add', sceneId: sc.id, cloud: { points: [1, 1], r: 30 } })).ok, false);
+  await act(dm.c, { type: 'cloud.add', sceneId: sc.id, cloud: { points: [100, 100, 200, 120], r: 60, color: '#9fd18b' } });
+  await act(dm.c, { type: 'cloud.add', sceneId: sc.id, cloud: { points: [150, 110], r: 20, erase: true } });
+  assert.equal(sc.clouds.length, 2);
+  assert.equal(sc.clouds[0].color, '#9fd18b');
+  assert.equal(sc.clouds[1].erase, true);
+  const pv = require('../server/state').viewForPlayer(st, 1).scenes[0];
+  assert.equal(pv.clouds.length, 2, 'Spieler sehen den Nebel');
+  await act(dm.c, { type: 'cloud.undo', sceneId: sc.id });
+  assert.equal(sc.clouds.length, 1);
+  await act(dm.c, { type: 'cloud.clear', sceneId: sc.id });
+  await act(dm.c, { type: 'light.clear', sceneId: sc.id });
+  assert.equal(sc.clouds.length, 0);
+  p.c.close(); dm.c.close();
+});
+
+test('Sechseck-Raster: Rasterform speichern, beim Drehen wechselt die Ausrichtung', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const r = await act(dm.c, { type: 'scene.create', name: 'Hex' });
+  const sc = st.scenes.find((x) => x.id === r.result.id);
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { grid: { type: 'hex', size: 63.5 } } });
+  assert.equal(sc.grid.type, 'hex');
+  assert.equal(sc.grid.size, 63.5);
+  await act(dm.c, { type: 'scene.rotate', id: sc.id, dir: 1 });
+  assert.equal(sc.grid.type, 'hexflat');
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { grid: { type: 'unsinn' } } });
+  assert.equal(sc.grid.type, 'square');
+  await act(dm.c, { type: 'scene.delete', id: sc.id });
+  dm.c.close();
+});
+
+test('NPCs und Gegner, Angriffe, Kopien im aktuellen Zustand mit neuem Marker', async () => {
+  const dm = await joinDM();
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const g = await act(dm.c, { type: 'npc.create', name: 'Ork', category: 'enemy' });
+  const n = st.npcs.find((x) => x.id === g.result.id);
+  assert.equal(n.category, 'enemy');
+  await act(dm.c, { type: 'npc.update', id: n.id, patch: { weapons: [{ name: 'Großaxt', attack: '+5', damage: '1W12+3 Hieb' }], hp: { max: 15, cur: 9 } } });
+  assert.equal(n.weapons[0].name, 'Großaxt');
+  // zwei Orks mit Buchstaben setzen
+  const sp = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: n.id, labels: ['A', 'B'], x: 0, y: 0 });
+  const tA = sc.tokens.find((t) => t.id === sp.result.created[0].tokenId);
+  // Figur kopieren: eigener NPC, aktueller Zustand, nächster freier Buchstabe, Name ohne „Kopie“
+  const d = await act(dm.c, { type: 'token.duplicate', sceneId: sc.id, id: tA.id });
+  const cp = st.npcs.find((x) => x.id === d.result.npcId);
+  const ct = sc.tokens.find((t) => t.id === d.result.id);
+  assert.notEqual(cp.id, n.id);
+  assert.equal(cp.name, 'Ork');
+  assert.equal(cp.hp.cur, 9, 'aktueller Zustand');
+  assert.equal(cp.category, 'enemy');
+  assert.equal(ct.label, 'C');
+  // Farbmarker: Kopie bekommt eine freie Farbe
+  const w = await act(dm.c, { type: 'npc.create', name: 'Wolf' });
+  const ws = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: w.result.id, labels: ['', ''], style: 'color', x: 0, y: 0 });
+  const wt = ws.result.created.map((c) => sc.tokens.find((t) => t.id === c.tokenId));
+  const dup = await act(dm.c, { type: 'npc.duplicate', id: ws.result.created[0].npcId });
+  const dt = sc.tokens.find((t) => t.id === dup.result.tokenId);
+  assert.ok(dt.badgeColor && !wt.some((t) => t.badgeColor === dt.badgeColor), 'freie Farbe');
+  assert.equal(st.npcs.find((x) => x.id === dup.result.id).name, 'Wolf', 'ohne (Kopie)');
+  // Bearbeitet und erneut gesetzt: Kopie hat den bearbeiteten Stand
+  await act(dm.c, { type: 'npc.update', id: n.id, patch: { hp: { max: 30, cur: 30 }, abilities: { str: 18 } } });
+  const again = await act(dm.c, { type: 'npc.spawn', sceneId: sc.id, npcId: n.id, labels: ['D'], x: 0, y: 0 });
+  const an = st.npcs.find((x) => x.id === again.result.created[0].npcId);
+  assert.equal(an.hp.max, 30); assert.equal(an.abilities.str, 18);
+  for (const x of [...st.npcs]) if (['Ork', 'Wolf'].includes(x.baseName || x.name)) await act(dm.c, { type: 'npc.delete', id: x.id });
+  dm.c.close();
+});
+
+test('Bearbeitungsmodus: Spieler sehen den letzten Live-Stand, Live schalten gibt alles frei', async () => {
+  const dm = await joinDM();
+  const S = require('../server/state');
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  const p = await joinPlayer(1);
+  assert.equal((await act(p.c, { type: 'live.set', live: false })).ok, false);
+  await act(dm.c, { type: 'live.set', live: false });
+  assert.equal(S.viewForDM(st).editMode, true);
+  assert.equal(S.viewForDM(st).liveSnapshot, undefined);
+  const t = await act(dm.c, { type: 'token.create', sceneId: sc.id, token: { name: 'Geheimtür', x: 10, y: 10 } });
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { night: !sc.night } });
+  const pv = S.viewForPlayer(st, 1).scenes[0];
+  assert.ok(!pv.tokens.some((x) => x.id === t.result.id), 'neue Figur noch unsichtbar');
+  assert.notEqual(pv.night, sc.night, 'Nachtfilter noch alt');
+  await act(dm.c, { type: 'live.set', live: true });
+  const pv2 = S.viewForPlayer(st, 1).scenes[0];
+  assert.ok(pv2.tokens.some((x) => x.id === t.result.id), 'nach Live sichtbar');
+  assert.equal(pv2.night, sc.night);
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { night: false } });
+  await act(dm.c, { type: 'token.delete', sceneId: sc.id, ids: [t.result.id] });
+  p.c.close(); dm.c.close();
+});
+
+test('Ping-Farben: jede nur einmal, Ping geht an alle in der Szene', async () => {
+  const S = require('../server/state');
+  const dm = await joinDM();
+  const st = inst.getState();
+  for (const s of st.seats) if (s.seat >= 2 && s.seat <= 3 && s.claimToken) await act(dm.c, { type: 'seat.release', seat: s.seat });
+  const join = (seat, color) => new Promise((resolve) => {
+    const c = connect();
+    c.emit('join', { mode: 'player', seat, pin: '4711', playerName: `P${seat}`, color }, (res) => resolve({ c, res }));
+  });
+  const a = await join(2, '#2b53a7');
+  assert.equal(a.res.ok, true);
+  assert.equal(st.seats.find((s) => s.seat === 2).color, '#2b53a7');
+  const b = await join(3, '#2B53A7');
+  assert.equal(b.res.ok, false, 'Farbe schon vergeben');
+  assert.equal(b.res.colorTaken, true);
+  b.c.close();
+  const info = await (await fetch(`${base}/api/public-info`)).json();
+  assert.deepEqual(info.pingColors, S.PING_COLORS);
+  assert.equal(info.seats.find((s) => s.seat === 2).color, '#2b53a7');
+  // Ping kommt beim DM an, mit Spielerfarbe
+  const got = new Promise((resolve) => dm.c.once('ping:map', resolve));
+  a.c.emit('ping:map', { sceneId: st.activeSceneId, x: 100, y: 200 }, () => {});
+  const m = await got;
+  assert.equal(m.color, '#2b53a7'); assert.equal(m.x, 100);
+  // DM-Ping ist lila
+  await settle();
+  const got2 = new Promise((resolve) => a.c.once('ping:map', resolve));
+  dm.c.emit('ping:map', { sceneId: st.activeSceneId, x: 5, y: 5 }, () => {});
+  assert.equal((await got2).color, '#c99be0');
+  await act(dm.c, { type: 'seat.release', seat: 2 });
+  assert.equal(st.seats.find((s) => s.seat === 2).color, null, 'Farbe wieder frei');
+  a.c.close(); dm.c.close();
 });

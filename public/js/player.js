@@ -54,9 +54,10 @@ const board = new Board($('#board'), {
   },
   onCreateDrawing: (d) => conn.act({ type: 'drawing.create', sceneId: sceneId(), drawing: d }),
   onToolDone: () => renderToolbar(),
+  onPing: (p) => conn.ping(sceneId(), p.x, p.y),
 });
 
-const conn = connect({ mode: 'player', seat, pin: join.pin, playerName: join.playerName }, {
+const conn = connect({ mode: 'player', seat, pin: join.pin, playerName: join.playerName, color: join.color }, {
   onJoined: () => { sessionStorage.removeItem('dnd.join'); },
   onJoinError: (err) => gone('Beitritt nicht möglich', err),
   onKicked: (k) => gone('Platz freigegeben', k.reason),
@@ -67,6 +68,7 @@ const conn = connect({ mode: 'player', seat, pin: join.pin, playerName: join.pla
   onChatHistory: (list) => chat.setHistory(list),
   onTokenMoved: (m) => board.moveToken(m.id, m.x, m.y),
   onDice: (r) => dice.announce(r),
+  onPing: (m) => { window.dnd.lastPing = m; if (board.scene && m.sceneId === board.scene.id) board.showPing(m.x, m.y, m.color, m.name); },
 });
 
 const dice = new DicePanel({ isDM: false, act: (a) => conn.act(a) });
@@ -94,7 +96,7 @@ function renderToolbar() {
   const tool = board.tool;
   const btn = (key, icon) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon);
   $('#toolbar').replaceChildren(
-    btn('select', '🖐'), btn('measure', '📏'),
+    btn('select', '🖐'), btn('measure', '📏'), btn('ping', '📍'),
     h('button.tool', { title: 'Zauberschablone legen', onclick: placeTemplate }, '🔥'),
   );
 }

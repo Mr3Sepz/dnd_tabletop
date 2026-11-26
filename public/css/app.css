@@ -633,3 +633,31 @@ small.term-en.under { display: block; margin-top: 1px; padding-left: 4px; font-s
 .sheet-head .portrait { position: relative; overflow: visible; }
 .sheet-head .portrait img { border-radius: 50%; }
 .sheet-head .portrait .npc-mark { position: absolute; right: -2px; bottom: -2px; }
+
+/* Schieberegler mit Zahlenfeld */
+.slider-spin .row { flex-wrap: nowrap; align-items: center; gap: 6px; }
+.slider-spin input[type=range] { flex: 1; min-width: 0; }
+.slider-spin input.spin { width: 5.2em; flex: none; }
+.slider-spin .unit { color: var(--muted); font-size: 0.85rem; flex: none; }
+
+/* Unterreiter NPCs | Gegner, einklappbare Liste */
+.subtabs { display: flex; gap: 4px; margin: 2px 0 10px; border-bottom: 2px solid var(--line); }
+.subtabs .subtab { flex: 1; border: 1px solid var(--line); border-bottom: none; border-radius: 8px 8px 0 0; background: var(--tint); color: var(--muted); font-weight: 700; }
+.subtabs .subtab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+.npc-list-box > summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: 4px 0; }
+.sheet section.attacks .gear-list { margin-bottom: 4px; }
+
+/* Live-/Bearbeitungsmodus */
+#goLive.is-live { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+#goLive.is-editing { background: #e08a00; border-color: #e08a00; color: #1b1200; font-weight: 700; animation: edit-pulse 2s ease-in-out infinite; }
+@keyframes edit-pulse { 50% { box-shadow: 0 0 0 4px rgba(224,138,0,0.35); } }
+
+/* Ping-Farbe beim Einloggen */
+.ping-colors { border: none; padding: 0; margin: 0 0 10px; }
+.ping-colors legend { font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+.color-choice { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-choice .swatch { width: 56px; height: 44px; border-radius: 10px; border: 2px solid rgba(0,0,0,0.25); display: flex; align-items: flex-end; justify-content: center; padding: 2px; }
+.color-choice .swatch span { font-size: 0.7rem; font-weight: 700; background: rgba(255,255,255,0.85); color: #222; border-radius: 4px; padding: 0 4px; }
+.color-choice .swatch.on { outline: 3px solid var(--ink); outline-offset: 2px; }
+.color-choice .swatch.taken { opacity: 0.25; cursor: not-allowed; }
+.seat-color { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.4); vertical-align: middle; margin-right: 4px; }

@@ -17,6 +17,7 @@
     <div id="seats" class="seats"></div>
     <form id="joinForm" class="hidden">
       <label class="field"><span>Dein Name</span><input name="playerName" maxlength="40" autocomplete="nickname" placeholder="z. B. Mia"></label>
+      <fieldset class="field ping-colors" id="colorField"><legend>Deine Farbe (für Pings auf der Karte)</legend><div id="colors" class="color-choice"></div></fieldset>
       <label class="field" id="pinField"><span>Raum-PIN</span><input name="pin" inputmode="numeric" autocomplete="off" placeholder="vom DM"></label>
       <button class="primary" type="submit">Beitreten</button>
     </form>
@@ -56,10 +57,31 @@
       seats.append(btn);
     }
 
+    // Ping-Farben: jede nur einmal, wer zuerst kommt, bekommt sie
+    const NAMES = { '#a71313': 'Rot', '#006D5B': 'Grün', '#2b53a7': 'Blau', '#d6a444': 'Gelb', '#e3ded5': 'Weiß' };
+    const takenColors = new Set(info.seats.filter((s) => s.taken && s.color).map((s) => s.color.toLowerCase()));
+    let color = null;
+    const colors = document.getElementById('colors');
+    for (const c of info.pingColors || []) {
+      const taken = takenColors.has(c.toLowerCase());
+      const b = h(`button.swatch${taken ? '.taken' : ''}`, {
+        type: 'button', disabled: taken, dataset: { color: c }, style: { background: c },
+        title: taken ? `${NAMES[c] || c} (schon vergeben)` : NAMES[c] || c, 'aria-label': NAMES[c] || c, 'aria-pressed': 'false',
+        onclick: () => {
+          color = c;
+          for (const x of colors.children) { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }
+        },
+      }, h('span', {}, NAMES[c] || ''));
+      colors.append(b);
+    }
+    const free = (info.pingColors || []).filter((c) => !takenColors.has(c.toLowerCase()));
+    if (!free.length) document.getElementById('colorField').append(h('p.hint', {}, 'Alle Farben sind schon vergeben. Deine Pings erscheinen grau.'));
+
     form.onsubmit = (e) => {
       e.preventDefault();
       if (!chosen) return;
-      sessionStorage.setItem('dnd.join', JSON.stringify({ seat: chosen, playerName: form.elements.playerName.value, pin: form.elements.pin.value }));
+      if (free.length && !color) { document.getElementById('msg').textContent = 'Bitte eine Farbe wählen.'; return; }
+      sessionStorage.setItem('dnd.join', JSON.stringify({ seat: chosen, playerName: form.elements.playerName.value, pin: form.elements.pin.value, color }));
       location.href = `/player?seat=${chosen}`;
     };
   </script>

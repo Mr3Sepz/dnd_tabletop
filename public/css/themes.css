@@ -24,7 +24,14 @@
 /* Überschriften-Schrift je Theme; --head-font wird unten gesetzt */
 :root[data-skin] h1, :root[data-skin] h2, :root[data-skin] h3, :root[data-skin] .tabs button,
 :root[data-skin] .dialog h3, :root[data-skin] .topbar .brand, :root[data-skin] .round-num b,
-:root[data-skin] .sheet .name, :root[data-skin] .dice-head b { font-family: var(--head-font, inherit); }
+:root[data-skin] .dice-head b { font-family: var(--head-font, inherit); }
+
+/* Namen von Charakteren und NPCs immer genau so, wie sie eingetragen sind:
+   keine Großbuchstaben-Umwandlung, keine Schriften, die nur Großbuchstaben/Kapitälchen kennen. */
+:root[data-skin] .sheet .name, :root[data-skin] button.link, :root[data-skin] .ini-name, :root[data-skin] .pname,
+:root[data-skin] .party-card, :root[data-skin] .inv-pick, :root[data-skin] .npc-list li, :root[data-skin] .chat-who,
+:root[data-skin] [data-name] { text-transform: none !important; font-variant: normal !important; }
+:root[data-skin="parchment"] .sheet .name, :root[data-skin="crypt"] .sheet .name { font-family: inherit; }
 
 /* ---------------------------------------------------------------- Pergament (Mittelalter, hell) */
 :root[data-skin="parchment"] {
@@ -35,6 +42,7 @@
   --sel: #ecd6a6; --bar: #dfcda4; --board-bg: #b9a57c; --toolbar-bg: rgba(244,232,200,0.96);
   --top-bg: linear-gradient(180deg, #4a2c14, #2e1a0b); --asset-bg: #e2d2ac;
 }
+:root[data-skin="parchment"] .dialog h3 { font-family: inherit; font-weight: 700; }
 :root[data-skin="parchment"] .panel { background: radial-gradient(ellipse at top, #f7ecd0, #ecdcb4 70%, #e0cc9e); }
 :root[data-skin="parchment"] button { border-radius: 4px; }
 :root[data-skin="parchment"] button.primary { background: linear-gradient(180deg, #8f2a19, #6a180d); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2); }
@@ -50,6 +58,7 @@
   --sel: #3a1212; --bar: #120f0f; --board-bg: #050404; --toolbar-bg: rgba(22,19,19,0.95);
   --track: #302624; --asset-bg: #100d0d; --top-bg: linear-gradient(90deg, #0a0808, #2a0608 60%, #0a0808);
 }
+:root[data-skin="crypt"] .dialog h3, :root[data-skin="crypt"] h3 { font-family: "IM Fell English", Georgia, serif; }
 :root[data-skin="crypt"] .panel { box-shadow: inset 8px 0 24px rgba(0,0,0,0.6); }
 :root[data-skin="crypt"] button.primary { background: linear-gradient(180deg, #a3141b, #5e0a0e); border-color: #3a0507; }
 :root[data-skin="crypt"] .effect { background: #2a1414; border-color: #6b2424; }
@@ -82,7 +91,8 @@
   --sel: #083548; --bar: #04101a; --board-bg: #02070c; --toolbar-bg: rgba(8,21,31,0.94);
   --track: #123346; --asset-bg: #030b11; --top-bg: linear-gradient(90deg, #02121c, #063247 60%, #02121c);
 }
-:root[data-skin="scifi"] h3, :root[data-skin="scifi"] .tabs button { letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; }
+:root[data-skin="scifi"] .tabs button { letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; }
+:root[data-skin="scifi"] h3 { letter-spacing: 0.04em; }
 :root[data-skin="scifi"] button { border-radius: 2px; }
 :root[data-skin="scifi"] button.primary { box-shadow: 0 0 10px rgba(0,200,240,0.45); font-weight: 700; }
 :root[data-skin="scifi"] .topbar { border-bottom: 1px solid #00a6c8; box-shadow: 0 0 12px rgba(0,166,200,0.4); }
@@ -99,7 +109,8 @@
   --sel: #3a0f3a; --bar: #08040e; --board-bg: #040208; --toolbar-bg: rgba(18,10,31,0.94);
   --track: #301a4d; --asset-bg: #07030c; --top-bg: linear-gradient(90deg, #12001f, #3a0040 50%, #001c33);
 }
-:root[data-skin="cyberpunk"] h3, :root[data-skin="cyberpunk"] .tabs button { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+:root[data-skin="cyberpunk"] .tabs button { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+:root[data-skin="cyberpunk"] h3 { font-weight: 700; }
 :root[data-skin="cyberpunk"] button.primary { box-shadow: 0 0 12px rgba(255,42,138,0.6); font-weight: 700; }
 :root[data-skin="cyberpunk"] .tabs button.active { border-bottom-color: #00f0ff; color: #00f0ff; }
 :root[data-skin="cyberpunk"] .topbar { border-bottom: 2px solid #00f0ff; }
@@ -144,8 +155,8 @@
   --track: #262640; --asset-bg: #05050a; --top-bg: #000;
   --c-orange: #ff9933; --c-peach: #ffcc99; --c-lilac: #cc99cc; --c-blue: #9999ff; --c-sky: #99ccff; --c-red: #cc6666;
 }
-:root[data-skin="console"] h1, :root[data-skin="console"] h3, :root[data-skin="console"] h4, :root[data-skin="console"] .tabs button,
-:root[data-skin="console"] button, :root[data-skin="console"] .dialog h3 { text-transform: uppercase; letter-spacing: 0.06em; }
+:root[data-skin="console"] h1, :root[data-skin="console"] h4, :root[data-skin="console"] .tabs button,
+:root[data-skin="console"] button { text-transform: uppercase; letter-spacing: 0.06em; }
 /* Pillen-Knöpfe in wechselnden Farben */
 :root[data-skin="console"] button { border-radius: 999px; background: var(--c-blue); color: #000; border: none; font-weight: 700; }
 :root[data-skin="console"] button:not(.effect):not(.on):nth-of-type(3n+2) { background: var(--c-lilac); }

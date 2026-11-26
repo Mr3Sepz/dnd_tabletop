@@ -37,6 +37,7 @@ function open() {
     onState: (s) => { state = s; render(); },
     onTokenMoved: (m) => board.moveToken(m.id, m.x, m.y),
     onDice: (r) => toast(`${r.by}: ${r.expr} = ${r.total}`),
+    onPing: (m) => { window.dnd.lastPing = m; if (board.scene && m.sceneId === board.scene.id) board.showPing(m.x, m.y, m.color, m.name); },
     onStopping: () => toast('Der DM hat das Spiel beendet.', 'error'),
   });
 }

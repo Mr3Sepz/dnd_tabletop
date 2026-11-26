@@ -60,6 +60,7 @@ export function connect(joinPayload, handlers) {
   socket.on('info', (i) => handlers.onInfo?.(i));
   socket.on('saved', (i) => handlers.onSaved?.(i));
   socket.on('dice', (r) => handlers.onDice?.(r));
+  socket.on('ping:map', (m) => handlers.onPing?.(m));
   socket.on('chat', (m) => handlers.onChat?.(m));
   socket.on('chat:history', (list) => handlers.onChatHistory?.(list));
   socket.on('server:stopping', () => handlers.onStopping?.());
@@ -75,6 +76,8 @@ export function connect(joinPayload, handlers) {
       resolve(res.result || {});
     });
   });
+  /** Ping an eine Stelle der Karte senden. */
+  conn.ping = (sceneId, x, y) => socket.emit('ping:map', { sceneId, x: Math.round(x), y: Math.round(y) }, () => {});
   conn.request = (ev, payload) => new Promise((resolve) => {
     if (payload === undefined) socket.emit(ev, resolve); else socket.emit(ev, payload, resolve);
   });

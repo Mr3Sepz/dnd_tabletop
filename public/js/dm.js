@@ -113,6 +113,7 @@ function open(payload) {
     onInfo: (i) => { info = i; if (tab === 'game') renderPanel(true); },
     onSaved: (i) => { if (info) info.lastSaved = i.lastSaved; if (tab === 'game') renderPanel(); },
     onDice: (r) => dice.announce(r),
+    onPing: (m) => { window.dnd.lastPing = m; if (board.scene && m.sceneId === board.scene.id) board.showPing(m.x, m.y, m.color, m.name); },
     onStopping: () => {
       $('#login').classList.remove('hidden');
       $('#loginForm').replaceChildren(h('h1', {}, 'Server beendet'), h('p', {}, 'Der Spielstand wurde gespeichert. Du kannst dieses Fenster schließen.'));
@@ -202,6 +203,8 @@ const board = new Board($('#board'), {
   onCreateDrawing: (d) => act({ type: 'drawing.create', sceneId: editScene().id, drawing: d }),
   onFogShape: (shape) => act({ type: 'fog.add', sceneId: editScene().id, shape }),
   onLight: (light) => act({ type: 'light.add', sceneId: editScene().id, light }),
+  onCloud: (cloud) => act({ type: 'cloud.add', sceneId: editScene().id, cloud }),
+  onPing: (p) => conn.ping(boardSceneId(), p.x, p.y),
   onToolDone: () => renderToolbar(),
   onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'tokens') renderPanel(); },
 });
@@ -268,7 +271,10 @@ function updateBanner(msg) {
   const b = $('#banner');
   const parts = [];
   if (previewSeat) parts.push(h('span', {}, `Vorschau: So sieht Platz ${previewSeat} das Spiel, mit Nebel und allem, was verborgen ist. Bearbeiten ist aus.`));
-  else if (state && editScene()) {
+  else if (state && state.editMode) {
+    parts.push(h('span', {}, '✏️ Bearbeitungsmodus: Die Spieler sehen die Karte so, wie sie zuletzt live war. Deine Änderungen erscheinen bei ihnen erst, wenn du wieder live schaltest.'),
+      h('button.small.primary', { onclick: () => act({ type: 'live.set', live: true }) }, 'Jetzt live schalten'));
+  } else if (state && editScene()) {
     const viewers = state.seats.filter((s) => s.sceneId === editScene().id).map((s) => s.seat);
     if (editScene().id !== state.activeSceneId && !viewers.length) {
       parts.push(h('span', {}, `Du bearbeitest „${editScene().name}“. Kein Spieler sieht diese Szene gerade.`));
@@ -288,7 +294,7 @@ document.addEventListener('keydown', (e) => {
 
 const TOOL_ICONS = {
   select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', eraser: '🧽',
+  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', 'cloud-brush': '🌫️', 'cloud-eraser': '💨', ping: '📍', eraser: '🧽',
 };
 
 function renderToolbar() {
@@ -297,22 +303,25 @@ function renderToolbar() {
   const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, TOOL_ICONS[key]);
   const style = board.drawStyle;
   tb.replaceChildren(...[
-    btn('select'), btn('measure'),
+    btn('select'), btn('measure'), btn('ping'),
     h('span.tb-sep'),
     btn('rect'), btn('ellipse'), btn('line'), btn('eraser'),
     h('button.tool', { title: 'Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)', onclick: placeObject }, '🧱'),
     h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', onclick: () => placeTemplate() }, '🔥'),
     h('span.tb-sep'),
     btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
-    state && editScene().night ? btn('light-brush') : null,
-    state && editScene().night ? btn('light-eraser') : null,
+    h('span.tb-sep'),
+    btn('light-brush'), btn('light-eraser'), btn('cloud-brush'), btn('cloud-eraser'),
     ['rect', 'ellipse', 'line'].includes(tool) ? h('div.tb-style', {},
       h('label', { title: 'Linienfarbe' }, h('input', { type: 'color', value: style.stroke, onchange: (e) => { style.stroke = e.target.value; } })),
       h('label', { title: 'Füllung' }, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderToolbar(); } }),
         style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
-    tool.startsWith('fog-brush') || tool.startsWith('light-') ? h('div.tb-style', {}, h('label', { title: 'Pinselgröße' }, 'Pinsel',
-      h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
+    tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') ? h('div.tb-style', {},
+      tool === 'light-brush' ? h('label', { title: 'Farbe des Lichtscheins' }, h('input', { type: 'color', value: board.lightColor, onchange: (e) => { board.lightColor = e.target.value; } })) : null,
+      tool === 'cloud-brush' ? h('label', { title: 'Farbe des Nebels' }, h('input', { type: 'color', value: board.cloudColor, onchange: (e) => { board.cloudColor = e.target.value; } })) : null,
+      h('label', { title: 'Pinselgröße' }, 'Pinsel',
+        h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
     tool === 'eraser' ? h('div.tb-style', {}, h('label', { title: 'Größe des Radierers' }, 'Größe',
       h('input', { type: 'range', min: 5, max: 120, value: board.eraserRadius, onchange: (e) => { board.eraserRadius = Number(e.target.value); } }))) : null,
   ].filter(Boolean));
@@ -566,7 +575,12 @@ async function askNextDowned() {
 // ================================================================ Kopfzeile
 
 $('#editScene').onchange = (e) => { editSceneId = e.target.value; render(); };
-$('#goLive').onclick = () => act({ type: 'scene.activate', id: editScene().id });
+$('#goLive').onclick = () => {
+  const elsewhere = state.seats.filter((s) => s.sceneId !== state.activeSceneId);
+  // Live-Szene: Knopf schaltet zwischen „Live“ und „Bearbeiten“ (Spieler sehen dann den letzten Live-Stand)
+  if (editScene().id === state.activeSceneId && !elsewhere.length) return act({ type: 'live.set', live: !!state.editMode });
+  return act({ type: 'scene.activate', id: editScene().id });
+};
 $('#preview').onchange = async (e) => {
   previewSeat = Number(e.target.value);
   previewView = null;
@@ -594,8 +608,19 @@ function renderTopbar() {
   const sel = $('#editScene');
   sel.replaceChildren(...state.scenes.map((s) => h('option', { value: s.id, selected: s.id === editScene().id }, `${s.name}${s.id === state.activeSceneId ? ' (live)' : ''}`)));
   const isLive = editScene().id === state.activeSceneId && !elsewhere.length;
-  $('#goLive').disabled = isLive;
-  $('#goLive').textContent = isLive ? 'Ist live' : (editScene().id === state.activeSceneId ? 'Alle hierher' : 'Live schalten');
+  const btn = $('#goLive');
+  btn.disabled = false;
+  btn.classList.toggle('is-live', isLive && !state.editMode);
+  btn.classList.toggle('is-editing', !!state.editMode);
+  if (isLive) {
+    btn.textContent = state.editMode ? '✏️ Bearbeitung · Live schalten' : '🟢 Ist live';
+    btn.title = state.editMode
+      ? 'Bearbeitungsmodus: Die Spieler sehen noch den letzten Live-Stand. Antippen = alle Änderungen sofort für die Spieler freigeben.'
+      : 'Die Spieler sehen jede Änderung sofort. Antippen = Bearbeitungsmodus: Die Karte bleibt für die Spieler auf dem jetzigen Stand, bis du wieder live schaltest.';
+  } else {
+    btn.textContent = editScene().id === state.activeSceneId ? 'Alle hierher' : 'Live schalten';
+    btn.title = 'Diese Szene für alle Spieler anzeigen (S3)';
+  }
   const pv = $('#preview');
   pv.replaceChildren(h('option', { value: '0' }, 'aus'), ...state.seats.map((s) => h('option', { value: s.seat, selected: s.seat === previewSeat }, `Platz ${s.seat}${s.playerName ? ` (${s.playerName})` : ''}`)));
 }
@@ -613,7 +638,7 @@ async function render() {
   updateBanner();
   // Kerzen-Werkzeug nur bei Nacht: Werkzeugleiste anpassen, wenn sich das ändert
   const night = !!editScene().night;
-  if (night !== lastNight) { lastNight = night; if (!night && board.tool.startsWith('light-')) board.setTool('select'); renderToolbar(); }
+  if (night !== lastNight) { lastNight = night; renderToolbar(); }
   if (previewSeat) {
     await refreshPreview();
     if (previewView) board.setData(previewView, previewView.scenes[0]);
@@ -741,13 +766,17 @@ function tabScenes() {
       h('div.row', {},
         h('button.small', { title: 'Szene um 90° gegen den Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)', onclick: async () => { await act({ type: 'scene.rotate', id: sc.id, dir: -1 }); board.fittedSceneId = null; } }, '⟲ 90°'),
         h('button.small', { title: 'Szene um 90° im Uhrzeigersinn drehen (Figuren, Zeichnungen und Nebel drehen mit)', onclick: async () => { await act({ type: 'scene.rotate', id: sc.id, dir: 1 }); board.fittedSceneId = null; } }, '⟳ 90°'))),
-    h('label.field', {}, h('span', {}, `Kartengröße: ${Math.round(sc.mapScale * 100)} %`),
-      h('input', { type: 'range', min: 0.1, max: 4, step: 0.01, value: sc.mapScale, onchange: (e) => update({ mapScale: Number(e.target.value) }) })),
+    sliderSpin({ label: 'Kartengröße', unit: '%', min: 10, max: 400, step: 1, value: Math.round(sc.mapScale * 1000) / 10, name: 'mapScale',
+      onCommit: (v) => update({ mapScale: v / 100 }) }),
     h('fieldset', {}, h('legend', {}, 'Raster'),
       h('label.check', {}, h('input', { type: 'checkbox', checked: g.enabled, onchange: (e) => update({ grid: { enabled: e.target.checked } }) }), 'Raster anzeigen'),
       h('label.check', {}, h('input', { type: 'checkbox', checked: g.snap, onchange: (e) => update({ grid: { snap: e.target.checked } }) }), 'Figuren rasten im Feld ein'),
-      h('label.field', {}, h('span', {}, `Feldgröße: ${Math.round(g.size)} px`),
-        h('input', { type: 'range', min: 10, max: 300, step: 0.5, value: g.size, oninput: (e) => { e.target.previousSibling.textContent = `Feldgröße: ${Math.round(e.target.value)} px`; }, onchange: (e) => update({ grid: { size: Number(e.target.value) } }) })),
+      h('label.field', {}, h('span', {}, 'Rasterform'),
+        h('select', { name: 'gridType', onchange: (e) => update({ grid: { type: e.target.value } }) },
+          ...[['square', 'Quadrate'], ['hex', 'Sechsecke (Spitze oben)'], ['hexflat', 'Sechsecke (flache Seite oben)']]
+            .map(([v, l]) => h('option', { value: v, selected: (g.type || 'square') === v }, l)))),
+      sliderSpin({ label: 'Feldgröße', unit: 'px', min: 10, max: 300, step: 0.5, value: g.size, name: 'gridSize',
+        onCommit: (v) => update({ grid: { size: v } }) }),
       h('div.row', {},
         h('label.num', {}, h('span', {}, 'Fuß pro Feld'), h('input', { type: 'number', min: 1, value: g.feet, onchange: (e) => update({ grid: { feet: Number(e.target.value) } }) })),
         h('label.num', {}, h('span', {}, 'Versatz X'), h('input', { type: 'number', value: g.offsetX, onchange: (e) => update({ grid: { offsetX: Number(e.target.value) } }) })),
@@ -763,16 +792,8 @@ function tabScenes() {
         h('button.small', { disabled: !sc.fog.shapes.length, onclick: () => act({ type: 'fog.undo', sceneId: sc.id }) }, 'Rückgängig')),
       h('p.hint', {}, 'Aufdecken und Verdecken mit den Nebel-Werkzeugen links auf der Karte (☀ = aufdecken, ☁ = verdecken). Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
     h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: async (e) => { await update({ night: e.target.checked }); renderToolbar(); } }), 'Nachtfilter (S8)'),
-    sc.night ? h('div.lights-box', {},
-      h('p.hint', {}, '🕯️ Licht malen: In der Werkzeugleiste links das Kerzen-Werkzeug wählen und über Fackeln, Lagerfeuer oder Fenster malen. Dort ist es für alle hell, mit warmem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. 🌑 Licht radieren macht eine Stelle wieder dunkel.'),
-      h('div.row', {},
-        h('button.small', { onclick: () => { board.setTool('light-brush'); renderToolbar(); } }, '🕯️ Licht malen'),
-        h('button.small', { onclick: () => { board.setTool('light-eraser'); renderToolbar(); } }, '🌑 Licht radieren'),
-        h('button.small', { disabled: !(sc.lights || []).length, onclick: () => act({ type: 'light.undo', sceneId: sc.id }) }, 'Rückgängig'),
-        h('button.small', { disabled: !(sc.lights || []).length, onclick: async () => {
-          if (await dialog({ title: 'Alle Lichter löschen?', okText: 'Löschen', danger: true })) act({ type: 'light.clear', sceneId: sc.id });
-        } }, 'Alle Lichter löschen'),
-        h('span.hint', {}, `${(sc.lights || []).filter((l) => !l.erase).length} Licht(er)`))) : null,
+    paintBox(sc, 'light'),
+    paintBox(sc, 'cloud'),
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
     // Plätze der Spieler ganz unten
@@ -915,6 +936,41 @@ function tabPlayers() {
   return out;
 }
 
+/**
+ * Schieberegler mit Zahlenfeld daneben (Pfeile zum genauen Einstellen). Beide bleiben gleich,
+ * gespeichert wird beim Loslassen bzw. nach der Eingabe.
+ */
+function sliderSpin({ label, unit, min, max, step, value, name, onCommit }) {
+  const clamp = (v) => Math.min(max, Math.max(min, Number(v) || min));
+  const range = h('input', { type: 'range', min, max, step, value, 'aria-label': label });
+  const spin = h('input.spin', { type: 'number', min, max, step, value, name, 'aria-label': `${label} (${unit})`, inputmode: 'decimal' });
+  range.oninput = () => { spin.value = range.value; };
+  range.onchange = () => onCommit(clamp(range.value));
+  spin.oninput = () => { if (spin.value !== '') range.value = clamp(spin.value); };
+  spin.onchange = () => { spin.value = clamp(spin.value); range.value = spin.value; onCommit(Number(spin.value)); };
+  return h('label.field.slider-spin', {}, h('span', {}, label),
+    h('div.row', {}, range, spin, h('span.unit', {}, unit)));
+}
+
+/** Licht bzw. Nebel/Wolken malen: Knöpfe, Farbe, Rückgängig, alles löschen (Tag und Nacht). */
+function paintBox(sc, kind) {
+  const light = kind === 'light';
+  const list = (light ? sc.lights : sc.clouds) || [];
+  const n = list.filter((l) => !l.erase).length;
+  return h('fieldset.lights-box', {}, h('legend', {}, light ? '🕯️ Licht' : '🌫️ Nebel und Wolken'),
+    h('p.hint', {}, light
+      ? 'Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.'
+      : 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.'),
+    h('div.row.wrap', {},
+      h('button.small', { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); } }, light ? '🕯️ Licht malen' : '🌫️ Nebel malen'),
+      h('button.small', { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); } }, light ? '🌑 Licht radieren' : '💨 Nebel radieren'),
+      h('button.small', { disabled: !list.length, onclick: () => act({ type: `${kind}.undo`, sceneId: sc.id }) }, 'Rückgängig'),
+      h('button.small', { disabled: !list.length, onclick: async () => {
+        if (await dialog({ title: light ? 'Alle Lichter löschen?' : 'Allen Nebel löschen?', okText: 'Löschen', danger: true })) act({ type: `${kind}.clear`, sceneId: sc.id });
+      } }, light ? 'Alle Lichter löschen' : 'Allen Nebel löschen'),
+      h('span.hint', {}, light ? `${n} Licht(er)` : `${n} Nebelstrich(e)`)));
+}
+
 /** Plätze der Spieler mit ihrem Ort (Szene), steht im Reiter „Szenen“. */
 function seatsSection() {
   const sceneOpts = state.scenes.map((s) => ({ value: s.id, label: s.name }));
@@ -924,7 +980,7 @@ function seatsSection() {
       h('div.seat-line', {},
         h('span', { class: `dot ${s.online ? 'on' : ''}`, title: s.online ? 'online' : 'offline' }),
         h('b', {}, `Platz ${s.seat}`),
-        h('span', {}, s.playerName || (s.taken ? '(ohne Namen)' : 'frei')),
+        h('span', {}, s.taken && s.color ? h('span.seat-color', { style: { background: s.color }, title: 'Ping-Farbe' }) : null, s.playerName || (s.taken ? '(ohne Namen)' : 'frei')),
         h('span.muted', {}, c ? `– ${c.name}` : ''),
         h('span.spacer'),
         s.taken ? h('button.small', { title: 'Platz freigeben (V10)', onclick: async () => {
@@ -975,10 +1031,17 @@ async function deleteNpcs(ids) {
   renderPanel(true);
 }
 
+/** Unterreiter im Reiter NPCs: 'npc' (NPCs) oder 'enemy' (Gegner); beide gleich aufgebaut. */
+let npcCat = 'npc';
+let npcListOpen = true;
+const catOf = (n) => (n && n.category === 'enemy' ? 'enemy' : 'npc');
+
 function tabNpcs() {
-  for (const id of [...npcSel]) if (!npc(id)) npcSel.delete(id);
+  for (const id of [...npcSel]) if (!npc(id) || catOf(npc(id)) !== npcCat) npcSel.delete(id);
   const toggleSel = (id) => { if (npcSel.has(id)) npcSel.delete(id); else npcSel.add(id); renderPanel(true); };
-  const list = h('ul.list.npc-list', {}, ...state.npcs.map((n) => {
+  const enemy = npcCat === 'enemy';
+  const shown = state.npcs.filter((n) => catOf(n) === npcCat);
+  const list = h('ul.list.npc-list', {}, ...shown.map((n) => {
     const r = hpRatio(n) ?? 0;
     let pressTimer = null; let longPressed = false;
     const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
@@ -1016,22 +1079,36 @@ function tabNpcs() {
     } }, 'In Leiste'),
     h('button.small', { onclick: () => groupDialog(selIds) }, 'Als Gruppe'),
     h('button.small', { onclick: () => hpDialog(selIds.map((id) => ({ kind: 'npc', id })), `${selIds.length} NPCs`) }, '± HP'),
+    h('button.small', { onclick: async () => {
+      for (const id of selIds) await act({ type: 'npc.update', id, patch: { category: enemy ? 'npc' : 'enemy' } });
+      npcSel.clear(); renderPanel(true);
+    } }, enemy ? '→ zu NPCs' : '→ zu Gegnern'),
     h('button.small.danger', { onclick: () => deleteNpcs(selIds) }, '🗑 Löschen'),
     h('button.small', { onclick: () => { npcSel.clear(); renderPanel(true); } }, 'Auswahl aufheben')) : null;
+  const count = (cat) => state.npcs.filter((x) => catOf(x) === cat).length;
   const out = [
-    h('div.section-head', {}, h('h3', {}, 'NPCs'),
+    // Unterreiter: NPCs | Gegner
+    h('div.subtabs', { role: 'tablist' },
+      ...[['npc', 'NPCs'], ['enemy', 'Gegner']].map(([cat, label]) => h(`button.subtab${npcCat === cat ? '.active' : ''}`, {
+        role: 'tab', 'aria-selected': String(npcCat === cat), dataset: { cat },
+        onclick: () => { if (npcCat === cat) return; npcCat = cat; npcSel.clear(); if (selected.npcs && catOf(npc(selected.npcs)) !== cat) selected.npcs = null; renderPanel(true); },
+      }, `${label} (${count(cat)})`))),
+    h('div.section-head', {}, h('h3', {}, enemy ? 'Gegner' : 'NPCs'),
       h('div.row', {},
         h('button.small', { onclick: () => groupDialog() }, 'Gruppe für Leiste'),
         h('button.small.primary', { onclick: async () => {
-          const r = await dialog({ title: 'Neuer NPC', fields: [{ name: 'name', label: 'Name', value: '' }], okText: 'Anlegen' });
-          if (r) { const res = await act({ type: 'npc.create', name: r.name }); if (res) openSheet('npcs', res.id); }
-        } }, '+ Neuer NPC'))),
-    state.npcs.length ? h('p.hint', {}, 'Mehrere auswählen: Umschalt + Klick, auf dem Handy lang drücken.') : null,
+          const r = await dialog({ title: enemy ? 'Neuer Gegner' : 'Neuer NPC', fields: [{ name: 'name', label: 'Name', value: '' }], okText: 'Anlegen' });
+          if (r) { const res = await act({ type: 'npc.create', name: r.name, category: npcCat }); if (res) openSheet('npcs', res.id); }
+        } }, enemy ? '+ Neuer Gegner' : '+ Neuer NPC'))),
+    shown.length ? h('p.hint', {}, 'Mehrere auswählen: Umschalt + Klick, auf dem Handy lang drücken.') : null,
     selBar,
-    state.npcs.length ? list : h('p.hint', {}, 'Noch keine NPCs. Spieler sehen nie die genauen Werte, nur einen groben Zustand.'),
+    shown.length
+      ? h('details.npc-list-box', { open: npcListOpen, ontoggle: (e) => { npcListOpen = e.target.open; } },
+        h('summary', {}, `Liste (${shown.length})`), list)
+      : h('p.hint', {}, enemy ? 'Noch keine Gegner. Spieler sehen nie die genauen Werte, nur einen groben Zustand.' : 'Noch keine NPCs. Spieler sehen nie die genauen Werte, nur einen groben Zustand.'),
   ];
   const n = selected.npcs && npc(selected.npcs);
-  if (n) {
+  if (n && catOf(n) === npcCat) {
     out.push(sheetFor('npcs', n));
     out.push(abilityDetails('npc', n));
   }
@@ -1042,6 +1119,7 @@ function tabNpcs() {
 
 function openSheet(kind, id) {
   selected[kind] = id;
+  if (kind === 'npcs' && npc(id)) npcCat = catOf(npc(id)); // in den passenden Unterreiter springen
   tab = kind;
   document.body.classList.add('panel-open');
   renderPanel(true);
@@ -1062,6 +1140,8 @@ function sheetFor(kind, src) {
       onConditions: (list) => act({ type: 'conditions.set', target: { kind: isNpc ? 'npc' : 'character', id: src.id }, conditions: list }),
       actions: sheetActions(kind, src.id),
       mark: () => npcMark(src.id), // Marker der Figur am Porträt
+      showAttacks: isNpc, // Angriffe wie „Aktuelle Waffen“ im Inventar
+      statsLast: isNpc, // Werte (RK …) direkt über den Attributen
     });
     entry = { sheet, el };
     sheets.set(src.id, entry);
@@ -1097,7 +1177,12 @@ function sheetActions(kind, id) {
         startPlacing({ kind: 'spawn', npcId: id, labels: Array(count).fill(''), style: 'color', hidden: r.hidden }, count > 1 ? `${count}× „${s.name}“` : `„${s.name}“`);
         return;
       }
-      const suggestion = Array.from({ length: count }, (_, i) => (r.style === 'abc' ? String.fromCharCode(65 + (i % 26)) : r.style === 'num' ? String(i + 1) : ''));
+      // Vorschlag ohne Doppelbelegung: Kennungen, die gleichnamige NPCs in der Szene schon tragen, auslassen
+      const group = s.baseName || s.name;
+      const used = new Set(editScene().tokens.filter((t) => t.kind === 'npc' && t.label && (npc(t.refId)?.baseName || npc(t.refId)?.name) === group).map((t) => t.label));
+      const pool = r.style === 'abc' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('') : Array.from({ length: 99 }, (_, i) => String(i + 1));
+      const freeLabels = pool.filter((l) => !used.has(l));
+      const suggestion = Array.from({ length: count }, (_, i) => (r.style === 'none' ? '' : freeLabels[i] || ''));
       const r2 = await dialog({ title: 'Kennungen', body: 'Durch Komma getrennt. Du kannst sie frei ändern (F3).',
         fields: [{ name: 'labels', label: 'Kennungen', value: suggestion.join(', ') }], okText: 'Auf die Karte tippen …' });
       if (!r2) return;
@@ -1113,6 +1198,10 @@ function sheetActions(kind, id) {
     acts.push({ label: 'Kopieren', onClick: async () => {
       const r = await act({ type: 'npc.duplicate', id });
       if (r) openSheet('npcs', r.id);
+    } });
+    acts.push({ label: catOf(src) === 'enemy' ? '→ zu NPCs' : '→ zu Gegnern', title: 'In den anderen Unterreiter verschieben', onClick: async () => {
+      await act({ type: 'npc.update', id, patch: { category: catOf(fresh()) === 'enemy' ? 'npc' : 'enemy' } });
+      openSheet('npcs', id);
     } });
     acts.push({ label: 'Löschen', onClick: () => deleteNpcs([id]) });
   }

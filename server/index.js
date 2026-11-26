@@ -87,8 +87,9 @@ function createApp(overrides = {}) {
   app.get('/api/public-info', (_req, res) => {
     res.json({
       pinRequired: !!state.settings.pin,
-      seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken, online: seatOnline(s.seat) })),
+      seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken, online: seatOnline(s.seat), color: s.claimToken ? s.color || null : null })),
       characters: state.characters.map((c) => ({ seat: c.seat, name: c.name })),
+      pingColors: S.PING_COLORS,
       dmPasswordRequired: !!config.dmPassword,
     });
   });
@@ -258,7 +259,13 @@ function createApp(overrides = {}) {
         if (!reclaim) {
           if (state.settings.pin && !safeEqual(String(req.pin || '').trim(), state.settings.pin)) return ack({ ok: false, error: 'Falsche PIN' });
           if (seat.claimToken) return ack({ ok: false, error: 'Dieser Platz ist schon belegt. Der DM kann ihn freigeben.' });
+          // Ping-Farbe: wer zuerst kommt, bekommt sie; jede Farbe nur einmal
+          const wanted = S.PING_COLORS.find((c) => c.toLowerCase() === String(req.color || '').toLowerCase()) || null;
+          if (wanted && state.seats.some((x) => x !== seat && x.claimToken && x.color === wanted)) {
+            return ack({ ok: false, error: 'Diese Farbe hat schon jemand anderes. Bitte eine andere wählen.', colorTaken: true });
+          }
           seat.claimToken = newToken();
+          seat.color = wanted;
           if (req.playerName) seat.playerName = String(req.playerName).slice(0, 40);
         }
         who = { role: 'player', seat: seatNo };
@@ -312,6 +319,30 @@ function createApp(overrides = {}) {
         if (!(e instanceof S.ActionError)) console.error('[aktion]', e);
         ack({ ok: false, error: e.message });
       }
+    });
+
+    // Ping: kurz aufleuchtender Kreis in der eigenen Farbe, bei allen in derselben Szene (wird nicht gespeichert)
+    let lastPing = 0;
+    socket.on('ping:map', (req, ack = () => {}) => {
+      if (!who || who.role === 'spectator') return ack({ ok: false });
+      const now = Date.now();
+      if (now - lastPing < 300) return ack({ ok: false, error: 'Zu schnell' });
+      lastPing = now;
+      req = req || {};
+      const sc = state.scenes.find((x) => x.id === req.sceneId);
+      if (!sc) return ack({ ok: false, error: 'Szene fehlt' });
+      if (who.role === 'player' && S.sceneIdForSeat(state, who.seat) !== sc.id) return ack({ ok: false, error: 'Nicht in deiner Szene' });
+      const seat = who.role === 'player' ? state.seats.find((x) => x.seat === who.seat) : null;
+      const ch = seat && state.characters.find((c) => c.seat === seat.seat);
+      const msg = {
+        sceneId: sc.id, x: Number(req.x) || 0, y: Number(req.y) || 0,
+        color: who.role === 'dm' ? S.DM_PING_COLOR : (seat.color || '#9a9a9a'),
+        name: who.role === 'dm' ? 'DM' : (ch && ch.name) || seat.playerName || `Platz ${seat.seat}`,
+      };
+      io.to('dm').emit('ping:map', msg);
+      for (let n = 1; n <= S.seatCount(); n++) if (S.sceneIdForSeat(state, n) === sc.id) io.to(`seat:${n}`).emit('ping:map', msg);
+      if (state.activeSceneId === sc.id) io.to('spectators').emit('ping:map', msg);
+      ack({ ok: true });
     });
 
     socket.on('save.now', (ack = () => {}) => {

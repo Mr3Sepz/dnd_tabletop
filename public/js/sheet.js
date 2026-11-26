@@ -77,7 +77,7 @@ export class Sheet {
       data.id, data.portraitAssetId, data.portraitAssetId && assetUrl(this.state, data.portraitAssetId), (data.stats || []).map((s) => s.id), (data.counters || []).map((c) => c.id),
       (data.conditions || []).map((c) => c.id), data.hp.cur <= 0, !!data.dead, data.deathSaves,
       (data.slots || []).map((s) => s.max), (data.slots || []).some((s) => s.used), (this.opts.actions || []).map((a) => a.label),
-      data.sheetPrefs,
+      data.sheetPrefs, (data.weapons || []).map((w) => [w.id, !!w.ammo]),
     ]);
     if (sig !== this.signature && !this.focusedInside()) {
       this.signature = sig;
@@ -112,6 +112,7 @@ export class Sheet {
     if (a === 'stat') return d.stats.find((s) => s.id === b)?.[c];
     if (a === 'counter') return d.counters.find((s) => s.id === b)?.[c];
     if (a === 'slotmax') return d.slots.find((s) => s.level === Number(b))?.max;
+    if (a === 'weapon') { const w = (d.weapons || []).find((x) => x.id === b); return c === 'ammoCur' ? w?.ammo?.cur : c === 'ammoMax' ? w?.ammo?.max : w?.[c]; }
     return d[a];
   }
 
@@ -200,17 +201,11 @@ export class Sheet {
         ? conditionChips(d.conditions, (cnd) => this.opts.onConditions?.(this.data.conditions.filter((x) => x.id !== cnd.id)))
         : h('p.hint', {}, 'Keine.')));
 
-    // Weitere Werte (C7)
-    const stats = h('div.stats');
-    for (const s of d.stats) {
-      stats.append(h('div.stat', {},
-        h('div.stat-label', {}, h('input.label', { value: s.label, 'data-lock': '', 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }), enHint(s.label)),
-        h('input.value', { value: s.value, 'data-lock': '', 'data-bind': `stat:${s.id}:value`, placeholder: '–', onchange: (e) => this.editStat(s.id, { value: e.target.value }) }),
-        h('button.icon', { title: 'Entfernen', 'data-lock': '', onclick: () => this.patch({ stats: this.data.stats.filter((x) => x.id !== s.id) }) }, '×')));
-    }
-    c.append(h('section', {},
-      h('h4', {}, 'Werte ', info('ac'), h('button.small', { 'data-lock': '', onclick: () => this.patch({ stats: [...this.data.stats, { id: uid('s_'), label: '', value: '' }] }) }, '+ Wert')),
-      stats));
+    // Werte (C7): bei Spielercharakteren hier, bei NPCs ganz unten direkt über den Attributen
+    if (!o.statsLast) this.renderStats(c);
+
+    // Angriffe (nur NPCs): aufgebaut wie „Aktuelle Waffen“ im Inventar
+    if (o.showAttacks) c.append(this.renderAttacks());
 
     // Zauberplätze (C3) als blaue Rauten mit Grad I–IX; verbraucht = stark ausgegraut.
     // Normal sieht man nur Grade mit Plätzen; "Anzahl ändern" zeigt alle 9.
@@ -263,7 +258,67 @@ export class Sheet {
     };
     if (o.showPrivateNotes) c.append(textArea('privateNotes', 'Mein Notizbuch (nur für mich, auch der DM sieht es nicht)', 'Notizen …'));
     if (o.showNote) c.append(textArea('note', 'Notiz zu diesem NPC', 'Wer ist das? Was will er?'));
+    if (o.statsLast) this.renderStats(c);
     applyLocks(c);
+  }
+
+  renderStats(c) {
+    const d = this.data;
+    const stats = h('div.stats');
+    for (const s of d.stats) {
+      stats.append(h('div.stat', {},
+        h('div.stat-label', {}, h('input.label', { value: s.label, 'data-lock': '', 'data-bind': `stat:${s.id}:label`, placeholder: 'Wert', onchange: (e) => this.editStat(s.id, { label: e.target.value }) }), enHint(s.label)),
+        h('input.value', { value: s.value, 'data-lock': '', 'data-bind': `stat:${s.id}:value`, placeholder: '–', onchange: (e) => this.editStat(s.id, { value: e.target.value }) }),
+        h('button.icon', { title: 'Entfernen', 'data-lock': '', onclick: () => this.patch({ stats: this.data.stats.filter((x) => x.id !== s.id) }) }, '×')));
+    }
+    c.append(h('section', {},
+      h('h4', {}, 'Werte ', info('ac'), h('button.small', { 'data-lock': '', onclick: () => this.patch({ stats: [...this.data.stats, { id: uid('s_'), label: '', value: '' }] }) }, '+ Wert')),
+      stats));
+
+  }
+
+  /** Angriffe eines NPCs: Name, Angriffsbonus, Schaden/Art, optional Munition – wie die Waffen im Inventar. */
+  renderAttacks() {
+    const d = this.data;
+    const list = d.weapons || [];
+    const setList = (items) => { this.patch({ weapons: items }); this.signature = ''; this.render(); };
+    const edit = (id, p) => this.patch({ weapons: (this.data.weapons || []).map((x) => (x.id === id ? { ...x, ...p } : x)) });
+    const field = (w, key, label, opts = {}) => h('label.gear-field', { style: opts.grow ? { flex: opts.grow } : {} },
+      h('span', {}, opts.term ? term(opts.term) : label, opts.info ? info(opts.info) : null),
+      h('input', { value: w[key] || '', placeholder: opts.placeholder || '', 'data-lock': '', 'data-bind': `weapon:${w.id}:${key}`,
+        onchange: (e) => edit(w.id, { [key]: e.target.value }) }));
+    const setAmmo = (id, cur) => {
+      const w = (this.data.weapons || []).find((x) => x.id === id);
+      if (!w || !w.ammo) return;
+      edit(id, { ammo: { ...w.ammo, cur: Math.max(0, Math.min(w.ammo.max, cur)) } });
+      this.refreshValues();
+    };
+    const rows = list.map((w) => h('div.gear', {},
+      h('div.gear-row', {},
+        field(w, 'name', 'Name', { grow: 3, placeholder: 'z. B. Krummsäbel' }),
+        field(w, 'attack', 'Angr. Bonus', { grow: 1, placeholder: '+4', info: 'attackBonus', term: 'attackBonus' }),
+        field(w, 'damage', 'Schaden/Art', { grow: 2, placeholder: LANG === 'en' ? '1d6+2 slashing' : '1W6+2 Hieb', term: 'damageType' }),
+        h('button.icon', { title: 'Angriff entfernen', 'data-lock': '', onclick: () => setList((this.data.weapons || []).filter((x) => x.id !== w.id)) }, '×')),
+      w.ammo
+        ? h('div.ammo', {},
+          h('span', { 'data-raw': '' }, '🏹 ', w.ammo.name || termText('ammunition')),
+          h('button.small', { title: 'Einen verschießen', onclick: () => setAmmo(w.id, ((this.data.weapons || []).find((x) => x.id === w.id)?.ammo?.cur || 0) - 1) }, '−'),
+          h('input.cur', { type: 'number', min: 0, value: w.ammo.cur, 'data-lock': '', 'data-bind': `weapon:${w.id}:ammoCur`, onchange: (e) => setAmmo(w.id, Number(e.target.value) || 0) }),
+          h('span', {}, '/'),
+          h('input.cur', { type: 'number', min: 0, value: w.ammo.max, title: 'Höchstwert', 'data-lock': '', 'data-bind': `weapon:${w.id}:ammoMax`,
+            onchange: (e) => { const max = Math.max(0, Number(e.target.value) || 0); const cur = (this.data.weapons || []).find((x) => x.id === w.id)?.ammo; edit(w.id, { ammo: { ...cur, max, cur: Math.min(cur.cur, max) } }); } }),
+          h('button.small', { title: 'Einen aufsammeln', onclick: () => setAmmo(w.id, ((this.data.weapons || []).find((x) => x.id === w.id)?.ammo?.cur || 0) + 1) }, '+'),
+          h('button.icon', { title: 'Munitionszähler entfernen', 'data-lock': '', onclick: () => setList((this.data.weapons || []).map((x) => (x.id === w.id ? { ...x, ammo: null } : x))) }, '×'))
+        : h('button.small.link-like', { 'data-lock': '', onclick: async () => {
+          const r = await dialog({ title: 'Munitionszähler', fields: [
+            { name: 'name', label: 'Was wird gezählt?', value: /armbrust|crossbow/i.test(w.name) ? termText('bolts') : termText('arrows') },
+            { name: 'max', label: 'Anzahl', type: 'number', min: 0, value: 20 }], okText: 'Hinzufügen' });
+          if (r) setList((this.data.weapons || []).map((x) => (x.id === w.id ? { ...x, ammo: { name: r.name, max: r.max || 0, cur: r.max || 0 } } : x)));
+        } }, '+ Munitionszähler')));
+    return h('section.attacks', {},
+      h('h4', {}, 'Angriffe ', info('attackBonus'),
+        h('button.small', { 'data-lock': '', onclick: () => setList([...(this.data.weapons || []), { id: uid('wa_'), name: '', attack: '', damage: '', ammo: null }]) }, '+ Angriff')),
+      rows.length ? h('div.gear-list', {}, ...rows) : h('p.hint', {}, 'Keine. Mit „+ Angriff“ z. B. Krummsäbel, Kurzbogen oder Biss eintragen.'));
   }
 
   renderSlotBoxes(el, level) {

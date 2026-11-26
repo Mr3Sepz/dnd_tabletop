@@ -162,8 +162,47 @@ export const CATALOG = await fetch('/shared/conditions.json').then((r) => r.json
 export const HEALTH_COLORS = CATALOG.health;
 export const CONDITION_BY_KEY = new Map(CATALOG.conditions.map((c) => [c.key, c]));
 
-/** Entfernung nach 5e-Regel: jedes Feld zählt, auch diagonal (Chebyshev). */
-export function gridDistance(dx, dy, grid) {
+// ---------------------------------------------------------------- Sechseck-Raster
+// grid.size = Abstand zweier benachbarter Feldmitten. „hex“: Spitze oben, „hexflat“: flache Seite oben.
+// (offsetX, offsetY) ist die Mitte des Feldes (0, 0). Rechnung in axialen Koordinaten (q, r).
+const SQ3 = Math.sqrt(3);
+export const isHex = (grid) => !!grid && (grid.type === 'hex' || grid.type === 'hexflat');
+
+export function hexFromPixel(x, y, grid) {
+  const R = (grid.size || 70) / SQ3; // Radius (Mitte bis Ecke)
+  const px = x - (grid.offsetX || 0); const py = y - (grid.offsetY || 0);
+  let q; let r;
+  if (grid.type === 'hexflat') { q = (2 / 3 * px) / R; r = (-1 / 3 * px + SQ3 / 3 * py) / R; } else { q = (SQ3 / 3 * px - 1 / 3 * py) / R; r = (2 / 3 * py) / R; }
+  // auf das nächste Feld runden (Würfelkoordinaten)
+  let rq = Math.round(q); let rr = Math.round(r); const rs = Math.round(-q - r);
+  const dq = Math.abs(rq - q); const dr = Math.abs(rr - r); const ds = Math.abs(rs + q + r);
+  if (dq > dr && dq > ds) rq = -rr - rs; else if (dr > ds) rr = -rq - rs;
+  return { q: rq, r: rr };
+}
+
+export function hexToPixel(q, r, grid) {
+  const R = (grid.size || 70) / SQ3;
+  const x = grid.type === 'hexflat' ? R * 1.5 * q : R * (SQ3 * q + SQ3 / 2 * r);
+  const y = grid.type === 'hexflat' ? R * (SQ3 / 2 * q + SQ3 * r) : R * 1.5 * r;
+  return { x: x + (grid.offsetX || 0), y: y + (grid.offsetY || 0) };
+}
+
+export function hexCorners(cx, cy, grid) {
+  const R = (grid.size || 70) / SQ3;
+  const start = grid.type === 'hexflat' ? 0 : 30;
+  const pts = [];
+  for (let i = 0; i < 6; i++) { const a = ((start + 60 * i) * Math.PI) / 180; pts.push(cx + R * Math.cos(a), cy + R * Math.sin(a)); }
+  return pts;
+}
+
+/** Entfernung nach 5e-Regel: jedes Feld zählt, auch diagonal (Chebyshev); bei Sechsecken die Zahl der Felder. */
+export function gridDistance(dx, dy, grid, from) {
+  if (isHex(grid)) {
+    const a = hexFromPixel(from ? from.x : 0, from ? from.y : 0, grid);
+    const b = hexFromPixel((from ? from.x : 0) + dx, (from ? from.y : 0) + dy, grid);
+    const cells = (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.q + a.r - b.q - b.r)) / 2;
+    return { cells, feet: Math.round(cells * (grid.feet || 5)) };
+  }
   const cells = Math.max(Math.abs(dx), Math.abs(dy)) / (grid.size || 70);
   const rounded = Math.round(cells * 10) / 10;
   return { cells: rounded, feet: Math.round(cells * (grid.feet || 5)) };

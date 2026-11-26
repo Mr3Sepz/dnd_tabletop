@@ -84,7 +84,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** bzw. **🟢 Ist live / ✏️ Bearbeitung** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
@@ -140,17 +140,27 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **+ Neue Szene**, dann **Bild hochladen**. Große Bilder werden automatisch verkleinert, damit sie bei allen schnell laden.
 - **Jede Szene ist für sich:** Eine neue Szene ist **völlig leer**, ohne Karte, ohne Figuren und mit **leerer Porträtleiste**. Jede Szene hat ihre eigene Leiste mit eigenem Rundenzähler. Schaltest du eine andere Szene live, bleibt die Leiste der alten Szene dort liegen. Gehst du zurück, ist sie wieder da. Laufende Effekttimer behalten beim Wechsel ihre restlichen Runden.
 - **Plätze:** Ganz unten im Reiter stehen die Spielerplätze mit ihrem *Ort* (siehe [Getrennte Gruppen](#12-getrennte-gruppen)) und *Freigeben*.
-- **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
+- **Raster an die Karte anpassen:** Das Raster ist sofort da. Zieh den Schieberegler **Feldgröße**, bis ein Feld genau einem Kästchen deiner Karte entspricht. Alternativ veränderst du mit **Kartengröße** die Karte unter dem Raster. Neben beiden Reglern steht ein **Zahlenfeld mit Pfeilen**: Damit stellst du den Wert genau ein, die Feldgröße in halben Pixeln, die Kartengröße in ganzen Prozent. Die Figuren sind immer genau ein Feld groß und passen sich automatisch an. *Versatz X/Y* schiebt das Raster ein Stück, falls es nicht ganz bündig sitzt.
+- **Rasterform:** **Quadrate** oder **Sechsecke**, wahlweise mit der Spitze oder der flachen Seite nach oben. Figuren rasten in der Mitte eines Sechsecks ein, das Lineal zählt Sechsecke. Beim Drehen der Karte wechselt die Ausrichtung mit.
+
+  <img src="docs/img/61-zahlenfelder.webp" width="380" alt="Schieberegler Kartengröße mit Zahlenfeld daneben">
 - **Fuß pro Feld** (Standard 5) braucht das Lineal.
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
-- **Licht malen** (nur bei Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort wird es für alle hell, mit warmem, orangefarbenem Feuerschein. Antippen ohne Ziehen = runder Lichtkreis. Mit **🌑 Licht radieren** wischst du über eine helle Stelle, und dort wird es wieder dunkel. Die Größe stellst du wie beim Licht unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen unter dem Nachtfilter.
+- **Licht malen** (Tag und Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort leuchtet es für alle; bei Nacht wird es dort hell. Die **Farbe des Scheins** wählst du unter dem Werkzeug, Standard ist warmes Feuer-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **🌑 Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. Die Größe stellst du unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im Kasten *Licht*.
+- **Nebel und Wolken malen:** Mit **🌫️** malst du Nebelschwaden, Rauch oder Wolken über die Karte, mit **💨** radierst du sie wieder weg. Alle sehen sie. Die Farbe wählst du unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar; zum Verbergen ist der [Fog of War](#11-fog-of-war) da. *Rückgängig* und *Allen Nebel löschen* stehen im Kasten *Nebel und Wolken*.
+
+  <img src="docs/img/57-nebel-und-tageslicht.webp" alt="Nebelschwaden oben links und ein blaues Licht am Tag">
 
   <img src="docs/img/48-licht-radieren.webp" width="460" alt="Lagerfeuerschein mit einem wegradierten dunklen Streifen">
 - **Notiz zur Szene:** Raumbeschreibung, Fallen, Schätze. Nur du siehst sie.
 
 **Im Hintergrund vorbereiten:** Oben bei *Bearbeite* wählst du eine andere Szene aus. Die Spieler sehen weiter die alte, bis du **Live schalten** drückst.
+
+**Bearbeitungsmodus für die Live-Szene:** Der grüne Knopf **🟢 Ist live** oben ist ein Schalter. Antippen = **Bearbeitungsmodus** (Knopf wird orange): Die Spieler sehen die Karte weiter genau so, wie sie in diesem Moment war, während du Figuren setzt, zeichnest oder den Nebel änderst. Mit **✏️ Bearbeitung · Live schalten** (oder *Jetzt live schalten* im Hinweis über der Karte) erscheinen alle Änderungen auf einmal bei den Spielern. Porträtleiste, Bögen und Chat laufen in der Zeit normal weiter; Spieler können ihre eigene Figur auch im Bearbeitungsmodus bewegen.
+
+<img src="docs/img/59-bearbeitungsmodus.webp" alt="Kopfzeile im Bearbeitungsmodus: oranger Knopf Bearbeitung · Live schalten">
 
 <br clear="right">
 
@@ -183,7 +193,19 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 <img src="docs/img/49-npc-mehrfachauswahl.webp" width="340" align="right" alt="NPC-Liste mit zwei ausgewählten Ratten und der Leiste mit In Leiste, Als Gruppe, ± HP, Löschen">
 
-**NPC-Liste:** Jeder Eintrag hat rechts einen **🗑** zum Löschen. **Mehrere auswählen:** **Umschalt + Klick**, auf dem Handy **lang drücken**. Ist schon etwas ausgewählt, reicht ein normaler Klick. Oben erscheint dann eine Leiste mit **In Leiste**, **Als Gruppe**, **± HP**, **🗑 Löschen** und **Auswahl aufheben**.
+**NPC-Liste:** Jeder Eintrag hat rechts einen **🗑** zum Löschen. **Mehrere auswählen:** **Umschalt + Klick**, auf dem Handy **lang drücken**. Ist schon etwas ausgewählt, reicht ein normaler Klick. Oben erscheint dann eine Leiste mit **In Leiste**, **Als Gruppe**, **± HP**, **→ zu Gegnern** bzw. **→ zu NPCs**, **🗑 Löschen** und **Auswahl aufheben**. Mit einem Tipp auf **Liste** klappst du die Liste ein, damit mehr Platz für den Bogen bleibt.
+
+<br clear="right">
+
+<img src="docs/img/62-gegner-angriffe.webp" width="340" align="right" alt="Unterreiter Gegner mit Bugbear: Angriffe mit Morgenstern">
+
+**NPCs und Gegner:** Der Reiter *NPCs* hat zwei gleich aufgebaute Unterreiter, **NPCs** (Händler, Verbündete, Pferde …) und **Gegner**. Neue Einträge landen in dem Unterreiter, in dem du gerade bist. Verschieben geht im Bogen mit **→ zu Gegnern** / **→ zu NPCs** oder für mehrere über die Auswahl. Ein Doppelklick in der Porträtleiste springt automatisch in den richtigen Unterreiter.
+
+**Bogen eines NPCs:** Trefferpunkte, Zustände, dann **Angriffe**, aufgebaut wie *Aktuelle Waffen* im Inventar: Name, Angriffsbonus, Schaden/Art und auf Wunsch ein Munitionszähler. Danach Zauberplätze, Zähler und Notiz. Die **Werte** (RK usw.) stehen ganz unten, direkt über den Attributen.
+
+**Kopien im aktuellen Zustand:** Setzt du einen NPC erneut auf die Karte oder kopierst ihn, bekommt die Kopie genau den Stand, den er gerade hat, also auch alles, was du vorher bearbeitet hast. Der Name bleibt gleich, ohne „(Kopie)“.
+
+**Namen** erscheinen überall genau so, wie du sie geschrieben hast, mit Groß- und Kleinschreibung, auch in der Liste und in allen Themes.
 
 <br clear="right">
 
@@ -258,7 +280,8 @@ Die **Werkzeugleiste** endet über dem Würfelknopf 🎲. Passt nicht alles hine
 | Sichtbar für … | Nur bestimmte Spieler sehen die Figur ([mehr dazu](#13-sicht-pro-spieler)) |
 | Bearbeiten … | Name, Kennung, Bild, Größe, verknüpfter Charakter/NPC, wer sie bewegen darf, Farbe |
 | Werte öffnen | Öffnet den Bogen rechts. Das geht auch per normalem Klick auf die Figur |
-| In Porträtleiste · Größer · Kleiner · Kopieren · Nach vorne · Löschen | |
+| In Porträtleiste · Größer · Kleiner · Nach vorne · Löschen | |
+| Kopieren | Bei einem NPC entsteht ein **eigener NPC** mit eigenen HP, im **aktuellen Zustand** des Originals und mit **gleichem Namen** (ohne „Kopie“). Hat das Original einen Marker, bekommt die Kopie den nächsten freien: eine noch nicht vergebene Farbe, die nächste Zahl oder den nächsten Buchstaben |
 
 ### 6. Mehrere Figuren auf einmal
 
@@ -471,7 +494,17 @@ Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenm
 
 <img src="docs/img/10-messen.webp" alt="Lineal zeigt 30 ft (6 Felder)">
 
-📏 auswählen und ziehen: Die App zeigt **Fuß und Felder** (5e-Regel: Diagonalen zählen wie gerade Felder). Beim **Ziehen einer Figur** siehst du die Strecke automatisch. **Die Spieler haben das Lineal auch.**
+📏 auswählen und ziehen: Die App zeigt **Fuß und Felder** (5e-Regel: Diagonalen zählen wie gerade Felder; bei Sechsecken die Zahl der Sechsecke). Beim **Ziehen einer Figur** siehst du die Strecke automatisch. **Die Spieler haben das Lineal auch.**
+
+### Ping: Stelle auf der Karte zeigen
+
+<img src="docs/img/58-ping.webp" width="460" align="right" alt="Zwei Pings auf der Karte: rot von Aria, lila vom DM">
+
+Mit **📍** in der Werkzeugleiste und einem Tipp auf die Karte (oder **Alt + Klick**) leuchtet die Stelle bei allen in derselben Szene ein paar Sekunden auf, mit Ringen und dem Namen. Jeder Spieler wählt beim Einloggen **seine Farbe**: Rot, Grün, Blau, Gelb oder Weiß. Jede Farbe gibt es nur einmal, wer zuerst kommt, bekommt sie. Der DM pingt immer in **Lila**. Wird ein Platz freigegeben, ist seine Farbe wieder frei. Im Reiter *Szenen* unter *Plätze* siehst du die Farbe jedes Spielers.
+
+<img src="docs/img/56-farbe-waehlen.webp" width="200" alt="Beitreten: Name und Farbwahl">
+
+<br clear="right">
 
 ### 15. Würfeln
 
@@ -691,6 +724,10 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Spielerbild zuordnen | *Bilder* → *Charaktere/NPCs* → Bild antippen → **Porträt für …** |
 | Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
 | Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** (zu viel? **🌑 Licht radieren**) |
+| Nebelschwaden über dem Sumpf | Werkzeug **🌫️** (wegwischen mit **💨**) |
+| Auf eine Stelle zeigen | **📍** und auf die Karte tippen, oder **Alt + Klick** |
+| Karte umbauen, ohne dass die Spieler zusehen | **🟢 Ist live** antippen → bearbeiten → **✏️ Bearbeitung · Live schalten** |
+| Sechseck-Raster | *Szenen* → Raster → *Rasterform* |
 | NPCs würfeln Initiative | Leiste → **🎲 NPCs**, dann *Sortieren* |
 | Mehrere NPCs löschen | *NPCs* → Umschalt + Klick / lang drücken → **🗑 Löschen** |
 | Darkmode oder anderes Aussehen | **🎨** oben → Theme wählen |
