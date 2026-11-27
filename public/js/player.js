@@ -11,7 +11,7 @@ import { Sheet } from './sheet.js';
 import { renderInitiative } from './initiative.js';
 import { DicePanel } from './dice.js';
 import { AbilitySheet } from './charsheet.js';
-import { QuestLog } from './quests.js';
+import { Journal } from './journal.js';
 import { ChatPanel } from './chat.js';
 import { WorldMap } from './worldmap.js';
 import { setHelpOverrides } from './help.js';
@@ -83,7 +83,19 @@ const chat = new ChatPanel({
 });
 const world = new WorldMap({ isDM: false, mySeat: seat, act: (a) => conn.act(a), seatName });
 $('#worldBtn').onclick = () => { world.update(state); world.open(); };
-const quests = new QuestLog(h('div.quest-wrap'), { act: (a) => conn.act(a), who: (by) => (by === 'dm' ? 'DM' : by === seat ? 'dir' : seatName(by)) });
+// Tagebuch: Quests, gemeinsame Notizen und das private Tagebuch (sieht nicht einmal der DM)
+const journal = new Journal({
+  getState: () => state,
+  act: (a) => conn.act(a),
+  who: (by) => (by === 'dm' ? 'DM' : by === seat ? 'dir' : seatName(by)),
+  privateText: (st) => (st.characters.find((c) => c.seat === seat) || {}).privateNotes || '',
+  savePrivate: (text) => {
+    const me = state.characters.find((c) => c.seat === seat);
+    if (me) conn.act({ type: 'character.update', id: me.id, patch: { privateNotes: text } });
+  },
+  privateHint: 'Nur für dich. Auch der DM sieht es nicht.',
+});
+$('#journalBtn').onclick = () => journal.toggle();
 
 function gone(title, msg) {
   conn.socket.close();
@@ -124,25 +136,8 @@ function renderTabs() {
   $('#sheet').classList.toggle('hidden', tab !== 'sheet');
   $('#abilities').classList.toggle('hidden', tab !== 'abilities');
   $('#inventory').classList.toggle('hidden', tab !== 'inventory');
-  $('#party').classList.toggle('hidden', tab !== 'party');
 }
 $$('#tabs button').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; renderTabs(); }; });
-
-const saveNotes = debounce((v) => conn.act({ type: 'party.update', patch: { notes: v } }), 600);
-function renderParty() {
-  const el = $('#party');
-  const p = state.party;
-  quests.update(state.quests || []);
-  if (!el.contains(quests.container)) {
-    el.replaceChildren(quests.container,
-      h('h3', {}, 'Gemeinsame Notizen'),
-      h('label.field', {}, h('span', {}, 'Alle sehen und schreiben mit'),
-        h('textarea.party-notes', { rows: 10, oninput: (e) => saveNotes(e.target.value), placeholder: 'Namen, Hinweise, offene Fragen …' }, p.notes || '')));
-  } else {
-    const ta = el.querySelector('textarea.party-notes');
-    if (ta && ta !== document.activeElement && ta.value !== (p.notes || '')) ta.value = p.notes || '';
-  }
-}
 
 function render() {
   const me = state.characters.find((c) => c.seat === seat);
@@ -164,7 +159,7 @@ function render() {
     if (!sheet) {
       sheet = new Sheet($('#sheet'), {
         kind: 'character',
-        showPrivateNotes: true,
+        showPrivateNotes: false, // steht jetzt im Tagebuch
         canPickPortrait: false,
         onPatch: (patch) => conn.act({ type: 'character.update', id: me.id, patch }),
         onConditions: (list) => conn.act({ type: 'conditions.set', target: { kind: 'character', id: me.id }, conditions: list }),
@@ -180,7 +175,7 @@ function render() {
     });
     abilities.update(me);
   }
-  renderParty();
+  journal.update();
 }
 
 $('#zoomIn').onclick = () => board.zoomBy(1.25);

@@ -29,8 +29,11 @@ export function h(tag, attrs = {}, ...children) {
 }
 
 export function debounce(fn, ms) {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  let t; let pending = null;
+  const d = (...args) => { clearTimeout(t); pending = args; t = setTimeout(() => { pending = null; fn(...args); }, ms); };
+  /** sofort ausführen, falls noch etwas wartet */
+  d.flush = () => { if (pending) { clearTimeout(t); const a = pending; pending = null; fn(...a); } };
+  return d;
 }
 
 export function throttle(fn, ms) {

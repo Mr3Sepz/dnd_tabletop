@@ -8,6 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="/css/journal.css">
 </head>
 <body class="player">
   <header class="topbar">
@@ -17,6 +18,7 @@
     <button class="icon" id="zoomOut" title="Verkleinern">−</button>
     <button class="icon" id="zoomFit" title="Ganze Karte">⤢</button>
     <button class="icon" id="zoomIn" title="Vergrößern">+</button>
+    <button class="icon journal-btn" id="journalBtn" title="Tagebuch: Quests, gemeinsame Notizen, privates Tagebuch">📖</button>
     <button class="icon" id="worldBtn" title="Weltkarte">🌍</button>
     <button class="icon" id="mapToggle" title="Karte aus- oder einblenden (z. B. mit echter Karte auf dem Tisch oder am Handy)">🗺</button>
     <button class="icon" id="fullscreen" title="Vollbild (auch F11)">⛶</button>
@@ -34,12 +36,10 @@
         <button data-tab="sheet" class="active">Charakter</button>
         <button data-tab="abilities">Attribute</button>
         <button data-tab="inventory">Inventar</button>
-        <button data-tab="party">Gruppe</button>
       </nav>
       <div class="tab-body" id="sheet"></div>
       <div class="tab-body hidden" id="abilities"></div>
       <div class="tab-body hidden" id="inventory"></div>
-      <div class="tab-body hidden" id="party"></div>
     </aside>
   </main>
   <div id="gone" class="login hidden"><div class="card"><h1 id="goneTitle"></h1><p id="goneMsg"></p><a class="button primary" href="/">Zur Platzwahl</a></div></div>

@@ -692,7 +692,33 @@
   "Gelb": "Yellow",
   "Weiß": "White",
   "Ping-Farbe": "Ping colour",
-  "Diese Farbe hat schon jemand anderes. Bitte eine andere wählen.": "Someone else already has this colour. Please pick another one."
+  "Diese Farbe hat schon jemand anderes. Bitte eine andere wählen.": "Someone else already has this colour. Please pick another one.",
+  "Quests": "Quests",
+  "Privates Tagebuch": "Private diary",
+  "Tagebuch": "Diary",
+  "Tagebuch: Quests, gemeinsame Notizen, privates Tagebuch": "Diary: quests, shared notes, private diary",
+  "Tagebuch schließen": "Close diary",
+  "Bereiche des Tagebuchs": "Sections of the diary",
+  "Zurückblättern": "Previous page",
+  "Weiterblättern": "Next page",
+  "Titel": "Title",
+  "Noch keine Quests. Mit „+ Eintrag“ hält jeder Aufträge, Hinweise und Erlebnisse fest.": "No quests yet. With “+ Entry” anyone can record tasks, clues and adventures.",
+  "Alle sehen und schreiben mit.": "Everyone can read and write.",
+  "Wichtige Namen, Orte, offene Fragen …": "Important names, places, open questions …",
+  "Was ist heute passiert?": "What happened today?",
+  "Nur für dich. Notizen zu einzelnen Szenen findest du unter „Szenen“.": "Only for you. Notes for single scenes are in “Scenes”.",
+  "Nur für dich. Auch der DM sieht es nicht.": "Only for you. Not even the DM sees it.",
+  "Blitze malen": "Paint lightning",
+  "Blitze radieren": "Erase lightning",
+  "⚡ Blitze": "⚡ Lightning",
+  "⚡ Blitze malen": "⚡ Paint lightning",
+  "🫥 Blitze radieren": "🫥 Erase lightning",
+  "Alle Blitze löschen": "Clear all lightning",
+  "Alle Blitze löschen?": "Clear all lightning?",
+  "Jeder Blitz in einer anderen Farbe": "Every bolt in a different colour",
+  "Farbe der Blitze": "Colour of the lightning",
+  "Ein Gebiet malen, z. B. eine Gewitterwolke oder einen magischen Sturm: Dort zucken zufällig Blitze auf, an und aus, für alle sichtbar. Unter dem Werkzeug: 🎲 = jeder Blitz in einer anderen Farbe, sonst eine feste Farbe.": "Paint an area, e.g. a thundercloud or a magical storm: lightning flickers there at random, on and off, visible to everyone. Below the tool: 🎲 = every bolt in a different colour, otherwise one fixed colour.",
+  "dir (DM)": "you (DM)"
  },
  "patterns": [
   [
@@ -1118,6 +1144,10 @@
   [
    "(.+) \\(schon vergeben\\)",
    "$1 (already taken)"
+  ],
+  [
+   "(\\d+) Blitzgebiet\\(e\\)",
+   "$1 lightning area(s)"
   ]
  ]
 }

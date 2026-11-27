@@ -1,6 +1,7 @@
 // DM-Ansicht (A1): Karte mit Werkzeugleiste in der Mitte, alle Verwaltung in der Seitenleiste.
 
 import { cropDialog } from './crop.js';
+import { Journal } from './journal.js';
 import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
 import { InventoryEditor, COINS, coinLabel, coinImage } from './inventory.js';
 import { connect } from './net.js';
@@ -10,7 +11,6 @@ import { renderInitiative } from './initiative.js';
 import { editConditions } from './conditions.js';
 import { DicePanel } from './dice.js';
 import { AbilitySheet } from './charsheet.js';
-import { QuestLog } from './quests.js';
 import { ChatPanel } from './chat.js';
 import { WorldMap } from './worldmap.js';
 import { setHelpContext, setHelpOverrides } from './help.js';
@@ -143,7 +143,17 @@ const world = new WorldMap({
   onGoScene: (id) => { if (state.scenes.some((x) => x.id === id)) { editSceneId = id; tab = 'scenes'; render(); } },
 });
 $('#worldBtn').onclick = () => { world.update(state); world.open(); };
-const questLog = new QuestLog(h('div.quest-wrap'), { act: (a) => conn.act(a), who: (by) => (by === 'dm' ? 'dir' : seatName(by)) });
+
+// Tagebuch (ersetzt den früheren Reiter „Notizen“): Quests, gemeinsame Notizen, privates Tagebuch des DM
+const journal = new Journal({
+  getState: () => state,
+  act: (a) => act(a),
+  who: (by) => (by === 'dm' ? 'dir (DM)' : seatName(by)),
+  privateText: (st) => st.dmNotes || '',
+  savePrivate: (text) => act({ type: 'dm.notes', text }),
+  privateHint: 'Nur für dich. Notizen zu einzelnen Szenen findest du unter „Szenen“.',
+});
+$('#journalBtn').onclick = () => journal.toggle();
 
 // ================================================================ Hilfen
 
@@ -204,6 +214,7 @@ const board = new Board($('#board'), {
   onFogShape: (shape) => act({ type: 'fog.add', sceneId: editScene().id, shape }),
   onLight: (light) => act({ type: 'light.add', sceneId: editScene().id, light }),
   onCloud: (cloud) => act({ type: 'cloud.add', sceneId: editScene().id, cloud }),
+  onBolt: (bolt) => act({ type: 'bolt.add', sceneId: editScene().id, bolt }),
   onPing: (p) => conn.ping(boardSceneId(), p.x, p.y),
   onToolDone: () => renderToolbar(),
   onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'tokens') renderPanel(); },
@@ -294,7 +305,7 @@ document.addEventListener('keydown', (e) => {
 
 const TOOL_ICONS = {
   select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', 'cloud-brush': '🌫️', 'cloud-eraser': '💨', ping: '📍', eraser: '🧽',
+  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', 'cloud-brush': '🌫️', 'cloud-eraser': '💨', 'bolt-brush': '⚡', 'bolt-eraser': '🫥', ping: '📍', eraser: '🧽',
 };
 
 function renderToolbar() {
@@ -311,13 +322,16 @@ function renderToolbar() {
     h('span.tb-sep'),
     btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
     h('span.tb-sep'),
-    btn('light-brush'), btn('light-eraser'), btn('cloud-brush'), btn('cloud-eraser'),
+    btn('light-brush'), btn('light-eraser'), btn('cloud-brush'), btn('cloud-eraser'), btn('bolt-brush'), btn('bolt-eraser'),
     ['rect', 'ellipse', 'line'].includes(tool) ? h('div.tb-style', {},
       h('label', { title: 'Linienfarbe' }, h('input', { type: 'color', value: style.stroke, onchange: (e) => { style.stroke = e.target.value; } })),
       h('label', { title: 'Füllung' }, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderToolbar(); } }),
         style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
-    tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') ? h('div.tb-style', {},
+    tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') || tool.startsWith('bolt-') ? h('div.tb-style', {},
+      tool === 'bolt-brush' ? h('label.check', { title: 'Jeder Blitz in einer anderen Farbe' },
+        h('input', { type: 'checkbox', checked: board.boltColor === 'random', onchange: (e) => { board.boltColor = e.target.checked ? 'random' : '#cfe8ff'; renderToolbar(); } }), '🎲') : null,
+      tool === 'bolt-brush' && board.boltColor !== 'random' ? h('label', { title: 'Farbe der Blitze' }, h('input', { type: 'color', value: board.boltColor, onchange: (e) => { board.boltColor = e.target.value; } })) : null,
       tool === 'light-brush' ? h('label', { title: 'Farbe des Lichtscheins' }, h('input', { type: 'color', value: board.lightColor, onchange: (e) => { board.lightColor = e.target.value; } })) : null,
       tool === 'cloud-brush' ? h('label', { title: 'Farbe des Nebels' }, h('input', { type: 'color', value: board.cloudColor, onchange: (e) => { board.cloudColor = e.target.value; } })) : null,
       h('label', { title: 'Pinselgröße' }, 'Pinsel',
@@ -709,13 +723,13 @@ function renderPanel(force = false) {
   }
   if (invEditor && selected.inventory && character(selected.inventory)) invEditor.update(character(selected.inventory));
   for (const [id, ab] of abilitySheets) { const c = character(id) || npc(id); if (c) ab.update(c); }
-  questLog.update(state.quests || []);
+  journal.update();
   if (!force && panelFocused()) { panelDirty = true; return; }
   panelDirty = false;
   const body = $('#tabBody');
   const scroll = body.scrollTop;
   body.replaceChildren(...({
-    scenes: tabScenes, tokens: tabTokens, images: tabImages, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, notes: tabNotes, game: tabGame,
+    scenes: tabScenes, tokens: tabTokens, images: tabImages, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, game: tabGame,
   }[tab])().filter((x) => x !== null && x !== undefined && x !== false));
   body.scrollTop = scroll;
 }
@@ -794,6 +808,7 @@ function tabScenes() {
     h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: async (e) => { await update({ night: e.target.checked }); renderToolbar(); } }), 'Nachtfilter (S8)'),
     paintBox(sc, 'light'),
     paintBox(sc, 'cloud'),
+    paintBox(sc, 'bolt'),
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
     // Plätze der Spieler ganz unten
@@ -953,22 +968,30 @@ function sliderSpin({ label, unit, min, max, step, value, name, onCommit }) {
 }
 
 /** Licht bzw. Nebel/Wolken malen: Knöpfe, Farbe, Rückgängig, alles löschen (Tag und Nacht). */
+const PAINT = {
+  light: { list: 'lights', legend: '🕯️ Licht', brush: '🕯️ Licht malen', eraser: '🌑 Licht radieren', clearQ: 'Alle Lichter löschen?', clear: 'Alle Lichter löschen', count: (n) => `${n} Licht(er)`,
+    hint: 'Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.' },
+  cloud: { list: 'clouds', legend: '🌫️ Nebel und Wolken', brush: '🌫️ Nebel malen', eraser: '💨 Nebel radieren', clearQ: 'Allen Nebel löschen?', clear: 'Allen Nebel löschen', count: (n) => `${n} Nebelstrich(e)`,
+    hint: 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.' },
+  bolt: { list: 'bolts', legend: '⚡ Blitze', brush: '⚡ Blitze malen', eraser: '🫥 Blitze radieren', clearQ: 'Alle Blitze löschen?', clear: 'Alle Blitze löschen', count: (n) => `${n} Blitzgebiet(e)`,
+    hint: 'Ein Gebiet malen, z. B. eine Gewitterwolke oder einen magischen Sturm: Dort zucken zufällig Blitze auf, an und aus, für alle sichtbar. Unter dem Werkzeug: 🎲 = jeder Blitz in einer anderen Farbe, sonst eine feste Farbe.' },
+};
+
+/** Licht, Nebel/Wolken bzw. Blitze malen: Knöpfe, Rückgängig, alles löschen (Tag und Nacht). */
 function paintBox(sc, kind) {
-  const light = kind === 'light';
-  const list = (light ? sc.lights : sc.clouds) || [];
+  const k = PAINT[kind];
+  const list = sc[k.list] || [];
   const n = list.filter((l) => !l.erase).length;
-  return h('fieldset.lights-box', {}, h('legend', {}, light ? '🕯️ Licht' : '🌫️ Nebel und Wolken'),
-    h('p.hint', {}, light
-      ? 'Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.'
-      : 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.'),
+  return h('fieldset.lights-box', {}, h('legend', {}, k.legend),
+    h('p.hint', {}, k.hint),
     h('div.row.wrap', {},
-      h('button.small', { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); } }, light ? '🕯️ Licht malen' : '🌫️ Nebel malen'),
-      h('button.small', { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); } }, light ? '🌑 Licht radieren' : '💨 Nebel radieren'),
+      h('button.small', { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); } }, k.brush),
+      h('button.small', { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); } }, k.eraser),
       h('button.small', { disabled: !list.length, onclick: () => act({ type: `${kind}.undo`, sceneId: sc.id }) }, 'Rückgängig'),
       h('button.small', { disabled: !list.length, onclick: async () => {
-        if (await dialog({ title: light ? 'Alle Lichter löschen?' : 'Allen Nebel löschen?', okText: 'Löschen', danger: true })) act({ type: `${kind}.clear`, sceneId: sc.id });
-      } }, light ? 'Alle Lichter löschen' : 'Allen Nebel löschen'),
-      h('span.hint', {}, light ? `${n} Licht(er)` : `${n} Nebelstrich(e)`)));
+        if (await dialog({ title: k.clearQ, okText: 'Löschen', danger: true })) act({ type: `${kind}.clear`, sceneId: sc.id });
+      } }, k.clear),
+      h('span.hint', {}, k.count(n))));
 }
 
 /** Plätze der Spieler mit ihrem Ort (Szene), steht im Reiter „Szenen“. */
@@ -1286,23 +1309,6 @@ function tabInventory() {
     picker,
     c ? h('h3', {}, c.name) : null,
     c ? invEditor.container : null,
-  ];
-}
-
-// ================================================================ Tab: Notizen (T1, T4, Gruppenwerte)
-
-function tabNotes() {
-  const save = debounce((v) => act({ type: 'dm.notes', text: v }), 600);
-  const party = debounce((patch) => act({ type: 'party.update', patch }), 600);
-  const p = state.party;
-  questLog.update(state.quests || []);
-  return [
-    questLog.container,
-    h('h3', {}, 'Gemeinsame Notizen (sehen alle, alle dürfen schreiben)'),
-    h('textarea', { rows: 6, oninput: (e) => party({ notes: e.target.value }), placeholder: 'Wichtige Namen, offene Fragen …' }, p.notes || ''),
-    h('h3', {}, 'Mein Notizblock (nur für dich)'),
-    h('p.hint', {}, 'Notizen zu einzelnen Szenen findest du unter „Szenen“.'),
-    h('textarea.big', { rows: 16, oninput: (e) => save(e.target.value), onblur: (e) => act({ type: 'dm.notes', text: e.target.value }) }, state.dmNotes || ''),
   ];
 }
 

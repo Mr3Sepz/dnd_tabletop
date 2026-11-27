@@ -118,6 +118,8 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Bearbeitungsmodus | ✅ | Spieler sehen den letzten Live-Stand, bis der DM live schaltet |
 | — | NPCs/Gegner | ✅ | Unterreiter, Angriffe, Werte über Attributen, einklappbare Liste, Kopien im aktuellen Zustand mit freiem Marker |
 | — | Ping | ✅ | 📍 oder Alt + Klick; Spielerfarbe beim Einloggen (je Farbe einmal), DM lila |
+| — | Tagebuch | ✅ | 📖 groß in der Mitte, Buch/PADD/PDA/Tablet je nach Theme, Lesezeichen Quests · Gemeinsame Notizen · Privates Tagebuch, Umblättern statt Scrollen; ersetzt den Reiter Notizen |
+| — | Blitze malen | ✅ | ⚡ Gebiete mit zufällig zuckenden Blitzen, bunt oder feste Farbe |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Themes | ✅ | Standard, Nacht (Darkmode), Pergament, Gruft, Messing, Zukunft, Neon, 8-Bit, Konsole; pro Gerät, Schriften lokal (OFL/Apache) |

@@ -1121,3 +1121,21 @@ test('Ping-Farben: jede nur einmal, Ping geht an alle in der Szene', async () =>
   assert.equal(st.seats.find((s) => s.seat === 2).color, null, 'Farbe wieder frei');
   a.c.close(); dm.c.close();
 });
+
+test('Blitze malen: zufällige Farben oder feste Farbe, radieren, Spieler sehen sie', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(1);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  assert.equal((await act(p.c, { type: 'bolt.add', sceneId: sc.id, bolt: { points: [1, 1], r: 30 } })).ok, false);
+  await act(dm.c, { type: 'bolt.add', sceneId: sc.id, bolt: { points: [10, 10, 80, 20], r: 50, color: 'random' } });
+  await act(dm.c, { type: 'bolt.add', sceneId: sc.id, bolt: { points: [200, 200], r: 40, color: '#ffe066' } });
+  await act(dm.c, { type: 'bolt.add', sceneId: sc.id, bolt: { points: [200, 200], r: 20, erase: true } });
+  assert.deepEqual(sc.bolts.map((b) => b.color || (b.erase && 'erase')), ['random', '#ffe066', 'erase']);
+  assert.equal(require('../server/state').viewForPlayer(st, 1).scenes[0].bolts.length, 3);
+  await act(dm.c, { type: 'bolt.undo', sceneId: sc.id });
+  assert.equal(sc.bolts.length, 2);
+  await act(dm.c, { type: 'bolt.clear', sceneId: sc.id });
+  assert.equal(sc.bolts.length, 0);
+  p.c.close(); dm.c.close();
+});

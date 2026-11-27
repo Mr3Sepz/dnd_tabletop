@@ -622,6 +622,19 @@ try:
         assert mia.evaluate("window.dnd.board.scene.clouds.length") == 3, 'Spieler sehen den Nebel'
         dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
         shot(dm, '57-nebel-und-tageslicht.png')
+        dm.get_by_role('button', name='⚡ Blitze malen').click(); time.sleep(0.2)
+        drag_world(dm, (G * 11, G * 2.5), (G * 15, G * 3.5)); time.sleep(0.3)
+        assert dm.evaluate("window.dnd.board.scene.bolts.at(-1).color") == 'random'
+        assert mia.evaluate("window.dnd.board.scene.bolts.length") == 1
+        for _ in range(60):
+            if dm.evaluate("window.dnd.board.fxLayer.children.length") > 0: break
+            time.sleep(0.05)
+        assert dm.evaluate("window.dnd.board.fxLayer.children.length") > 0, 'ein Blitz zuckt'
+        bx, by = world(dm, G * 13, G * 3)
+        shot(dm, '66-blitze.png', clip={'x': max(0, bx - 300), 'y': max(0, by - 180), 'width': 600, 'height': 360})
+        dm.get_by_role('button', name='🫥 Blitze radieren').click(); time.sleep(0.2)
+        drag_world(dm, (G * 11, G * 3), (G * 15, G * 3)); time.sleep(0.3)
+        dm.get_by_role('button', name='Alle Blitze löschen').click(); dialog_ok(dm); time.sleep(0.3)
         dm.get_by_role('button', name='Allen Nebel löschen').click(); dialog_ok(dm); time.sleep(0.3)
         dm.get_by_role('button', name='Alle Lichter löschen').click(); dialog_ok(dm); time.sleep(0.3)
 
@@ -837,38 +850,68 @@ try:
         dm.mouse.up()
         dm.click('button.tool[title="Auswählen und Verschieben"]')
 
-        step('Tagebuch und Quests: DM und Spieler schreiben, erledigt rutscht nach unten')
-        dm.click('#tabs button[data-tab=notes]'); time.sleep(0.2)
+        step('Tagebuch als Buch: Quests, gemeinsame Notizen, privates Tagebuch, umblättern')
+        dm.click('#journalBtn'); time.sleep(0.5)
+        assert dm.locator('.journal.book').count() == 1, 'helles Theme = rotes Buch'
+        assert dm.locator('.journal-mark').count() == 3
         for title, text in [('Wagen nach Phandalin bringen', 'Auftrag von Gundren. Lohn: 10 GM pro Person bei Barthen.'),
                             ('Gundren Felsensucher finden', 'Von Goblins verschleppt. Goblin A weiß, wo die Höhle ist.')]:
-            dm.get_by_role('button', name='+ Eintrag').click(); time.sleep(0.5)
-            dm.fill('.quest-title >> nth=0', title); dm.press('.quest-title >> nth=0', 'Tab'); time.sleep(0.2)
-            dm.fill('.quest-text >> nth=0', text); dm.press('.quest-text >> nth=0', 'Tab'); time.sleep(0.4)
-        if not mia.locator('#tabs').is_visible(): mia.click('#panelToggle'); time.sleep(0.3)
-        mia.click('#tabs button[data-tab=party]'); time.sleep(0.4)
-        mia.get_by_role('button', name='+ Eintrag').click(); time.sleep(0.5)
-        mia.fill('.quest-title >> nth=0', 'Sildar Hallwinter retten'); mia.press('.quest-title >> nth=0', 'Tab'); time.sleep(0.4)
-        idx = dm.evaluate("[...document.querySelectorAll('.quest-title')].findIndex(i => i.value.startsWith('Wagen'))")
-        before = dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)")
-        # sofort, ohne dass das Häkchen den Fokus verliert
-        dm.locator(f'.quest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.05)
-        titles = dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)")
-        assert titles[-1] == 'Wagen nach Phandalin bringen', titles
-        assert dm.locator('.quest').last.get_attribute('class').find('done') >= 0
-        dm.locator('.quest').last.locator('input[type=checkbox]').uncheck(); time.sleep(0.05)
-        assert dm.evaluate("[...document.querySelectorAll('.quest-title')].map(i => i.value)") == before, 'zurück an den alten Platz'
-        idx = dm.evaluate("[...document.querySelectorAll('.quest-title')].findIndex(i => i.value.startsWith('Wagen'))")
-        dm.locator(f'.quest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.6)
-        dm.fill('#tabBody textarea.big', 'Sildar sitzt in der Burg Cragmaw fest. Klarg hat einen Wolf namens Ripper.'); time.sleep(0.8)
-        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
-        panel_shot(dm, '16-notizen.png', 750)
-        time.sleep(0.4)
+            dm.locator('.journal .jbtn', has_text='+ Eintrag').click(); time.sleep(0.6)
+            dm.fill('.jquest-title >> nth=0', title); dm.press('.jquest-title >> nth=0', 'Tab'); time.sleep(0.2)
+            dm.fill('.jquest-text >> nth=0', text); dm.press('.jquest-text >> nth=0', 'Tab'); time.sleep(0.4)
+        mia.click('#journalBtn'); time.sleep(0.5)
+        mia.locator('.journal .jbtn', has_text='+ Eintrag').click(); time.sleep(0.6)
+        mia.fill('.jquest-title >> nth=0', 'Sildar Hallwinter retten'); mia.press('.jquest-title >> nth=0', 'Tab'); time.sleep(0.5)
+        dm.locator('.journal-mark.mark-shared').click(); time.sleep(0.2); dm.locator('.journal-mark.mark-quests').click(); time.sleep(0.3)
+        titles = dm.evaluate("[...document.querySelectorAll('.jquest-title')].map(i => i.value)")
+        assert 'Sildar Hallwinter retten' in titles, titles
+        idx = titles.index('Wagen nach Phandalin bringen')
+        dm.locator(f'.jquest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.4)
+        assert dm.evaluate("[...document.querySelectorAll('.jquest-title')].map(i => i.value)")[-1] == 'Wagen nach Phandalin bringen'
+        assert 'done' in dm.locator('.jquest').last.get_attribute('class')
+        # privates Tagebuch: langer Text fließt auf die nächste Seite
+        dm.locator('.journal-mark.mark-private').click(); time.sleep(0.3)
+        long = ' '.join(['Sildar sitzt in der Burg Cragmaw fest. Klarg hat einen Wolf namens Ripper.'] * 22)
+        dm.locator('textarea.jtext').first.fill(long); time.sleep(1.2)
+        assert dm.evaluate("window.dnd.board.state.dmNotes.length") == len(long), 'Text gespeichert'
+        filled = dm.evaluate("[...document.querySelectorAll('textarea.jtext')].filter(t => t.value.length).length")
+        assert filled >= 2, f'Text läuft auf die zweite Seite: {filled}'
+        assert dm.evaluate("[...document.querySelectorAll('textarea.jtext')].every(t => t.scrollHeight <= t.clientHeight + 1)"), 'nichts scrollt'
+        dm.locator('.journal-mark.mark-quests').click(); time.sleep(0.3)
+        shot(dm, '63-tagebuch-buch.png')
+        dm.locator('.journal-mark.mark-private').click(); time.sleep(0.3)
+        shot(dm, '64-tagebuch-buch-privat.png')
+        # umblättern: freie Seiten hinter dem Ende, Bereich bleibt gleich
+        dm.locator('.jnav.next').click(); time.sleep(0.4)
+        assert dm.locator('.journal-mark.active').get_attribute('data-section') == 'private'
+        assert dm.locator('.jpage-num').first.inner_text() == '3'
+        dm.locator('.jnav.prev').click(); time.sleep(0.3)
+        dm.keyboard.press('Escape'); time.sleep(0.2)
+        assert dm.locator('.journal').count() == 0
+        # Mia: gemeinsame Notizen am Handy
+        mia.locator('.journal-mark.mark-shared').click(); time.sleep(0.3)
+        mia.locator('textarea.jtext').first.fill('Barthen in Phandalin zahlt. Die Goblins kommen aus dem Nordwesten.'); time.sleep(0.9)
+        assert dm.evaluate("window.dnd.board.state.party.notes").startswith('Barthen')
         shot(mia, '30-tagebuch-handy.png')
-        mia.click('#tabs button[data-tab=sheet]'); time.sleep(0.2)
+        mia.locator('.journal-close').click(); time.sleep(0.2)
+
+        step('Tagebuch passend zum Theme: Lederbuch, Gruft, PADD, PDA, Tablet')
+        def pick_theme2(page, tid):
+            page.click('.theme-switch'); time.sleep(0.2)
+            page.click(f'.theme-menu button[data-theme={tid}]'); time.sleep(0.5)
+        for tid, kind in [('parchment', 'book'), ('crypt', 'book'), ('console', 'device'), ('retro', 'device'), ('scifi', 'device')]:
+            pick_theme2(dm, tid)
+            dm.click('#journalBtn'); time.sleep(0.5)
+            assert dm.locator(f'.journal.{kind}').count() == 1, tid
+            dm.locator('.journal-mark.mark-quests').click(); time.sleep(0.3)
+            dm.evaluate("document.fonts.ready"); time.sleep(0.2)
+            shot(dm, f'65-tagebuch-{tid}.png')
+            dm.keyboard.press('Escape'); time.sleep(0.2)
+        pick_theme2(dm, 'light')
 
         step('Reiter in neuer Reihenfolge, Gruppe und Inventar-Auswahl nebeneinander')
         tabs = dm.evaluate("[...document.querySelectorAll('#tabs button')].map(b => b.dataset.tab)")
-        assert tabs == ['players', 'npcs', 'inventory', 'notes', 'scenes', 'tokens', 'images', 'game'], tabs
+        assert tabs == ['players', 'npcs', 'inventory', 'scenes', 'tokens', 'images', 'game'], tabs
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
         assert dm.locator('#tabBody .seat-row').count() == 0, 'Plätze sind im Reiter Szenen'
         ys = dm.evaluate("[...document.querySelectorAll('.party-card')].map(c => Math.round(c.getBoundingClientRect().top))")

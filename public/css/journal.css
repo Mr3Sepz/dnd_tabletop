@@ -1,0 +1,155 @@
+/* ================================================================ Tagebuch
+   Buch (Lesezeichen links) oder Gerät (farbige Punkte links), je nach Theme. Seiten ohne Scrollen. */
+
+.journal-backdrop { position: fixed; inset: 0; z-index: 950; display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 6, 4, 0.58); backdrop-filter: blur(2px); animation: jfade 0.18s ease-out; }
+@keyframes jfade { from { opacity: 0; } }
+
+.journal { position: relative; display: flex; width: min(1120px, 92vw); height: min(740px, 88vh); color: var(--j-ink); animation: jopen 0.22s ease-out; }
+@keyframes jopen { from { transform: scale(0.94); opacity: 0; } }
+.journal-body { position: relative; flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.journal-pages { position: relative; flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
+.journal-pages[data-spread="2"] { grid-template-columns: 1fr 1fr; }
+.jpage { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; padding: 30px 34px 46px; }
+.jpage-content { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
+.jpage-num { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 0.8rem; opacity: 0.6; }
+.jpage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.jpage-head h2 { margin: 0; font-size: 1.45rem; font-family: var(--j-head); text-transform: none; }
+.jsub, .jhint { margin: 0; font-size: 0.85rem; opacity: 0.72; }
+
+/* Fließtext ohne Scrollen: so viel wie auf die Seite passt, der Rest wandert weiter */
+.journal textarea.jtext { flex: 1; min-height: 0; width: 100%; resize: none; overflow: hidden; border: none; outline: none; padding: 0 2px;
+  background: transparent; color: var(--j-ink); font-family: var(--j-font); font-size: var(--j-size, 18px); line-height: var(--j-line, 28px);
+  background-image: var(--j-lines, none); background-attachment: local; box-shadow: none; border-radius: 0; }
+.journal textarea.jtext::placeholder { color: var(--j-ink); opacity: 0.4; }
+
+/* Quests als Karten */
+.jquest { border: 1px solid var(--j-rule); border-radius: 8px; padding: 8px 10px; background: var(--j-card); display: flex; flex-direction: column; gap: 4px; }
+.jquest.done { opacity: 0.5; }
+.jquest.done .jquest-title { text-decoration: line-through; }
+.jquest-head { display: flex; align-items: center; gap: 8px; }
+.jquest-title { flex: 1; min-width: 0; font-weight: 700; font-family: var(--j-font); font-size: 1.02rem; background: transparent; border: none; border-bottom: 1px solid var(--j-rule); color: var(--j-ink); border-radius: 0; padding: 2px 0; }
+.jquest-text { resize: none; font-family: var(--j-font); font-size: 0.95rem; line-height: 1.35; background: transparent; border: 1px dashed var(--j-rule); border-radius: 6px; color: var(--j-ink); padding: 4px 6px; height: 4.4em; }
+.jquest-by { font-size: 0.72rem; opacity: 0.6; }
+.jcheck input { width: 20px; height: 20px; accent-color: var(--j-accent); }
+.journal .jdel { background: transparent; border: none; color: var(--j-ink); opacity: 0.6; }
+.journal .jbtn { background: var(--j-accent); color: var(--j-accent-ink, #fff); border: none; font-weight: 700; }
+
+/* Umblättern: kleine Pfeile in den unteren Ecken */
+.journal-navs { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: space-between; padding: 0 10px; pointer-events: none; z-index: 3; }
+.jnav { pointer-events: auto; min-width: 40px; min-height: 40px; border-radius: 50%; border: 2px solid var(--j-rule); background: var(--j-card); color: var(--j-ink); font-size: 1.1rem; font-weight: 700; }
+.jnav:disabled { opacity: 0.25; }
+.journal.flip-r .journal-pages { animation: jflip-r 0.32s ease-out; }
+.journal.flip-l .journal-pages { animation: jflip-l 0.32s ease-out; }
+@keyframes jflip-r { from { transform: perspective(1400px) rotateY(-8deg) translateX(14px); opacity: 0.4; } }
+@keyframes jflip-l { from { transform: perspective(1400px) rotateY(8deg) translateX(-14px); opacity: 0.4; } }
+
+.journal-close { position: absolute; top: -14px; right: -14px; z-index: 5; width: 40px; height: 40px; border-radius: 50%; font-size: 1.4rem; line-height: 1;
+  background: var(--j-cover, #333); color: #fff; border: 2px solid rgba(255,255,255,0.7); box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+/* ---------------------------------------------------------------- Buch */
+.journal.book { --j-font: "EB Garamond", Georgia, serif; --j-head: "Cinzel", Georgia, serif; --j-size: 19px; --j-line: 29px;
+  --j-ink: #2b2118; --j-rule: rgba(60,40,20,0.28); --j-card: rgba(255,255,255,0.35); --j-accent: #8b2e1f;
+  --j-lines: repeating-linear-gradient(to bottom, transparent 0, transparent 28px, rgba(40,70,140,0.28) 28px, rgba(40,70,140,0.28) 29px);
+  padding: 18px 20px 18px 30px; margin-left: 70px; border-radius: 8px 16px 16px 8px; background: var(--j-cover);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 3px rgba(0,0,0,0.25), inset 10px 0 18px rgba(0,0,0,0.35); }
+.journal.book .journal-pages { background: var(--j-paper); border-radius: 3px 8px 8px 3px; box-shadow: inset 0 0 22px rgba(80,50,20,0.25), 4px 4px 0 -1px var(--j-paper), 8px 8px 0 -2px var(--j-paper-2, #e8dfc8); }
+.journal.book .journal-pages[data-spread="2"] { background: linear-gradient(90deg, var(--j-paper) 0, var(--j-paper) 48.6%, rgba(0,0,0,0.18) 50%, var(--j-paper) 51.4%, var(--j-paper) 100%); }
+.journal.book .journal-pages[data-spread="2"] .jpage:first-child { padding-right: 40px; }
+.journal.book .journal-pages[data-spread="2"] .jpage:last-child { padding-left: 40px; }
+.journal.book .jnav { border-radius: 50%; background: var(--j-cover); color: #fff; border-color: rgba(255,255,255,0.6); box-shadow: 0 2px 5px rgba(0,0,0,0.35); }
+
+/* Lesezeichen links am Buch */
+.journal.book .journal-marks { position: absolute; left: -66px; top: 56px; display: flex; flex-direction: column; gap: 14px; z-index: 0; }
+.journal.book .journal-mark { width: 104px; height: 48px; padding: 0 10px 0 8px; display: flex; align-items: center; justify-content: flex-start;
+  border: none; border-radius: 8px 0 0 8px; color: #fff; font-family: var(--j-head); font-size: 0.74rem; font-weight: 700; line-height: 1.1; text-align: left;
+  box-shadow: -3px 3px 6px rgba(0,0,0,0.35); transform: translateX(0); transition: transform 0.15s; }
+.journal.book .journal-mark .mark-label { max-width: 64px; }
+.journal.book .journal-mark.active { transform: translateX(-12px); box-shadow: -5px 4px 10px rgba(0,0,0,0.45); }
+.journal.book .mark-quests { background: linear-gradient(90deg, #1f5a3d, #2d7a54); }
+.journal.book .mark-shared { background: linear-gradient(90deg, #1f3c78, #2b53a7); }
+.journal.book .mark-private { background: linear-gradient(90deg, #7a4a10, #a8701e); }
+
+.journal.book.v-red { --j-cover: linear-gradient(135deg, #b53a2b, #8a2318); --j-paper: #fbf7ec; }
+.journal.book.v-navy { --j-cover: linear-gradient(135deg, #24345e, #121b38); --j-paper: #ece6d6; --j-accent: #1f3c78; }
+.journal.book.v-navy .journal-pages { outline: 2px solid #c9a45c; outline-offset: 6px; }
+.journal.book.v-leather { --j-cover: radial-gradient(ellipse at 30% 20%, #8a5a2e, #5a3415 60%, #3d220c); --j-paper: #f3e6c4; --j-paper-2: #e3d2a6; --j-accent: #7a1f12; }
+.journal.book.v-leather::after, .journal.book.v-gothic::after, .journal.book.v-brass::after {
+  content: ""; position: absolute; inset: 7px; border: 2px dashed rgba(255,230,180,0.35); border-radius: 6px 12px 12px 6px; pointer-events: none; }
+.journal.book.v-gothic { --j-cover: radial-gradient(ellipse at 30% 20%, #2b2222, #140f0f 70%); --j-paper: #e6dccb; --j-paper-2: #cfc3ad; --j-ink: #1d1512; --j-accent: #7a0f14;
+  --j-head: "IM Fell English", Georgia, serif; --j-font: "IM Fell English", Georgia, serif; box-shadow: 0 24px 60px rgba(0,0,0,0.7), inset 0 0 0 3px #5e0a0e, inset 10px 0 18px rgba(0,0,0,0.5); }
+.journal.book.v-gothic .mark-quests { background: linear-gradient(90deg, #3a0507, #7a0f14); }
+.journal.book.v-gothic .mark-shared { background: linear-gradient(90deg, #1b1b1b, #3c3c3c); }
+.journal.book.v-gothic .mark-private { background: linear-gradient(90deg, #3d2a0c, #6e4e1a); }
+.journal.book.v-brass { --j-cover: linear-gradient(135deg, #4a3320, #2b1b0c); --j-paper: #efe2c3; --j-accent: #9b6420; --j-head: "Special Elite", monospace;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 0 0 5px #b5782a, inset 0 0 0 8px #3a2510; }
+
+/* ---------------------------------------------------------------- Geräte: PADD, Tablet, PDA */
+.journal.device { padding: 18px 18px 18px 14px; gap: 12px; border-radius: 30px; background: var(--j-frame); box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 0 0 3px rgba(255,255,255,0.08); }
+.journal.device .journal-body { background: var(--j-screen); border-radius: 16px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.6), inset 0 0 26px rgba(0,0,0,0.5); overflow: hidden; }
+.journal.device .journal-marks { width: 112px; flex: none; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 16px 10px; border-radius: 22px; background: var(--j-rail); }
+.journal.device .journal-mark { display: flex; align-items: center; gap: 8px; padding: 0; border: none; background: transparent; color: var(--j-rail-ink); font-family: var(--j-head); font-size: 0.74rem; text-align: left; line-height: 1.1; }
+.journal.device .journal-mark::before { content: ""; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--m); box-shadow: 0 0 0 2px rgba(0,0,0,0.5); }
+.journal.device .journal-mark.active::before { box-shadow: 0 0 0 3px var(--j-rail-ink), 0 0 12px var(--m); }
+.journal.device .journal-mark.active { font-weight: 700; }
+.journal.device .jnav { border-radius: 10px; }
+.journal.device .journal-close { border-radius: 12px; }
+
+/* PADD im Stil der Bedienpulte: schwarz, abgerundete Farbbalken, Punkte in Rot, Blau, Orange */
+.journal.device.v-padd { --j-frame: linear-gradient(160deg, #3a3a44, #1d1d24); --j-screen: #000; --j-ink: #ffcc99; --j-rule: #9999ff; --j-card: #0b0b14; --j-accent: #ff9c00; --j-accent-ink: #000;
+  --j-rail: #000; --j-rail-ink: #ffcc99; --j-font: "Antonio", "Arial Narrow", sans-serif; --j-head: "Antonio", "Arial Narrow", sans-serif; --j-size: 19px; --j-line: 27px; }
+.journal.device.v-padd .journal-marks { border: 3px solid #cc99cc; border-radius: 40px 22px 22px 40px; }
+.journal.device.v-padd .mark-quests { --m: #cc6666; }
+.journal.device.v-padd .mark-shared { --m: #9999ff; }
+.journal.device.v-padd .mark-private { --m: #ff9c00; }
+.journal.device.v-padd .journal-mark { text-transform: uppercase; letter-spacing: 0.04em; }
+.journal.device.v-padd .journal-body { border: 3px solid #ff9c00; border-radius: 26px 16px 16px 26px; box-shadow: inset 14px 0 0 #ff9c00; }
+.journal.device.v-padd .jpage { padding-left: 34px; }
+.journal.device.v-padd .jpage-head h2 { text-transform: uppercase; letter-spacing: 0.06em; color: #ff9c00; }
+.journal.device.v-padd .jnav { background: #9999ff; color: #000; border: none; border-radius: 999px; min-width: 64px; }
+.journal.device.v-padd .journal-close { background: #cc6666; border-radius: 999px; }
+
+.journal.device.v-tablet { --j-frame: linear-gradient(160deg, #13293a, #07131c); --j-screen: linear-gradient(180deg, #08202e, #04121a); --j-ink: #d8f3ff; --j-rule: #1d5a75; --j-card: rgba(0,166,200,0.08);
+  --j-accent: #00a6c8; --j-accent-ink: #001218; --j-rail: #04121a; --j-rail-ink: #7fd8ef; --j-font: "Exo 2", sans-serif; --j-head: "Orbitron", sans-serif;
+  --j-lines: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgba(0,166,200,0.14) 27px, rgba(0,166,200,0.14) 28px); --j-line: 28px; --j-size: 17px; }
+.journal.device.v-tablet .mark-quests { --m: #ff5a6e; } .journal.device.v-tablet .mark-shared { --m: #00c8f0; } .journal.device.v-tablet .mark-private { --m: #ffb340; }
+
+.journal.device.v-neon { --j-frame: linear-gradient(160deg, #240f3a, #0a0612); --j-screen: #0a0612; --j-ink: #f2e9ff; --j-rule: #5a2a8a; --j-card: rgba(255,42,138,0.06);
+  --j-accent: #ff2a8a; --j-accent-ink: #12000a; --j-rail: #08040e; --j-rail-ink: #00f0ff; --j-font: "Rajdhani", sans-serif; --j-head: "Rajdhani", sans-serif; --j-size: 19px; --j-line: 27px;
+  box-shadow: 0 0 0 2px #ff2a8a, 0 0 30px rgba(255,42,138,0.45), 0 24px 60px rgba(0,0,0,0.6); }
+.journal.device.v-neon .mark-quests { --m: #ff2a8a; } .journal.device.v-neon .mark-shared { --m: #00f0ff; } .journal.device.v-neon .mark-private { --m: #f8e71c; }
+
+/* PDA mit grünem Pixel-Display */
+.journal.device.v-pda { --j-frame: linear-gradient(160deg, #c9c4b7, #8f8a7e); --j-screen: #9bbc0f; --j-ink: #0f380f; --j-rule: #306230; --j-card: rgba(15,56,15,0.08);
+  --j-accent: #306230; --j-accent-ink: #9bbc0f; --j-rail: #3a3a46; --j-rail-ink: #e8e8e8; --j-font: "VT323", monospace; --j-head: "Press Start 2P", monospace; --j-size: 22px; --j-line: 26px; border-radius: 22px; }
+.journal.device.v-pda .journal-body { border: 10px solid #3a3a46; border-radius: 10px; box-shadow: inset 0 0 0 2px #0f380f, inset 3px 3px 0 rgba(255,255,255,0.15); }
+.journal.device.v-pda .jpage-head h2 { font-size: 0.85rem; line-height: 1.6; }
+.journal.device.v-pda .mark-quests { --m: #e04040; } .journal.device.v-pda .mark-shared { --m: #40a0e0; } .journal.device.v-pda .mark-private { --m: #f8d030; }
+.journal.device.v-pda .journal-mark::before { border-radius: 3px; }
+.journal.device.v-pda .jnav { border-radius: 0; background: #306230; color: #9bbc0f; border: none; box-shadow: 3px 3px 0 #0f380f; }
+
+/* ---------------------------------------------------------------- schmale Bildschirme */
+@media (max-width: 859px) {
+  .journal { width: 96vw; height: 90vh; }
+  .journal.book { margin-left: 0; padding: 12px 12px 12px 44px; }
+  .journal.book .journal-marks { left: 4px; top: 50px; gap: 10px; }
+  .journal.book .journal-mark { width: 34px; height: 92px; padding: 6px 0; border-radius: 6px 0 0 6px; justify-content: center; writing-mode: vertical-rl; transform: rotate(180deg); }
+  .journal.book .journal-mark .mark-label { max-width: none; }
+  .journal.book .journal-mark.active { transform: rotate(180deg) translateX(6px); }
+  .journal.device { flex-direction: column-reverse; padding: 12px; }
+  .journal.device .journal-marks { width: auto; flex-direction: row; justify-content: space-around; padding: 8px; }
+  .jpage { padding: 18px 16px 44px; }
+  .journal-close { top: -10px; right: -6px; }
+}
+
+/* Theme-Regeln für Knöpfe nicht auf Lesezeichen und Punkte übertragen */
+:root[data-skin] .journal button.journal-mark { background-color: transparent; box-shadow: none; border-radius: 0; min-height: 0; text-transform: none; }
+:root[data-skin] .journal.book button.journal-mark { border-radius: 8px 0 0 8px; box-shadow: -3px 3px 6px rgba(0,0,0,0.35); }
+:root[data-skin="console"] .journal.device button.journal-mark { background: transparent !important; color: var(--j-rail-ink); text-transform: uppercase; }
+.journal.device .journal-marks { width: 132px; }
+.journal.device .journal-mark .mark-label { font-size: 0.72rem; overflow-wrap: anywhere; }
+.journal.device.v-pda .journal-mark { font-family: "VT323", monospace; font-size: 1rem; }
+.journal.device.v-pda .journal-mark .mark-label { font-size: 1rem; }
+:root[data-skin="retro"] .journal button.journal-mark { box-shadow: none; }
+.journal.device .journal-mark .mark-label { overflow-wrap: normal; hyphens: manual; }
+.journal.device.v-tablet .journal-mark, .journal.device.v-neon .journal-mark { font-family: var(--j-font); font-size: 0.85rem; }

@@ -8,6 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="/css/journal.css">
 </head>
 <body class="dm">
   <div id="login" class="login hidden">
@@ -33,6 +34,7 @@
     <button class="icon" id="zoomOut" title="Verkleinern">−</button>
     <button class="icon" id="zoomFit" title="Ganze Karte">⤢</button>
     <button class="icon" id="zoomIn" title="Vergrößern">+</button>
+    <button class="icon journal-btn" id="journalBtn" title="Tagebuch: Quests, gemeinsame Notizen, privates Tagebuch">📖</button>
     <button class="icon" id="worldBtn" title="Weltkarte">🌍</button>
     <button class="icon" id="mapToggle" title="Karte aus- oder einblenden (z. B. am Handy oder mit echter Karte auf dem Tisch)">🗺</button>
     <button class="icon" id="fullscreen" title="Vollbild (auch F11)">⛶</button>
@@ -54,7 +56,6 @@
         <button data-tab="players" class="active">Spieler</button>
         <button data-tab="npcs">NPCs</button>
         <button data-tab="inventory">Inventar</button>
-        <button data-tab="notes">Notizen</button>
         <button data-tab="scenes">Szenen</button>
         <button data-tab="tokens">Figuren</button>
         <button data-tab="images">Bilder</button>

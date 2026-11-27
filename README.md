@@ -24,7 +24,7 @@ Keine Cloud, kein Abo, keine Accounts. Alle Daten bleiben bei dir.
 - [Die DM-Ansicht im Überblick](#die-dm-ansicht-im-überblick) · [Ohne Karte spielen](#ohne-karte-spielen)
 - [Vor der Sitzung](#vor-der-sitzung): [Einladen](#1-spieler-einladen) · [Szenen und Karten](#2-szenen-und-karten) · [Bilder, Figuren und NPCs](#3-bilder-figuren-und-npcs) · [Objekte und Zeichnungen](#4-objekte-zeichnungen-und-schablonen)
 - [Während des Spiels](#während-des-spiels): [Figurenmenü](#5-das-figurenmenü) · [Mehrere Figuren](#6-mehrere-figuren-auf-einmal) · [Initiative, Runden, Effekte](#7-porträtleiste-und-initiative) · [Schaden und Zustände](#8-schaden-zustände-und-0-hp) · [Charakterbogen und Attribute](#9-der-charakterbogen) · [Inventar, Waffen, Zauber](#10-inventar) · [Fog of War](#11-fog-of-war) · [Getrennte Gruppen](#12-getrennte-gruppen) · [Sicht pro Spieler](#13-sicht-pro-spieler) · [Messen](#14-entfernungen-messen) · [Würfel und Fuß ↔ Meter](#15-würfeln) · [Vorschau](#16-als-spieler-ansehen)
-- [Alle zusammen](#alle-zusammen): [Tagebuch und Quests](#17-tagebuch-und-quests) · [Chat](#18-chat) · [Weltkarte](#19-weltkarte) · [Zuschauer-Bildschirm](#20-zuschauer-bildschirm)
+- [Alle zusammen](#alle-zusammen): [Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch) · [Chat](#18-chat) · [Weltkarte](#19-weltkarte) · [Zuschauer-Bildschirm](#20-zuschauer-bildschirm)
 - [Themes und Darkmode](#themes-und-darkmode) · [Deutsch und Englisch](#deutsch-und-englisch) · [Infopunkte für Einsteiger](#infopunkte-für-einsteiger)
 - [Notizen, Speichern, Beenden](#notizen-speichern-beenden)
 - [Was deine Spieler sehen](#was-deine-spieler-sehen)
@@ -88,7 +88,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
 | **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
-| **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · Notizen · Szenen · Figuren · Bilder · Spiel* |
+| **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · Szenen · Figuren · Bilder · Spiel*. Quests und Notizen stehen im **📖 Tagebuch** oben |
 | **🎲 💬** (unten links) | Würfel mit Protokoll und Fuß-↔-Meter-Rechner · Chat |
 
 Auf dem Tablet oder Handy klappt die Seitenleiste mit **☰** auf und zu.
@@ -149,6 +149,9 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
 - **Licht malen** (Tag und Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort leuchtet es für alle; bei Nacht wird es dort hell. Die **Farbe des Scheins** wählst du unter dem Werkzeug, Standard ist warmes Feuer-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **🌑 Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. Die Größe stellst du unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im Kasten *Licht*.
+- **Blitze malen:** Mit **⚡** malst du ein Gebiet, z. B. eine Gewitterwolke oder einen magischen Sturm. Dort zucken zufällig Blitze auf: an, kurz aus, nochmal an, aus. Unter dem Werkzeug wählst du **🎲** (jeder Blitz in einer anderen Farbe) oder eine feste Farbe. **🫥** radiert Blitzgebiete wieder weg. Alle sehen die Blitze; im Fog of War bleiben sie verborgen.
+
+  <img src="docs/img/66-blitze.webp" width="460" alt="Ein Blitz zuckt über dem Waldweg">
 - **Nebel und Wolken malen:** Mit **🌫️** malst du Nebelschwaden, Rauch oder Wolken über die Karte, mit **💨** radierst du sie wieder weg. Alle sehen sie. Die Farbe wählst du unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar; zum Verbergen ist der [Fog of War](#11-fog-of-war) da. *Rückgängig* und *Allen Nebel löschen* stehen im Kasten *Nebel und Wolken*.
 
   <img src="docs/img/57-nebel-und-tageslicht.webp" alt="Nebelschwaden oben links und ein blaues Licht am Tag">
@@ -374,7 +377,7 @@ Spieler und NPCs haben denselben Bogen:
 - **Werte** wie die RK (Rüstungsklasse), frei benennbar. Spieler sehen und ändern ihre eigene RK. Die RK von Gegnern sehen sie nie.
 - **Zauberplätze als blaue Rauten** mit dem Grad (I, II, III …). Jede Raute gilt **einzeln**: Antippen = genau dieser Platz ist verbraucht und wird grau, egal in welcher Reihenfolge du tippst. Nochmal antippen = wieder frei. „Anzahl ändern“ legt fest, wie viele es pro Grad gibt. „Alle frei“ setzt nach einer langen Rast zurück.
 - **Zähler:** Ki, Kampfrausch, Heiltränke …
-- **Notiz** (NPC) bzw. **privates Notizbuch** (Spieler, das siehst auch du nicht).
+- **Notiz** (NPC). Das private Tagebuch der Spieler steht im [📖 Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch).
 
 <br clear="right">
 
@@ -536,18 +539,43 @@ Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dies
 
 ## Alle zusammen
 
-### 17. Tagebuch und Quests
+### 17. Tagebuch: Quests, Notizen, privates Tagebuch
 
-<img src="docs/img/30-tagebuch-handy.webp" width="260" align="right" alt="Tagebuch am Handy mit zwei offenen Quests">
+**📖** oben in der Kopfzeile öffnet das Tagebuch groß in der Mitte, vor allem anderen. Es sieht je nach [Theme](#themes-und-darkmode) anders aus:
 
-Reiter **Notizen** (bei dir) bzw. **Gruppe** (bei den Spielern):
+| Theme | Tagebuch |
+| --- | --- |
+| Standard, Nacht, Pergament, Gruft, Messing | **Buch** mit Lesezeichen am linken Rand: rot, nachtblau, Leder, schwarzes Gothic-Leder, messingbeschlagen |
+| Konsole | **PADD** mit runden Farbpunkten (Rot, Blau, Orange) |
+| 8-Bit | **PDA** mit grünem Pixel-Display |
+| Zukunft, Neon | **Tablet** in Cyan bzw. Neon |
 
-- **+ Eintrag** legt eine neue Quest oder Notiz an. Der neueste Eintrag steht oben.
-- Jeder Eintrag hat einen Titel und ein Textfeld. **Alle** dürfen alles: anlegen, schreiben, löschen.
-- **Erledigt** anhaken: Der Eintrag wird **sofort** grau, durchgestrichen und rutscht hinter alle offenen. Nimmst du das Häkchen wieder weg, springt er sofort an seinen alten Platz zurück.
-- Darunter stehen die **gemeinsamen Notizen** für alles andere.
+Die drei **Lesezeichen** bzw. **Farbpunkte** führen zu:
 
-<br clear="right">
+- **Quests:** **+ Eintrag** legt eine neue Quest an, der neueste steht oben. Jeder Eintrag hat einen Titel und ein Textfeld. **Alle** dürfen alles: anlegen, schreiben, löschen. **Erledigt** anhaken: Der Eintrag wird sofort grau, durchgestrichen und rutscht hinter alle offenen; zurücknehmen bringt ihn an seinen alten Platz.
+- **Gemeinsame Notizen:** sehen alle, alle schreiben mit.
+- **Privates Tagebuch:** nur für dich. Das Tagebuch eines Spielers sieht auch der DM nicht.
+
+**Blättern statt Scrollen:** Die Seiten scrollen nicht. Ist eine Seite voll, läuft der Text von selbst auf die nächste weiter. Mit den Pfeilen **◀ ▶** in den unteren Ecken blätterst du um, auch auf ein freies Blatt hinter dem Ende, wenn du dort neu anfangen willst. Die Pfeile bleiben im gewählten Bereich; zwischen Quests, Notizen und Tagebuch wechselst du nur über die Lesezeichen. Das Buch zeigt am PC zwei Seiten nebeneinander, am Handy eine. Schließen: **×**, **Esc** oder daneben tippen.
+
+<img src="docs/img/63-tagebuch-buch.webp" alt="Tagebuch als rotes Buch mit Lesezeichen Quests, Gemeinsame Notizen, Privates Tagebuch">
+
+<table>
+<tr>
+<td width="50%"><img src="docs/img/64-tagebuch-buch-privat.webp" alt="Privates Tagebuch: Text läuft über zwei Seiten"><br>Langer Text läuft auf die nächste Seite</td>
+<td width="50%"><img src="docs/img/65-tagebuch-console.webp" alt="Tagebuch als PADD im Theme Konsole"><br>PADD (Konsole)</td>
+</tr>
+<tr>
+<td><img src="docs/img/65-tagebuch-parchment.webp" alt="Lederbuch im Theme Pergament"><br>Lederbuch (Pergament)</td>
+<td><img src="docs/img/65-tagebuch-crypt.webp" alt="Gothic-Buch im Theme Gruft"><br>Gothic-Buch (Gruft)</td>
+</tr>
+<tr>
+<td><img src="docs/img/65-tagebuch-retro.webp" alt="PDA mit grünem Display im Theme 8-Bit"><br>PDA (8-Bit)</td>
+<td><img src="docs/img/65-tagebuch-scifi.webp" alt="Tablet im Theme Zukunft"><br>Tablet (Zukunft)</td>
+</tr>
+</table>
+
+<img src="docs/img/30-tagebuch-handy.webp" width="260" alt="Tagebuch am Handy: gemeinsame Notizen, Lesezeichen senkrecht am Rand">
 
 ### 18. Chat
 
@@ -668,13 +696,7 @@ Die Texte sind kurze deutsche Zusammenfassungen der **5e-Regeln von 2014 (SRD 5.
 
 ## Notizen, Speichern, Beenden
 
-<img src="docs/img/16-notizen.webp" width="300" align="right" alt="Reiter Notizen mit Gruppenwerten">
-
-**Reiter Notizen**
-- **[Tagebuch und Quests](#17-tagebuch-und-quests)** (sehen alle, alle schreiben mit).
-- **Gemeinsame Notizen** (sehen alle, alle schreiben mit).
-- **Mein Notizblock:** nur für dich.
-- Private Notizbücher der Spieler siehst du nicht. Die gehören den Spielern.
+**Notizen** stehen im **[📖 Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch)**: Quests und gemeinsame Notizen (sehen alle, alle schreiben mit) und dein **privates Tagebuch** (nur für dich). Die privaten Tagebücher der Spieler siehst du nicht. Notizen zu einzelnen Szenen stehen im Reiter *Szenen*.
 
 Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 
@@ -700,10 +722,10 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 
 - **Ihre Szene**, ohne Verstecktes, mit Nebel. Gegner nur mit grobem Zustand.
 - **Ihre eigenen Figuren** bewegen sie selbst. Andere Figuren können sie nicht bewegen.
-- **Charakter:** HP, Werte, Zauberplätze, Zähler, Zustände, ein **privates Notizbuch**, das auch du nicht siehst, ⚙ *Bogen anpassen* und ✎ *Bearbeiten*.
+- **Charakter:** HP, Werte, Zauberplätze, Zähler, Zustände, ⚙ *Bogen anpassen* und ✎ *Bearbeiten*.
 - **Attribute:** Attribute, Rettungswürfe, Fertigkeiten, Angaben (optional).
 - **Inventar:** Waffen mit Munition, vorbereitete Zauber, Münzen, Gegenstände.
-- **Gruppe:** Tagebuch und Quests, gemeinsame Notizen.
+- **📖 Tagebuch** oben: Quests, gemeinsame Notizen und ihr **privates Tagebuch**, das auch du nicht siehst.
 - **Oben:** Runde und Effekttimer (eigene starten), 🌍 Weltkarte mit eigenen Pins.
 - **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln mit Fuß-↔-Meter-Rechner, 💬 Chat, **🗺 Karte aus** (am Handy wie am PC), ⛶ Vollbild, **EN/DE** Sprache.
 
@@ -725,6 +747,8 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
 | Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** (zu viel? **🌑 Licht radieren**) |
 | Nebelschwaden über dem Sumpf | Werkzeug **🌫️** (wegwischen mit **💨**) |
+| Gewitter | Werkzeug **⚡** (wegwischen mit **🫥**) |
+| Notizen und Quests | **📖** oben |
 | Auf eine Stelle zeigen | **📍** und auf die Karte tippen, oder **Alt + Klick** |
 | Karte umbauen, ohne dass die Spieler zusehen | **🟢 Ist live** antippen → bearbeiten → **✏️ Bearbeitung · Live schalten** |
 | Sechseck-Raster | *Szenen* → Raster → *Rasterform* |
@@ -757,7 +781,7 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Münzbild ändern | *Inventar* → aufs Münzbild tippen |
 | Fuß in Meter umrechnen | 🎲 → *Fuß ↔ Meter* |
 | Einem Spieler heimlich etwas sagen | 💬 → Tab mit seinem Namen |
-| Quest festhalten | *Notizen* → **+ Eintrag** |
+| Quest festhalten | **📖** → Lesezeichen *Quests* → **+ Eintrag** |
 | Ort auf der Weltkarte markieren | 🌍 → **+ Pin** |
 | Karte auf dem Fernseher zeigen | *Spiel* → *Zuschauer-Ansicht öffnen* → F11 |
 | Münzen umbenennen | *Inventar* → ⚙ bei „Münzen“ |

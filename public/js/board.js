@@ -37,6 +37,8 @@ export const TOOLS = {
   'light-eraser': 'Licht radieren',
   'cloud-brush': 'Nebel/Wolken malen',
   ping: 'Ping: Stelle auf der Karte für alle markieren (auch Alt + Klick)',
+  'bolt-brush': 'Blitze malen',
+  'bolt-eraser': 'Blitze radieren',
   'cloud-eraser': 'Nebel/Wolken radieren',
 };
 
@@ -59,10 +61,13 @@ export class Board {
     this.stage = new Konva.Stage({ container, width: container.clientWidth, height: container.clientHeight, draggable: true });
     this.mapLayer = new Konva.Layer();
     this.drawLayer = new Konva.Layer();
+    this.fxLayer = new Konva.Layer({ listening: false }); // zuckende Blitze (unter dem Nebel, damit Verborgenes verborgen bleibt)
     this.fogLayer = new Konva.Layer({ listening: false });
     this.tokenLayer = new Konva.Layer();
     this.uiLayer = new Konva.Layer();
-    this.stage.add(this.mapLayer, this.drawLayer, this.fogLayer, this.tokenLayer, this.uiLayer);
+    this.stage.add(this.mapLayer, this.drawLayer, this.fxLayer, this.fogLayer, this.tokenLayer, this.uiLayer);
+    this.boltColor = 'random';
+    this.boltTimer = setInterval(() => this.#boltTick(), 90);
     this.transformer = new Konva.Transformer({ rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], ignoreStroke: true, anchorSize: 10, borderStroke: '#8b2e1f', anchorStroke: '#8b2e1f' });
     this.uiLayer.add(this.transformer);
 
@@ -191,7 +196,7 @@ export class Board {
     this.state = state;
     const sceneChanged = !this.scene || !scene || this.scene.id !== scene.id;
     this.scene = scene;
-    if (sceneChanged) { this.selection.clear(); this.selectedDrawing = null; }
+    if (sceneChanged) { this.selection.clear(); this.selectedDrawing = null; this.fxLayer.destroyChildren(); this.activeBolts = 0; }
     for (const id of [...this.selection]) if (!scene || !scene.tokens.some((t) => t.id === id)) this.selection.delete(id);
     this.#drawMap();
     this.#drawDrawings();
@@ -427,6 +432,79 @@ export class Board {
     }
     this.selectDrawing(this.selectedDrawing && this.drawingNodes.has(this.selectedDrawing) ? this.selectedDrawing : null);
     layer.draw();
+  }
+
+  /**
+   * Blitze: In gemalten Gebieten zucken zufällig Blitze auf (an, aus, flackern), in wechselnden Farben
+   * oder einer gewählten Farbe. Jedes Gerät würfelt selbst – das spart Netzverkehr und sieht trotzdem gleich wild aus.
+   */
+  #boltTick() {
+    const sc = this.scene;
+    const strokes = sc && sc.bolts;
+    if (!strokes || !strokes.length || document.hidden) return;
+    if (!this.boltCache || this.boltCache.key !== strokes) {
+      // mögliche Einschlagstellen: Punkte der Malstriche, außer dort, wo später radiert wurde
+      const spots = [];
+      strokes.forEach((b, i) => {
+        if (b.erase) return;
+        for (const [x, y] of strokeBlobs(b.points, b.r)) {
+          const erased = strokes.slice(i + 1).some((e) => e.erase && segNear(e.points, x, y, e.r));
+          if (!erased) spots.push({ x, y, r: b.r, color: b.color || '#cfe8ff' });
+        }
+      });
+      this.boltCache = { key: strokes, spots };
+    }
+    const spots = this.boltCache.spots;
+    if (!spots.length) return;
+    // im Schnitt etwa ein Blitz pro Sekunde je 6 Stellen, höchstens 3 auf einmal
+    const chance = Math.min(0.9, 0.015 * spots.length + 0.05);
+    if (Math.random() > chance || (this.activeBolts || 0) >= 3) return;
+    const sp = spots[Math.floor(Math.random() * spots.length)];
+    this.#flashBolt(sp);
+  }
+
+  #flashBolt(sp) {
+    const palette = ['#cfe8ff', '#8fd3ff', '#ffffff', '#c59bff', '#ffe066', '#ff7ad9', '#7dffb0', '#ff8a5c'];
+    const color = sp.color === 'random' ? palette[Math.floor(Math.random() * palette.length)] : sp.color;
+    const g = new Konva.Group({ listening: false });
+    // Zickzack von oben nach unten durch das Gebiet, mit Seitenast
+    const len = sp.r * (2 + Math.random() * 1.5);
+    const ang = (Math.random() - 0.5) * 0.9 + Math.PI / 2;
+    const x0 = sp.x - Math.cos(ang) * len / 2 + (Math.random() - 0.5) * sp.r * 0.6;
+    const y0 = sp.y - Math.sin(ang) * len / 2;
+    const zig = (x, y, a, l, n) => {
+      const pts = [x, y];
+      for (let i = 1; i <= n; i++) {
+        const t = i / n;
+        const jitter = (Math.random() - 0.5) * l * 0.22 * (i < n ? 1 : 0);
+        pts.push(x + Math.cos(a) * l * t + Math.cos(a + Math.PI / 2) * jitter, y + Math.sin(a) * l * t + Math.sin(a + Math.PI / 2) * jitter);
+      }
+      return pts;
+    };
+    const main = zig(x0, y0, ang, len, 9);
+    const w = Math.max(3, sp.r * 0.07);
+    const glow = { stroke: color, lineCap: 'round', lineJoin: 'round', shadowColor: color, shadowBlur: w * 8, shadowOpacity: 1 };
+    g.add(new Konva.Line({ points: main, strokeWidth: w, ...glow }));
+    g.add(new Konva.Line({ points: main, strokeWidth: w * 0.4, stroke: '#ffffff', lineCap: 'round', lineJoin: 'round' }));
+    const k = 3 + Math.floor(Math.random() * 4);
+    g.add(new Konva.Line({ points: zig(main[k * 2], main[k * 2 + 1], ang + (Math.random() < 0.5 ? -0.7 : 0.7), len * 0.35, 4), strokeWidth: w * 0.6, ...glow }));
+    // kurzer Lichtschein am Einschlag
+    const ex = main[main.length - 2]; const ey = main[main.length - 1];
+    g.add(new Konva.Circle({ x: ex, y: ey, radius: sp.r * 0.8, fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+      fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: sp.r * 0.8, fillRadialGradientColorStops: [0, `${color}aa`, 1, `${color}00`] }));
+    this.fxLayer.add(g);
+    this.activeBolts = (this.activeBolts || 0) + 1;
+    // an – kurz aus – nochmal an – aus (Flackern)
+    const seq = [[1, 60 + Math.random() * 60], [0.15, 40 + Math.random() * 50], [0.95, 50 + Math.random() * 90], [0.4, 40], [0, 0]];
+    let i = 0;
+    const step = () => {
+      if (i >= seq.length || !g.getLayer()) { g.destroy(); this.activeBolts--; this.fxLayer.batchDraw(); return; }
+      const [op, ms] = seq[i++];
+      g.opacity(op); this.fxLayer.batchDraw();
+      if (op === 0) { g.destroy(); this.activeBolts--; this.fxLayer.batchDraw(); return; }
+      setTimeout(step, ms);
+    };
+    step();
   }
 
   /** Ping anzeigen: Ringe in der Farbe des Spielers (bzw. des DM), mit Namen, für ein paar Sekunden. */
@@ -812,13 +890,13 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
-      if (tool === 'line' || tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-')) {
+      if (tool === 'line' || tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') || tool.startsWith('bolt-')) {
         const fog = tool.startsWith('fog');
         const light = tool === 'light-brush';
-        const lightErase = tool === 'light-eraser' || tool === 'cloud-eraser';
-        const cloud = tool === 'cloud-brush';
+        const lightErase = tool === 'light-eraser' || tool === 'cloud-eraser' || tool === 'bolt-eraser';
+        const cloud = tool === 'cloud-brush' || tool === 'bolt-brush';
         const width = fog || light || lightErase || cloud ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
-        const [R, G, B] = rgb(light ? this.lightColor : this.cloudColor);
+        const [R, G, B] = rgb(light ? this.lightColor : tool === 'bolt-brush' ? (this.boltColor === 'random' ? '#c59bff' : this.boltColor) : this.cloudColor);
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
           stroke: lightErase ? 'rgba(10,20,64,0.6)' : light || cloud ? `rgba(${R},${G},${B},0.5)` : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);
@@ -880,6 +958,8 @@ export class Board {
         this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
       } else if (d.kind === 'light-brush' || d.kind === 'light-eraser') {
         this.opts.onLight?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'light-eraser', color: this.lightColor });
+      } else if (d.kind === 'bolt-brush' || d.kind === 'bolt-eraser') {
+        this.opts.onBolt?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'bolt-eraser', color: this.boltColor });
       } else if (d.kind === 'cloud-brush' || d.kind === 'cloud-eraser') {
         this.opts.onCloud?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'cloud-eraser', color: this.cloudColor });
       } else if (d.kind === 'eraser') {
@@ -909,6 +989,18 @@ function densify(points, step) {
     for (let k = 1; k <= n; k++) out.push(x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n);
   }
   return out;
+}
+
+/** Liegt (x, y) höchstens r von einem Strich entfernt? */
+function segNear(points, x, y, r) {
+  if (points.length === 2) return Math.hypot(points[0] - x, points[1] - y) <= r;
+  for (let i = 2; i < points.length; i += 2) {
+    const ax = points[i - 2]; const ay = points[i - 1]; const bx = points[i]; const by = points[i + 1];
+    const dx = bx - ax; const dy = by - ay; const l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2));
+    if (Math.hypot(ax + t * dx - x, ay + t * dy - y) <= r) return true;
+  }
+  return false;
 }
 
 /** Punkte entlang eines Pinselstrichs, nicht zu dicht (für Licht und Nebel). */
