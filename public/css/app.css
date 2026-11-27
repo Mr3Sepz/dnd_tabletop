@@ -138,9 +138,9 @@ code { background: var(--tint); padding: 1px 4px; border-radius: 4px; word-break
   padding: 6px 10px; display: flex; gap: 10px; align-items: center; z-index: 6; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
 
 /* ---------- Würfel ---------- */
-.dice-toggle { position: fixed; left: 14px; bottom: 14px; z-index: 30; width: 52px; height: 52px; border-radius: 50%; font-size: 1.6rem; justify-content: center;
-  background: var(--accent); color: #fff; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-.dice-panel { position: fixed; left: 14px; bottom: 76px; z-index: 31; width: min(340px, calc(100vw - 28px)); max-height: 60vh; overflow-y: auto;
+.dice-toggle { left: 200px; background: var(--accent); display: none; }
+body.no-map .dice-toggle { display: inline-flex; }
+.dice-panel { position: fixed; left: 70px; bottom: 76px; z-index: 31; width: min(340px, calc(100vw - 28px)); max-height: 60vh; overflow-y: auto;
   background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
 .dice-head { display: flex; justify-content: space-between; align-items: center; }
 .dice-quick { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
@@ -255,12 +255,12 @@ section.down { background: #f1ebff; border-radius: 8px; padding: 8px; }
 .ctx-menu button.danger { color: var(--bad); background: transparent; }
 .ctx-title { font-weight: 700; padding: 4px 10px 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
 
-.overlay { position: fixed; inset: 0; background: rgba(30, 20, 10, 0.45); display: grid; place-items: center; z-index: 60; padding: 12px; }
+.overlay { position: fixed; inset: 0; background: rgba(30, 20, 10, 0.45); display: grid; place-items: center; z-index: 1200; padding: 12px; } /* über allem, auch über dem Tagebuch */
 .dialog { background: var(--paper); border-radius: 12px; padding: 18px; width: min(440px, 100%); max-height: 90vh; overflow-y: auto; }
 .dialog h3 { margin-top: 0; }
 .dialog-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--top); color: #fff; padding: 10px 16px; border-radius: 8px; transition: transform 0.25s; z-index: 70; max-width: 90vw; }
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--top); color: #fff; padding: 10px 16px; border-radius: 8px; transition: transform 0.25s; z-index: 1300; max-width: 90vw; }
 #toast.show { transform: translateX(-50%) translateY(0); }
 #toast.error { background: var(--bad); }
 
@@ -444,8 +444,15 @@ details.dm-abilities summary { cursor: pointer; font-weight: 700; }
 .quest-by { color: var(--muted); font-size: 0.7rem; }
 
 /* ---------- Chat ---------- */
-.chat-toggle { position: fixed; left: 76px; bottom: 14px; z-index: 30; width: 52px; height: 52px; border-radius: 50%; font-size: 1.45rem; justify-content: center;
-  background: #2f5f8f; color: #fff; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+/* Runde Knöpfe unten links: Weltkarte · Chat · Tagebuch (ohne Karte zusätzlich Würfel) */
+.fab { position: fixed; bottom: 14px; z-index: 30; width: 52px; height: 52px; border-radius: 50%; justify-content: center; align-items: center; padding: 0;
+  color: #fff; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.world-fab { left: 14px; background: #3d7a4f; }
+.chat-toggle { left: 76px; background: #2f5f8f; }
+.journal-fab { left: 138px; background: #8b2e1f; }
+.ico { display: inline-flex; line-height: 0; }
+.toolbar .tool .ico svg { width: 22px; height: 22px; }
+.toolbar .tool.active .ico { --icon-badge-bg: var(--accent); }
 .chat-toggle .badge { position: absolute; top: -2px; right: -2px; background: #e8101c; color: #fff; border-radius: 10px; font-size: 0.7rem; padding: 1px 6px; }
 .chat-panel { position: fixed; left: 14px; bottom: 76px; z-index: 32; width: min(380px, calc(100vw - 28px)); max-height: 70vh; display: flex; flex-direction: column;
   background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
@@ -661,3 +668,11 @@ small.term-en.under { display: block; margin-top: 1px; padding-left: 4px; font-s
 .color-choice .swatch.on { outline: 3px solid var(--ink); outline-offset: 2px; }
 .color-choice .swatch.taken { opacity: 0.25; cursor: not-allowed; }
 .seat-color { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.4); vertical-align: middle; margin-right: 4px; }
+
+/* Regen über der Karte, Klicks gehen durch */
+.rain-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+/* Werkzeug-Knöpfe im Panel mit Symbol */
+.tool-btn { display: inline-flex; align-items: center; gap: 4px; }
+.tool-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+fieldset legend .ico { vertical-align: -3px; }
+.content-subtabs .subtab { font-size: 0.78rem; padding-left: 4px; padding-right: 4px; }

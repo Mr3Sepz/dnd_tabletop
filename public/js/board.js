@@ -66,7 +66,7 @@ export class Board {
     this.tokenLayer = new Konva.Layer();
     this.uiLayer = new Konva.Layer();
     this.stage.add(this.mapLayer, this.drawLayer, this.fxLayer, this.fogLayer, this.tokenLayer, this.uiLayer);
-    this.boltColor = 'random';
+    this.boltColor = '#e6f0ff'; // Farbe des Blitzlichts
     this.boltTimer = setInterval(() => this.#boltTick(), 90);
     this.transformer = new Konva.Transformer({ rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315], ignoreStroke: true, anchorSize: 10, borderStroke: '#8b2e1f', anchorStroke: '#8b2e1f' });
     this.uiLayer.add(this.transformer);
@@ -196,12 +196,13 @@ export class Board {
     this.state = state;
     const sceneChanged = !this.scene || !scene || this.scene.id !== scene.id;
     this.scene = scene;
-    if (sceneChanged) { this.selection.clear(); this.selectedDrawing = null; this.fxLayer.destroyChildren(); this.activeBolts = 0; }
+    if (sceneChanged) { this.selection.clear(); this.selectedDrawing = null; this.fxLayer.destroyChildren(); this.boltCache = null; }
     for (const id of [...this.selection]) if (!scene || !scene.tokens.some((t) => t.id === id)) this.selection.delete(id);
     this.#drawMap();
     this.#drawDrawings();
     this.#drawFog();
     this.#drawTokens();
+    this.#updateRain();
     // Neu einpassen bei anderer Szene oder nach dem Drehen
     const fitKey = scene && `${scene.id}:${scene.rotation || 0}`;
     if (scene && this.fittedSceneId !== fitKey) { this.fittedSceneId = fitKey; this.fit(); }
@@ -435,76 +436,103 @@ export class Board {
   }
 
   /**
-   * Blitze: In gemalten Gebieten zucken zufällig Blitze auf (an, aus, flackern), in wechselnden Farben
-   * oder einer gewählten Farbe. Jedes Gerät würfelt selbst – das spart Netzverkehr und sieht trotzdem gleich wild aus.
+   * Blitze: Gemalte Gebiete leuchten in unregelmäßigen Abständen grell auf – an, kurz aus, nochmal an,
+   * aus –, wie von Blitzen erhellt. Kein gezeichneter Blitzstrahl. Jedes Gerät würfelt den Takt selbst.
    */
   #boltTick() {
     const sc = this.scene;
     const strokes = sc && sc.bolts;
     if (!strokes || !strokes.length || document.hidden) return;
     if (!this.boltCache || this.boltCache.key !== strokes) {
-      // mögliche Einschlagstellen: Punkte der Malstriche, außer dort, wo später radiert wurde
-      const spots = [];
+      // Gebiete: pro Malstrich die Punkte, die nicht später wegradiert wurden
+      const areas = [];
       strokes.forEach((b, i) => {
         if (b.erase) return;
+        const blobs = [];
         for (const [x, y] of strokeBlobs(b.points, b.r)) {
-          const erased = strokes.slice(i + 1).some((e) => e.erase && segNear(e.points, x, y, e.r));
-          if (!erased) spots.push({ x, y, r: b.r, color: b.color || '#cfe8ff' });
+          if (!strokes.slice(i + 1).some((e) => e.erase && segNear(e.points, x, y, e.r))) blobs.push([x, y]);
         }
+        if (blobs.length) areas.push({ blobs, r: b.r, color: b.color && b.color !== 'random' ? b.color : '#e6f0ff', busy: false, next: 0 });
       });
-      this.boltCache = { key: strokes, spots };
+      this.boltCache = { key: strokes, areas };
     }
-    const spots = this.boltCache.spots;
-    if (!spots.length) return;
-    // im Schnitt etwa ein Blitz pro Sekunde je 6 Stellen, höchstens 3 auf einmal
-    const chance = Math.min(0.9, 0.015 * spots.length + 0.05);
-    if (Math.random() > chance || (this.activeBolts || 0) >= 3) return;
-    const sp = spots[Math.floor(Math.random() * spots.length)];
-    this.#flashBolt(sp);
+    const now = performance.now();
+    for (const ar of this.boltCache.areas) {
+      if (ar.busy) continue;
+      if (!ar.next) ar.next = now + 400 + Math.random() * 3500; // erster Blitz zufällig versetzt
+      if (now < ar.next) continue;
+      this.#flashArea(ar);
+      ar.next = now + 900 + Math.random() * Math.random() * 7000; // mal schnell hintereinander, mal lange Pause
+    }
   }
 
-  #flashBolt(sp) {
-    const palette = ['#cfe8ff', '#8fd3ff', '#ffffff', '#c59bff', '#ffe066', '#ff7ad9', '#7dffb0', '#ff8a5c'];
-    const color = sp.color === 'random' ? palette[Math.floor(Math.random() * palette.length)] : sp.color;
+  #flashArea(ar) {
+    const [R, G, B] = rgb(ar.color);
     const g = new Konva.Group({ listening: false });
-    // Zickzack von oben nach unten durch das Gebiet, mit Seitenast
-    const len = sp.r * (2 + Math.random() * 1.5);
-    const ang = (Math.random() - 0.5) * 0.9 + Math.PI / 2;
-    const x0 = sp.x - Math.cos(ang) * len / 2 + (Math.random() - 0.5) * sp.r * 0.6;
-    const y0 = sp.y - Math.sin(ang) * len / 2;
-    const zig = (x, y, a, l, n) => {
-      const pts = [x, y];
-      for (let i = 1; i <= n; i++) {
-        const t = i / n;
-        const jitter = (Math.random() - 0.5) * l * 0.22 * (i < n ? 1 : 0);
-        pts.push(x + Math.cos(a) * l * t + Math.cos(a + Math.PI / 2) * jitter, y + Math.sin(a) * l * t + Math.sin(a + Math.PI / 2) * jitter);
-      }
-      return pts;
-    };
-    const main = zig(x0, y0, ang, len, 9);
-    const w = Math.max(3, sp.r * 0.07);
-    const glow = { stroke: color, lineCap: 'round', lineJoin: 'round', shadowColor: color, shadowBlur: w * 8, shadowOpacity: 1 };
-    g.add(new Konva.Line({ points: main, strokeWidth: w, ...glow }));
-    g.add(new Konva.Line({ points: main, strokeWidth: w * 0.4, stroke: '#ffffff', lineCap: 'round', lineJoin: 'round' }));
-    const k = 3 + Math.floor(Math.random() * 4);
-    g.add(new Konva.Line({ points: zig(main[k * 2], main[k * 2 + 1], ang + (Math.random() < 0.5 ? -0.7 : 0.7), len * 0.35, 4), strokeWidth: w * 0.6, ...glow }));
-    // kurzer Lichtschein am Einschlag
-    const ex = main[main.length - 2]; const ey = main[main.length - 1];
-    g.add(new Konva.Circle({ x: ex, y: ey, radius: sp.r * 0.8, fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
-      fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: sp.r * 0.8, fillRadialGradientColorStops: [0, `${color}aa`, 1, `${color}00`] }));
+    for (const [x, y] of ar.blobs) {
+      const rr = ar.r * 1.7;
+      g.add(new Konva.Circle({ x, y, radius: rr, globalCompositeOperation: 'lighter',
+        fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+        fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: rr,
+        fillRadialGradientColorStops: [0, `rgba(255,255,255,0.95)`, 0.25, `rgba(${R},${G},${B},0.85)`, 0.6, `rgba(${R},${G},${B},0.35)`, 1, `rgba(${R},${G},${B},0)`] }));
+    }
     this.fxLayer.add(g);
-    this.activeBolts = (this.activeBolts || 0) + 1;
-    // an – kurz aus – nochmal an – aus (Flackern)
-    const seq = [[1, 60 + Math.random() * 60], [0.15, 40 + Math.random() * 50], [0.95, 50 + Math.random() * 90], [0.4, 40], [0, 0]];
+    ar.busy = true;
+    // zufälliges Flackern: 1–3 Aufblitzer, dazwischen fast dunkel
+    const seq = [];
+    const n = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) {
+      seq.push([0.75 + Math.random() * 0.25, 40 + Math.random() * 110]);
+      if (i < n - 1) seq.push([Math.random() * 0.2, 30 + Math.random() * 90]);
+    }
+    seq.push([0.3, 60], [0, 0]);
     let i = 0;
     const step = () => {
-      if (i >= seq.length || !g.getLayer()) { g.destroy(); this.activeBolts--; this.fxLayer.batchDraw(); return; }
-      const [op, ms] = seq[i++];
+      const [op, ms] = seq[i++] || [0, 0];
+      if (op === 0 || !g.getLayer()) { g.destroy(); ar.busy = false; this.fxLayer.batchDraw(); return; }
       g.opacity(op); this.fxLayer.batchDraw();
-      if (op === 0) { g.destroy(); this.activeBolts--; this.fxLayer.batchDraw(); return; }
       setTimeout(step, ms);
     };
     step();
+  }
+
+  /** Regen: einfache Animation über der ganzen Karte (Bildschirm-Ebene), Stärke aus scene.rain. */
+  #updateRain() {
+    const level = (this.scene && this.scene.rain) || 'off';
+    const count = { off: 0, light: 90, medium: 220, heavy: 480 }[level] || 0;
+    if (!count) { if (this.rain) { cancelAnimationFrame(this.rain.raf); this.rain.canvas.remove(); this.rain = null; } return; }
+    if (!this.rain) {
+      const canvas = document.createElement('canvas');
+      canvas.className = 'rain-overlay';
+      this.container.append(canvas);
+      this.rain = { canvas, drops: [], level: '' };
+      const tick = (t) => {
+        const r = this.rain; if (!r) return;
+        const c = r.canvas; const w = this.container.clientWidth; const hgt = this.container.clientHeight;
+        if (c.width !== w || c.height !== hgt) { c.width = w; c.height = hgt; }
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, w, hgt);
+        const dt = Math.min(50, t - (r.last || t)); r.last = t;
+        ctx.strokeStyle = r.level === 'heavy' ? 'rgba(200,215,235,0.55)' : 'rgba(205,220,240,0.45)';
+        ctx.lineWidth = r.level === 'heavy' ? 1.6 : 1.2;
+        ctx.beginPath();
+        for (const d of r.drops) {
+          d.y += d.v * dt; d.x += d.v * 0.18 * dt;
+          if (d.y > hgt + 20) { d.y = -20 - Math.random() * 60; d.x = Math.random() * (w + 100) - 100; }
+          ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - d.len * 0.18, d.y - d.len);
+        }
+        ctx.stroke();
+        if (r.level === 'heavy') { ctx.fillStyle = 'rgba(60,70,90,0.12)'; ctx.fillRect(0, 0, w, hgt); }
+        r.raf = requestAnimationFrame(tick);
+      };
+      this.rain.raf = requestAnimationFrame(tick);
+    }
+    if (this.rain.level !== level) {
+      this.rain.level = level;
+      const w = this.container.clientWidth || 1200; const hgt = this.container.clientHeight || 800;
+      this.rain.drops = Array.from({ length: count }, () => ({ x: Math.random() * (w + 100) - 100, y: Math.random() * hgt,
+        v: (level === 'heavy' ? 1.3 : 0.9) + Math.random() * 0.5, len: (level === 'light' ? 8 : 14) + Math.random() * 10 }));
+    }
   }
 
   /** Ping anzeigen: Ringe in der Farbe des Spielers (bzw. des DM), mit Namen, für ein paar Sekunden. */
@@ -896,7 +924,7 @@ export class Board {
         const lightErase = tool === 'light-eraser' || tool === 'cloud-eraser' || tool === 'bolt-eraser';
         const cloud = tool === 'cloud-brush' || tool === 'bolt-brush';
         const width = fog || light || lightErase || cloud ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
-        const [R, G, B] = rgb(light ? this.lightColor : tool === 'bolt-brush' ? (this.boltColor === 'random' ? '#c59bff' : this.boltColor) : this.cloudColor);
+        const [R, G, B] = rgb(light ? this.lightColor : tool === 'bolt-brush' ? this.boltColor : this.cloudColor);
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
           stroke: lightErase ? 'rgba(10,20,64,0.6)' : light || cloud ? `rgba(${R},${G},${B},0.5)` : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);

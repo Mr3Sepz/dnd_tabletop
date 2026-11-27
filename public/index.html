@@ -58,7 +58,7 @@
     }
 
     // Ping-Farben: jede nur einmal, wer zuerst kommt, bekommt sie
-    const NAMES = { '#a71313': 'Rot', '#006D5B': 'Grün', '#2b53a7': 'Blau', '#d6a444': 'Gelb', '#e3ded5': 'Weiß' };
+    const NAMES = { '#a71313': 'Rot', '#006D5B': 'Grün', '#2b53a7': 'Blau', '#d6a444': 'Gelb', '#c99be0': 'Lila' };
     const takenColors = new Set(info.seats.filter((s) => s.taken && s.color).map((s) => s.color.toLowerCase()));
     let color = null;
     const colors = document.getElementById('colors');

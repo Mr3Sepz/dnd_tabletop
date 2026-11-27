@@ -1112,11 +1112,11 @@ test('Ping-Farben: jede nur einmal, Ping geht an alle in der Szene', async () =>
   a.c.emit('ping:map', { sceneId: st.activeSceneId, x: 100, y: 200 }, () => {});
   const m = await got;
   assert.equal(m.color, '#2b53a7'); assert.equal(m.x, 100);
-  // DM-Ping ist lila
+  // DM-Ping ist weiß
   await settle();
   const got2 = new Promise((resolve) => a.c.once('ping:map', resolve));
   dm.c.emit('ping:map', { sceneId: st.activeSceneId, x: 5, y: 5 }, () => {});
-  assert.equal((await got2).color, '#c99be0');
+  assert.equal((await got2).color, '#e3ded5');
   await act(dm.c, { type: 'seat.release', seat: 2 });
   assert.equal(st.seats.find((s) => s.seat === 2).color, null, 'Farbe wieder frei');
   a.c.close(); dm.c.close();
@@ -1137,5 +1137,19 @@ test('Blitze malen: zufällige Farben oder feste Farbe, radieren, Spieler sehen 
   assert.equal(sc.bolts.length, 2);
   await act(dm.c, { type: 'bolt.clear', sceneId: sc.id });
   assert.equal(sc.bolts.length, 0);
+  p.c.close(); dm.c.close();
+});
+
+test('Regen: nur DM, nur gültige Stufen, Spieler sehen ihn', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(1);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  assert.equal((await act(p.c, { type: 'scene.update', id: sc.id, patch: { rain: 'heavy' } })).ok, false);
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { rain: 'heavy' } });
+  assert.equal(sc.rain, 'heavy');
+  assert.equal(require('../server/state').viewForPlayer(st, 1).scenes[0].rain, 'heavy');
+  await act(dm.c, { type: 'scene.update', id: sc.id, patch: { rain: 'sintflut' } });
+  assert.equal(sc.rain, 'off');
   p.c.close(); dm.c.close();
 });

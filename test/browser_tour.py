@@ -102,6 +102,12 @@ def upload_folder(page, files, folder):
     time.sleep(1.0)
 
 
+def sub(page, name):
+    """Reiter „Inhalte“ → Unterreiter (scenes, tokens, images, paint)."""
+    page.click('#tabs button[data-tab=content]'); time.sleep(0.15)
+    page.click(f'.content-subtabs button[data-sub={name}]'); time.sleep(0.15)
+
+
 def folder_tab(page, label):
     page.locator('.folder-tab', has_text=label).click(); time.sleep(0.3)
 
@@ -122,13 +128,13 @@ try:
 
         step('Szene benennen, Karte hochladen')
         assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'players', 'Spieler ist der erste Reiter'
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         dm.fill('#tabBody input >> nth=0', 'Waldweg'); dm.press('#tabBody input >> nth=0', 'Tab'); time.sleep(0.3)
         upload(dm, 'Bild hochladen', art('waldweg.jpg'))
         dm.wait_for_selector('#tabBody img.thumb')
 
         step('Bildersammlung mit Ordnern füllen')
-        dm.click('#tabs button[data-tab=images]')
+        sub(dm, 'images')
         upload_folder(dm, [art('wagen.png')], 'objects')
         upload_folder(dm, [art('weltkarte.jpg')], 'maps')
         upload_folder(dm, [art(n) for n in ['aria.png', 'borin.png', 'kael.png', 'goblin.png', 'wolf.png']], 'characters')
@@ -191,9 +197,9 @@ try:
         dm.click('button.tool[title="Auswählen und Verschieben"]')
 
         step('Freihand: Linie auswählen, Mülleimer und Entf-Taste löschen, Radierer')
-        dm.click('#toolbar button.tool:has-text("✎") >> nth=0')
+        dm.click('#toolbar button.tool[title="Freihand zeichnen"]')
         # alle Optionen der Werkzeugleiste sind erreichbar, nichts liegt unter dem Würfelknopf
-        tb = dm.locator('#toolbar').bounding_box(); dice_btn = dm.locator('.dice-toggle').bounding_box()
+        tb = dm.locator('#toolbar').bounding_box(); dice_btn = dm.locator('.world-fab').bounding_box()
         assert tb['y'] + tb['height'] <= dice_btn['y'], 'Werkzeugleiste endet über dem Würfelknopf'
         dm.locator('#toolbar .tb-style').last.scroll_into_view_if_needed()
         shot(dm, '43-werkzeugleiste.png', clip={'x': 0, 'y': tb['y'] - 10, 'width': 260, 'height': 900 - tb['y'] + 10})
@@ -222,7 +228,7 @@ try:
         step('Porträtleiste: alle Spieler und Goblins einzeln, Werte, sortieren')
         dm.click('#tabs button[data-tab=players]')
         dm.get_by_role('button', name='Alle in Leiste').click(); time.sleep(0.6)
-        dm.click('#tabs button[data-tab=tokens]')
+        sub(dm, 'tokens')
         for label in ['A', 'B', 'C', 'D']:
             dm.locator('#tabBody li', has=dm.locator('.token-dot', has_text=label)).locator('button[title^="Markieren"]').click(); time.sleep(0.15)
         dm.click('#selbar button.primary'); time.sleep(0.2)
@@ -293,7 +299,7 @@ try:
         assert dm.locator('.effect.over').count() == 1, 'Netz ist abgelaufen'
 
         step('Wolf (durchsichtiges PNG) als NPC mit Hintergrundfarbe')
-        dm.click('#tabs button[data-tab=images]'); time.sleep(0.2)
+        sub(dm, 'images'); time.sleep(0.2)
         folder_tab(dm, 'Charaktere')
         asset_action(dm, 'wolf', '📍 Als NPC auf die Karte setzen')
         click_world(dm, G * 15.5, G * 9.5); time.sleep(0.6)
@@ -389,7 +395,7 @@ try:
         dialog_ok(dm); time.sleep(0.4)
 
         step('Doppelklick aufs Porträt in der Leiste öffnet den Reiter')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.2)
+        sub(dm, 'scenes'); time.sleep(0.2)
         dm.locator('.ini-item', has=dm.locator('.ini-badge', has_text='B')).locator('.ini-portrait').dblclick(); time.sleep(0.5)
         assert dm.locator('#tabs button.active').get_attribute('data-tab') == 'npcs'
         assert dm.locator('.sheet .name').input_value() == 'Goblin'
@@ -405,7 +411,7 @@ try:
         click_world(dm, G * 6, G * 3.2)
 
         step('Würfeln: erst auswählen (Umschalter), dann „Würfeln“; offen und verdeckt')
-        dm.click('.dice-toggle'); dm.click('.dice-quick button:has-text("W6")'); time.sleep(0.3)
+        dm.click('.dice-tool'); dm.click('.dice-quick button:has-text("W6")'); time.sleep(0.3)
         assert dm.evaluate("window.dnd.board.state.diceLog.length") == 0, 'Auswählen würfelt noch nicht'
         dm.click('.dice-count-row button[title="Mehr Würfel"]'); dm.click('.dice-count-row button[title="Mehr Würfel"]')
         assert dm.locator('.dice-summary').inner_text().startswith('3W6')
@@ -423,7 +429,7 @@ try:
         dm.check('.dice-panel input[type=checkbox]'); dm.click('.dice-roll'); time.sleep(0.5)
         assert 'Vorteil' in dm.locator('.dice-log li .detail').first.inner_text()
         shot(dm, '13-wuerfel.png')
-        dm.click('.dice-toggle'); time.sleep(0.3)
+        dm.click('.dice-tool'); time.sleep(0.3)
 
         step('Zauberplätze für Aria (Rauten), Borin als Krieger ohne Zauberplätze')
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
@@ -589,56 +595,68 @@ try:
         dm.click('.dialog button[value=go]'); time.sleep(0.5)
 
         step('Nacht mit Licht: Lagerfeuer am Wagen')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         dm.locator('label.check', has_text='Nachtfilter').locator('input').check(); time.sleep(0.6)
-        dm.get_by_role('button', name='🕯️ Licht malen').click(); time.sleep(0.2)
+        sub(dm, 'paint')
+        dm.locator('#tabBody button.tool-btn', has_text='Licht malen').click(); time.sleep(0.2)
         drag_world(dm, (G * 7.5, G * 10.5), (G * 10, G * 10.5))
         click_world(dm, G * 15.5, G * 9.5); time.sleep(0.6)
         assert dm.evaluate("window.dnd.board.scene.lights.length") == 2
         dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
         shot(dm, '40-nacht-licht.png')
         assert mia.evaluate("window.dnd.board.scene.lights.length") == 2, 'Spieler sehen das Licht'
-        dm.get_by_role('button', name='🌑 Licht radieren').click(); time.sleep(0.2)
+        dm.locator('#tabBody button.tool-btn', has_text='Licht radieren').click(); time.sleep(0.2)
         drag_world(dm, (G * 9.2, G * 9.6), (G * 9.2, G * 11.4)); time.sleep(0.6)
         assert dm.evaluate("window.dnd.board.scene.lights.at(-1).erase") is True
         dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
         lx, ly = world(dm, G * 9, G * 10.5)
         shot(dm, '48-licht-radieren.png', clip={'x': lx - 330, 'y': ly - 170, 'width': 660, 'height': 340})
+        sub(dm, 'scenes')
         dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
 
         step('Licht am Tag in Blau, Nebel/Wolken malen und radieren')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         assert dm.locator('label.check', has_text='Nachtfilter').locator('input').is_checked() is False
-        dm.get_by_role('button', name='🕯️ Licht malen').click(); time.sleep(0.2)
+        sub(dm, 'paint')
+        assert dm.locator('.content-subtabs button.active').get_attribute('data-sub') == 'paint'
+        dm.locator('#tabBody button.tool-btn', has_text='Licht malen').click(); time.sleep(0.2)
         dm.locator('#toolbar input[type=color]').first.evaluate("(el) => { el.value = '#4aa8ff'; el.dispatchEvent(new Event('change')); }")
         click_world(dm, G * 15.5, G * 9.5); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.lights.at(-1).color") == '#4aa8ff'
-        dm.get_by_role('button', name='🌫️ Nebel malen').click(); time.sleep(0.2)
+        dm.locator('#tabBody button.tool-btn', has_text='Nebel malen').click(); time.sleep(0.2)
         drag_world(dm, (G * 2, G * 3), (G * 9, G * 4.5)); time.sleep(0.4)
         drag_world(dm, (G * 3, G * 5), (G * 8, G * 5.5)); time.sleep(0.4)
-        dm.get_by_role('button', name='💨 Nebel radieren').click(); time.sleep(0.2)
+        dm.locator('#tabBody button.tool-btn', has_text='Nebel radieren').click(); time.sleep(0.2)
         drag_world(dm, (G * 5.5, G * 2), (G * 5.5, G * 6.5)); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.clouds.length") == 3
         assert mia.evaluate("window.dnd.board.scene.clouds.length") == 3, 'Spieler sehen den Nebel'
         dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
         shot(dm, '57-nebel-und-tageslicht.png')
-        dm.get_by_role('button', name='⚡ Blitze malen').click(); time.sleep(0.2)
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 0"); time.sleep(0.2)
+        panel_shot(dm, '67-zeichnen-und-malen.png', 900)
+        dm.get_by_role('button', name='Starkregen').click(); time.sleep(0.8)
+        assert mia.evaluate("window.dnd.board.scene.rain") == 'heavy'
+        assert dm.locator('.rain-overlay').count() == 1 and mia.locator('.rain-overlay').count() == 1
+        shot(dm, '68-regen.png')
+        dm.get_by_role('button', name='Aus', exact=True).click(); time.sleep(0.4)
+        assert dm.locator('.rain-overlay').count() == 0
+        dm.locator('#tabBody button.tool-btn', has_text='Blitze malen').click(); time.sleep(0.2)
         drag_world(dm, (G * 11, G * 2.5), (G * 15, G * 3.5)); time.sleep(0.3)
-        assert dm.evaluate("window.dnd.board.scene.bolts.at(-1).color") == 'random'
+        assert dm.evaluate("window.dnd.board.scene.bolts.at(-1).color") == '#e6f0ff'
         assert mia.evaluate("window.dnd.board.scene.bolts.length") == 1
-        for _ in range(60):
+        for _ in range(140):
             if dm.evaluate("window.dnd.board.fxLayer.children.length") > 0: break
             time.sleep(0.05)
-        assert dm.evaluate("window.dnd.board.fxLayer.children.length") > 0, 'ein Blitz zuckt'
+        assert dm.evaluate("window.dnd.board.fxLayer.children.length") > 0, 'es blitzt auf'
         bx, by = world(dm, G * 13, G * 3)
         shot(dm, '66-blitze.png', clip={'x': max(0, bx - 300), 'y': max(0, by - 180), 'width': 600, 'height': 360})
-        dm.get_by_role('button', name='🫥 Blitze radieren').click(); time.sleep(0.2)
+        dm.locator('#tabBody button.tool-btn', has_text='Blitze radieren').click(); time.sleep(0.2)
         drag_world(dm, (G * 11, G * 3), (G * 15, G * 3)); time.sleep(0.3)
         dm.get_by_role('button', name='Alle Blitze löschen').click(); dialog_ok(dm); time.sleep(0.3)
         dm.get_by_role('button', name='Allen Nebel löschen').click(); dialog_ok(dm); time.sleep(0.3)
         dm.get_by_role('button', name='Alle Lichter löschen').click(); dialog_ok(dm); time.sleep(0.3)
 
-        step('Ping: Mia (Rot) und DM (Lila) markieren Stellen, alle sehen es')
+        step('Ping: Mia (Rot) und DM (Weiß) markieren Stellen, alle sehen es')
         mia.click('#toolbar button.tool[title^="Ping"]'); time.sleep(0.1)
         mx, my = world(mia, G * 14, G * 11)
         mia.mouse.click(mx, my); time.sleep(0.5)
@@ -647,7 +665,7 @@ try:
         time.sleep(0.35)
         dx, dy = world(dm, G * 18, G * 7)
         dm.keyboard.down('Alt'); dm.mouse.click(dx, dy); dm.keyboard.up('Alt'); time.sleep(0.4)
-        assert mia.evaluate("window.dnd.lastPing.color") == '#c99be0'
+        assert mia.evaluate("window.dnd.lastPing.color") == '#e3ded5', 'DM pingt weiß'
         time.sleep(0.5)
         shot(tom, '58-ping.png')
 
@@ -692,7 +710,7 @@ try:
         assert dm.evaluate("document.documentElement.dataset.skin") is None
 
         step('Sechseck-Raster und genaue Feldgröße per Zahlenfeld')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         old_size = dm.evaluate("window.dnd.board.scene.grid.size")
         dm.select_option('#tabBody select[name=gridType]', 'hex'); time.sleep(0.4)
         spin = dm.locator('#tabBody input.spin[name=gridSize]')
@@ -739,7 +757,7 @@ try:
         assert 'E' in labels, labels
 
         step('Szene drehen')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         before = token_pos(dm, 'Wolf')
         mh = dm.evaluate("window.dnd.board.mapSize().h")
         dm.get_by_role('button', name='⟳ 90°').click(); time.sleep(0.8)
@@ -799,9 +817,10 @@ try:
         dm.select_option('#preview', '0'); time.sleep(0.5)
 
         step('Höhle mit Fog of War, Tom geht allein voraus (Szene pro Spieler)')
-        dm.click('#tabs button[data-tab=scenes]')
+        sub(dm, 'scenes')
         dm.get_by_role('button', name='+ Neue Szene').click(); dm.fill('.dialog input[name=name]', 'Cragmaw-Höhle'); dialog_ok(dm); time.sleep(0.4)
         upload(dm, 'Bild hochladen', art('hoehle.jpg'))
+        sub(dm, 'paint')
         dm.get_by_role('button', name='Alles verdecken').click(); time.sleep(0.3)
         dm.click('button.tool[title="Nebel aufdecken (Rechteck)"]')
         drag_world(dm, (G * 1.6, G * 1.6), (G * 7.4, G * 6.4))
@@ -809,6 +828,7 @@ try:
         drag_world(dm, (G * 5, G * 6.4), (G * 5, G * 8.5))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
         # Plätze (wer ist wo) stehen jetzt im Reiter „Szenen“
+        sub(dm, 'scenes')
         dm.select_option('.seat-row >> nth=1 >> .seat-scene select', label='Cragmaw-Höhle'); time.sleep(0.3)
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.2)
         dm.click('.party-card >> nth=1'); time.sleep(0.2)
@@ -817,10 +837,10 @@ try:
         dm.click('#tabs button[data-tab=npcs]'); time.sleep(0.2)
         dm.locator('#tabBody li', has=dm.locator('.npc-mark', has_text='B')).locator('button.link').click(); time.sleep(0.3)
         # Ein Wolf im Nebel (soll bei Tom nicht ankommen)
-        dm.click('#tabs button[data-tab=images]'); time.sleep(0.2)
+        sub(dm, 'images'); time.sleep(0.2)
         asset_action(dm, 'goblin', '📍 Als NPC auf die Karte setzen')
         click_world(dm, G * 12, G * 3); time.sleep(0.4)
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         shot(dm, '07-nebel-dm.png')
         time.sleep(0.6)
         tom_cave = tom.evaluate("[window.dnd.board.scene.name, window.dnd.board.scene.tokens.map(t => t.name)]")
@@ -832,7 +852,7 @@ try:
         assert mia_scene == 'Waldweg', mia_scene
         step('Tom sieht nur die Höhle ohne den Gegner im Nebel, Mia bleibt am Waldweg')
         shot(tom, '08-nebel-spieler.png')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         heads = dm.evaluate("[...document.querySelectorAll('#tabBody h3')].map(x => x.textContent)")
         assert heads[-1] == 'Plätze', heads
         dm.locator('#tabBody h3', has_text='Plätze').scroll_into_view_if_needed(); time.sleep(0.2)
@@ -869,6 +889,13 @@ try:
         dm.locator(f'.jquest >> nth={idx}').locator('input[type=checkbox]').check(); time.sleep(0.4)
         assert dm.evaluate("[...document.querySelectorAll('.jquest-title')].map(i => i.value)")[-1] == 'Wagen nach Phandalin bringen'
         assert 'done' in dm.locator('.jquest').last.get_attribute('class')
+        # Löschen-Rückfrage liegt über dem Buch, das Buch bleibt offen
+        dm.locator('.jquest').first.locator('.jdel').click(); time.sleep(0.3)
+        ov = dm.evaluate("(() => { const o = document.querySelector('.overlay'); const r = o.querySelector('form').getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + 20); return o.contains(top); })()")
+        assert ov, 'Dialog liegt im Vordergrund'
+        shot(dm, '69-tagebuch-loeschen.png')
+        dm.locator('.overlay button', has_text='Abbrechen').click(); time.sleep(0.3)
+        assert dm.locator('.journal').count() == 1, 'Buch bleibt offen'
         # privates Tagebuch: langer Text fließt auf die nächste Seite
         dm.locator('.journal-mark.mark-private').click(); time.sleep(0.3)
         long = ' '.join(['Sildar sitzt in der Burg Cragmaw fest. Klarg hat einen Wolf namens Ripper.'] * 22)
@@ -903,6 +930,8 @@ try:
             pick_theme2(dm, tid)
             dm.click('#journalBtn'); time.sleep(0.5)
             assert dm.locator(f'.journal.{kind}').count() == 1, tid
+            if kind == 'device':
+                assert dm.locator('.journal.scrolling').count() == 1 and not dm.locator('.jnav.next').is_visible(), 'Gerät scrollt statt zu blättern'
             dm.locator('.journal-mark.mark-quests').click(); time.sleep(0.3)
             dm.evaluate("document.fonts.ready"); time.sleep(0.2)
             shot(dm, f'65-tagebuch-{tid}.png')
@@ -911,7 +940,7 @@ try:
 
         step('Reiter in neuer Reihenfolge, Gruppe und Inventar-Auswahl nebeneinander')
         tabs = dm.evaluate("[...document.querySelectorAll('#tabs button')].map(b => b.dataset.tab)")
-        assert tabs == ['players', 'npcs', 'inventory', 'scenes', 'tokens', 'images', 'game'], tabs
+        assert tabs == ['players', 'npcs', 'inventory', 'content', 'game'], tabs
         dm.click('#tabs button[data-tab=players]'); time.sleep(0.3)
         assert dm.locator('#tabBody .seat-row').count() == 0, 'Plätze sind im Reiter Szenen'
         ys = dm.evaluate("[...document.querySelectorAll('.party-card')].map(c => Math.round(c.getBoundingClientRect().top))")
@@ -934,7 +963,7 @@ try:
 
         step('Neue Szene live: leere Leiste; zurück: alte Leiste wieder da')
         n_before = len(order)
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.2)
+        sub(dm, 'scenes'); time.sleep(0.2)
         dm.get_by_role('button', name='+ Neue Szene').click(); dm.fill('.dialog input[name=name]', 'Taverne'); dialog_ok(dm); time.sleep(0.4)
         dm.evaluate("window.dnd.act({ type: 'scene.activate', id: window.dnd.board.state.scenes.find(s => s.name === 'Taverne').id })"); time.sleep(0.6)
         assert dm.evaluate("window.dnd.board.state.initiative.entries.length") == 0
@@ -955,7 +984,7 @@ try:
         dm.click('#mapToggle'); time.sleep(0.5)
 
         step('Szenen-Reiter')
-        dm.click('#tabs button[data-tab=scenes]'); time.sleep(0.3)
+        sub(dm, 'scenes'); time.sleep(0.3)
         panel_shot(dm, '18-szenen.png', 750)
         b.close()
 finally:

@@ -1,6 +1,7 @@
 // Würfel (X1) mit Protokoll; der DM kann verdeckt würfeln (X2).
 // Gewürfelt wird auf dem Server. Echte Würfel am Tisch bleiben gleichwertig.
 
+import { icon } from './icons.js';
 import { h, toast } from './util.js';
 import { info } from './help.js';
 import { term, termText, LANG } from './i18n.js';
@@ -42,15 +43,18 @@ export class DicePanel {
     this.opts = opts;
     this.log = [];
     this.secret = false;
-    this.button = h('button.dice-toggle', { title: 'Würfeln', onclick: () => this.toggle() }, '🎲');
+    // Knopf in der Werkzeugleiste; ohne Karte (Handy, „Karte aus“) ein runder Knopf unten links
+    this.button = h('button.tool.dice-tool', { title: 'Würfeln', 'aria-label': 'Würfeln', onclick: () => this.toggle() }, icon('dice'));
+    this.floatButton = h('button.fab.dice-toggle', { title: 'Würfeln', 'aria-label': 'Würfeln', onclick: () => this.toggle() }, icon('dice', 26));
     this.panel = h('div.dice-panel.hidden');
-    document.body.append(this.button, this.panel);
+    document.body.append(this.floatButton, this.panel);
     this.render();
   }
 
   toggle(force) {
     const open = force ?? this.panel.classList.contains('hidden');
     this.panel.classList.toggle('hidden', !open);
+    this.button.classList.toggle('active', open);
   }
 
   async roll(expr) {

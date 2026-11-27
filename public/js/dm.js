@@ -2,6 +2,7 @@
 
 import { cropDialog } from './crop.js';
 import { Journal } from './journal.js';
+import { icon } from './icons.js';
 import { $, $$, h, toast, dialog, debounce, assetUrl, initials, pickAndUploadImages, uploadImage, HEALTH_COLORS, setupViewToggles } from './util.js';
 import { InventoryEditor, COINS, coinLabel, coinImage } from './inventory.js';
 import { connect } from './net.js';
@@ -22,6 +23,10 @@ let editSceneId = null;  // welche Szene der DM gerade bearbeitet (S4)
 let previewSeat = 0;     // "Als Spieler ansehen" (A4)
 let previewView = null;  // echte Spielersicht vom Server
 let tab = 'players';
+// Reiter „Inhalte“ mit Unterreitern: Szenen · Figuren · Bilder · Zeichnen und Malen
+let contentSub = 'scenes';
+const CONTENT_SUBS = [['scenes', 'Szenen'], ['tokens', 'Figuren'], ['images', 'Bilder'], ['paint', 'Zeichnen und Malen']];
+function showContent(sub) { tab = 'content'; contentSub = sub; }
 let placing = null;      // nächste Figur (F1: von Hand setzen)
 let selected = { players: null, npcs: null, inventory: null }; // geöffneter Bogen / Inventar
 let invEditor = null;
@@ -59,7 +64,7 @@ async function uploadToFolder(files) {
   }
   imageFolder = folder;
   toast(`${imgs.length} Bild(er) in „${folderLabel(folder)}“ geladen`);
-  tab = 'images'; renderPanel(true);
+  showContent('images'); renderPanel(true);
 }
 
 function pickFiles(multiple = true) {
@@ -140,9 +145,11 @@ const chat = new ChatPanel({
 });
 const world = new WorldMap({
   isDM: true, act: (a) => conn.act(a), seatName,
-  onGoScene: (id) => { if (state.scenes.some((x) => x.id === id)) { editSceneId = id; tab = 'scenes'; render(); } },
+  onGoScene: (id) => { if (state.scenes.some((x) => x.id === id)) { editSceneId = id; showContent('scenes'); render(); } },
 });
-$('#worldBtn').onclick = () => { world.update(state); world.open(); };
+// Runde Knöpfe unten links: Weltkarte · Chat · Tagebuch
+const worldFab = h('button.fab.world-fab', { id: 'worldBtn', title: 'Weltkarte', 'aria-label': 'Weltkarte', onclick: () => { world.update(state); world.open(); } }, icon('world', 26));
+document.body.append(worldFab);
 
 // Tagebuch (ersetzt den früheren Reiter „Notizen“): Quests, gemeinsame Notizen, privates Tagebuch des DM
 const journal = new Journal({
@@ -153,7 +160,9 @@ const journal = new Journal({
   savePrivate: (text) => act({ type: 'dm.notes', text }),
   privateHint: 'Nur für dich. Notizen zu einzelnen Szenen findest du unter „Szenen“.',
 });
-$('#journalBtn').onclick = () => journal.toggle();
+const journalFab = h('button.fab.journal-fab', { id: 'journalBtn', title: 'Tagebuch: Quests, gemeinsame Notizen, privates Tagebuch', 'aria-label': 'Tagebuch', onclick: () => journal.toggle() }, icon('journal', 26));
+document.body.append(journalFab);
+$('#mapToggle').replaceChildren(icon('map-off', 20)); // Karte aus/ein
 
 // ================================================================ Hilfen
 
@@ -217,7 +226,7 @@ const board = new Board($('#board'), {
   onBolt: (bolt) => act({ type: 'bolt.add', sceneId: editScene().id, bolt }),
   onPing: (p) => conn.ping(boardSceneId(), p.x, p.y),
   onToolDone: () => renderToolbar(),
-  onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'tokens') renderPanel(); },
+  onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'content' && contentSub === 'tokens') renderPanel(); },
 });
 
 // Bilder aus der Sammlung auf die Karte ziehen (F1, F11)
@@ -303,22 +312,18 @@ document.addEventListener('keydown', (e) => {
 
 // ================================================================ Werkzeugleiste
 
-const TOOL_ICONS = {
-  select: '🖐', measure: '📏', rect: '▭', ellipse: '◯', line: '✎',
-  'fog-rect-reveal': '☀▭', 'fog-rect-hide': '☁▭', 'fog-brush-reveal': '☀✎', 'fog-brush-hide': '☁✎', 'light-brush': '🕯️', 'light-eraser': '🌑', 'cloud-brush': '🌫️', 'cloud-eraser': '💨', 'bolt-brush': '⚡', 'bolt-eraser': '🫥', ping: '📍', eraser: '🧽',
-};
 
 function renderToolbar() {
   const tb = $('#toolbar');
   const tool = board.tool;
-  const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, TOOL_ICONS[key]);
+  const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], 'aria-label': TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon(key));
   const style = board.drawStyle;
   tb.replaceChildren(...[
-    btn('select'), btn('measure'), btn('ping'),
+    btn('select'), btn('measure'), btn('ping'), dice.button,
     h('span.tb-sep'),
     btn('rect'), btn('ellipse'), btn('line'), btn('eraser'),
-    h('button.tool', { title: 'Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)', onclick: placeObject }, '🧱'),
-    h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', onclick: () => placeTemplate() }, '🔥'),
+    h('button.tool', { title: 'Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)', 'aria-label': 'Objekt setzen', onclick: placeObject }, icon('object')),
+    h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', 'aria-label': 'Zauberschablone setzen', onclick: () => placeTemplate() }, icon('template')),
     h('span.tb-sep'),
     btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
     h('span.tb-sep'),
@@ -329,9 +334,7 @@ function renderToolbar() {
         style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
       h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
     tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') || tool.startsWith('bolt-') ? h('div.tb-style', {},
-      tool === 'bolt-brush' ? h('label.check', { title: 'Jeder Blitz in einer anderen Farbe' },
-        h('input', { type: 'checkbox', checked: board.boltColor === 'random', onchange: (e) => { board.boltColor = e.target.checked ? 'random' : '#cfe8ff'; renderToolbar(); } }), '🎲') : null,
-      tool === 'bolt-brush' && board.boltColor !== 'random' ? h('label', { title: 'Farbe der Blitze' }, h('input', { type: 'color', value: board.boltColor, onchange: (e) => { board.boltColor = e.target.value; } })) : null,
+      tool === 'bolt-brush' ? h('label', { title: 'Farbe des Blitzlichts' }, h('input', { type: 'color', value: board.boltColor, onchange: (e) => { board.boltColor = e.target.value; } })) : null,
       tool === 'light-brush' ? h('label', { title: 'Farbe des Lichtscheins' }, h('input', { type: 'color', value: board.lightColor, onchange: (e) => { board.lightColor = e.target.value; } })) : null,
       tool === 'cloud-brush' ? h('label', { title: 'Farbe des Nebels' }, h('input', { type: 'color', value: board.cloudColor, onchange: (e) => { board.cloudColor = e.target.value; } })) : null,
       h('label', { title: 'Pinselgröße' }, 'Pinsel',
@@ -342,7 +345,7 @@ function renderToolbar() {
 }
 
 async function placeObject(assetId) {
-  if (!galleryAssets('objects').length) return toast('Erst Bilder in den Ordner „Objekte“ laden (Reiter Bilder).', 'error');
+  if (!galleryAssets('objects').length) return toast('Erst Bilder in den Ordner „Objekte“ laden (Inhalte → Bilder).', 'error');
   const r = await dialog({ title: 'Objekt setzen', body: 'Ein Bild als eckiges, drehbares Objekt auf die Karte legen, z. B. Wagen, Tür, Tisch.',
     fields: [{ name: 'asset', label: 'Bild', type: 'select', value: typeof assetId === 'string' ? assetId : galleryAssets('objects')[0].id, options: galleryAssets('objects').map((a) => ({ value: a.id, label: a.name })) },
       { name: 'cells', label: 'Breite in Feldern', type: 'number', value: 2, step: 0.5, min: 0.5 }], okText: 'Auf die Karte tippen …' });
@@ -729,9 +732,60 @@ function renderPanel(force = false) {
   const body = $('#tabBody');
   const scroll = body.scrollTop;
   body.replaceChildren(...({
-    scenes: tabScenes, tokens: tabTokens, images: tabImages, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, game: tabGame,
+    content: tabContent, players: tabPlayers, npcs: tabNpcs, inventory: tabInventory, game: tabGame,
   }[tab])().filter((x) => x !== null && x !== undefined && x !== false));
   body.scrollTop = scroll;
+}
+
+// ================================================================ Tab: Inhalte (Unterreiter)
+
+function tabContent() {
+  const fn = { scenes: tabScenes, tokens: tabTokens, images: tabImages, paint: tabPaint }[contentSub] || tabScenes;
+  return [
+    h('div.subtabs.content-subtabs', { role: 'tablist' },
+      ...CONTENT_SUBS.map(([id, label]) => h(`button.subtab${contentSub === id ? '.active' : ''}`, {
+        role: 'tab', 'aria-selected': String(contentSub === id), dataset: { sub: id },
+        onclick: () => { if (contentSub !== id) { contentSub = id; renderPanel(true); $('#tabBody').scrollTop = 0; } },
+      }, label))),
+    ...fn(),
+  ];
+}
+
+// ================================================================ Unterreiter: Zeichnen und Malen
+
+function tabPaint() {
+  const sc = editScene();
+  const tool = (key, label) => h(`button.small.tool-btn${board.tool === key ? '.active' : ''}`, {
+    title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); renderPanel(true); },
+  }, icon(key, 18), ` ${label}`);
+  const drawn = sc.drawings.filter((d) => ['rect', 'ellipse', 'line'].includes(d.type));
+  return [
+    h('fieldset.lights-box', {}, h('legend', {}, 'Zeichnen'),
+      h('p.hint', {}, 'Rechtecke, Ellipsen und Freihandlinien, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Werkzeugleiste links ein. Ausgewählte Zeichnung löschen: 🗑 am Rahmen oder Entf.'),
+      h('div.row.wrap', {}, tool('rect', 'Rechteck'), tool('ellipse', 'Ellipse'), tool('line', 'Freihand'), tool('eraser', 'Radierer')),
+      drawn.length ? h('ul.list', {}, ...drawn.map((d) => h('li', {},
+        icon(d.type, 16),
+        h('span', {}, d.label || { rect: 'Rechteck', ellipse: 'Ellipse', line: 'Linie' }[d.type]),
+        h('span.spacer'),
+        h('button.icon', { title: d.hidden ? 'Zeigen' : 'Verstecken', onclick: () => act({ type: 'drawing.update', sceneId: sc.id, id: d.id, patch: { hidden: !d.hidden } }) }, d.hidden ? '🙈' : '👁'),
+        h('button.icon', { title: 'Löschen', onclick: () => act({ type: 'drawing.delete', sceneId: sc.id, id: d.id }) }, '🗑')))) : null),
+    h('fieldset.lights-box', {}, h('legend', {}, 'Fog of War (Sicht der Spieler)'),
+      h('label.check', {}, h('input', { type: 'checkbox', checked: sc.fog.enabled, onchange: (e) => act({ type: 'fog.update', sceneId: sc.id, patch: { enabled: e.target.checked } }) }), 'Nebel an (Spieler sehen nur Aufgedecktes)'),
+      h('div.row.wrap', {}, tool('fog-rect-reveal', 'Feld aufdecken'), tool('fog-rect-hide', 'Feld verdecken'), tool('fog-brush-reveal', 'Pinsel aufdecken'), tool('fog-brush-hide', 'Pinsel verdecken')),
+      h('div.row.wrap', {},
+        h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'hideAll' }) }, 'Alles verdecken'),
+        h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'revealAll' }) }, 'Alles aufdecken'),
+        h('button.small', { disabled: !sc.fog.shapes.length, onclick: () => act({ type: 'fog.undo', sceneId: sc.id }) }, 'Rückgängig')),
+      h('p.hint', {}, 'Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
+    paintBox(sc, 'light'),
+    paintBox(sc, 'cloud'),
+    paintBox(sc, 'bolt'),
+    h('fieldset.lights-box', {}, h('legend', {}, icon('rain', 18), ' Regen'),
+      h('p.hint', {}, 'Animierter Regen über der ganzen Karte, für alle sichtbar.'),
+      h('div.row.wrap', {}, ...[['off', 'Aus'], ['light', 'Niesel'], ['medium', 'Regen'], ['heavy', 'Starkregen']].map(([v, l]) =>
+        h(`button.small${(sc.rain || 'off') === v ? '.primary' : ''}`, { 'aria-pressed': String((sc.rain || 'off') === v), dataset: { rain: v },
+          onclick: () => act({ type: 'scene.update', id: sc.id, patch: { rain: v } }) }, l)))),
+  ];
 }
 
 // ================================================================ Tab: Szenen (S1–S8, T2, Nebel)
@@ -798,17 +852,8 @@ function tabScenes() {
         h('label.num', {}, h('span', {}, 'Farbe'), h('input', { type: 'color', value: g.color, onchange: (e) => update({ grid: { color: e.target.value } }) }))),
       h('label.field', {}, h('span', {}, 'Deckkraft'), h('input', { type: 'range', min: 0, max: 1, step: 0.05, value: g.opacity, onchange: (e) => update({ grid: { opacity: Number(e.target.value) } }) })),
       h('p.hint', {}, 'Tipp: Feldgröße so einstellen, dass ein Feld genau einem Kästchen der Karte entspricht, oder die Kartengröße ändern.')),
-    h('fieldset', {}, h('legend', {}, 'Fog of War'),
-      h('label.check', {}, h('input', { type: 'checkbox', checked: sc.fog.enabled, onchange: (e) => act({ type: 'fog.update', sceneId: sc.id, patch: { enabled: e.target.checked } }) }), 'Nebel an (Spieler sehen nur Aufgedecktes)'),
-      h('div.row.wrap', {},
-        h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'hideAll' }) }, 'Alles verdecken'),
-        h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'revealAll' }) }, 'Alles aufdecken'),
-        h('button.small', { disabled: !sc.fog.shapes.length, onclick: () => act({ type: 'fog.undo', sceneId: sc.id }) }, 'Rückgängig')),
-      h('p.hint', {}, 'Aufdecken und Verdecken mit den Nebel-Werkzeugen links auf der Karte (☀ = aufdecken, ☁ = verdecken). Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
     h('label.check', {}, h('input', { type: 'checkbox', checked: sc.night, onchange: async (e) => { await update({ night: e.target.checked }); renderToolbar(); } }), 'Nachtfilter (S8)'),
-    paintBox(sc, 'light'),
-    paintBox(sc, 'cloud'),
-    paintBox(sc, 'bolt'),
+    h('p.hint', {}, 'Licht, Nebel, Blitze, Regen und Fog of War findest du unter „Zeichnen und Malen“.'),
     h('label.field', {}, h('span', {}, 'Notiz zur Szene (T2, nur für dich)'),
       h('textarea', { rows: 6, oninput: (e) => notes(e.target.value), placeholder: 'Raumbeschreibung, Fallen, Schätze …' }, sc.notes || '')),
     // Plätze der Spieler ganz unten
@@ -839,20 +884,20 @@ function tabTokens() {
 
   return [
     h('h3', {}, `Figuren in „${sc.name}“`),
-    h('p.hint', {}, 'Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder im Reiter „Bilder“ ein Bild auf die Karte ziehen.'),
+    h('p.hint', {}, 'Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder unter „Inhalte → Bilder“ ein Bild auf die Karte ziehen.'),
     h('p.hint', {}, 'Mehrere markieren: Umschalt + Klick auf Figuren, Umschalt + Rahmen ziehen oder ☐ in der Liste. Rechtsklick (lange drücken) öffnet das Menü.'),
     sc.tokens.length ? tokens : h('p.hint', {}, 'Noch keine Figuren.'),
     h('div.row', {},
       h('button.small', { onclick: () => startPlacing({ kind: 'token', token: { kind: 'marker', name: '', label: '' } }, 'eine Markierung') }, 'Figur ohne Bild setzen'),
       h('button.small', { onclick: placeObject }, 'Objekt setzen (eckig, drehbar)')),
-    h('h3', {}, `Zeichnungen und Objekte (${sc.drawings.length})`),
-    sc.drawings.length ? h('ul.list', {}, ...sc.drawings.map((d) => h('li', {},
-      h('span', {}, { rect: '▭', ellipse: '◯', line: '✎', image: '🧱', template: '🔥' }[d.type]),
+    h('h3', {}, `Objekte und Schablonen (${sc.drawings.filter((d) => d.type === 'image' || d.type === 'template').length})`),
+    sc.drawings.some((d) => d.type === 'image' || d.type === 'template') ? h('ul.list', {}, ...sc.drawings.filter((d) => d.type === 'image' || d.type === 'template').map((d) => h('li', {},
+      icon(d.type === 'image' ? 'object' : 'template', 16),
       h('span', {}, d.label || { rect: 'Rechteck', ellipse: 'Ellipse', line: 'Linie', image: 'Objekt', template: `Schablone ${d.sizeFt} ft` }[d.type]),
       d.ownerSeat ? h('span.badge', {}, `Platz ${d.ownerSeat}`) : null,
       h('span.spacer'),
       h('button.icon', { title: d.hidden ? 'Zeigen' : 'Verstecken', onclick: () => act({ type: 'drawing.update', sceneId: sc.id, id: d.id, patch: { hidden: !d.hidden } }) }, d.hidden ? '🙈' : '👁'),
-      h('button.icon', { title: 'Löschen', onclick: () => act({ type: 'drawing.delete', sceneId: sc.id, id: d.id }) }, '🗑')))) : h('p.hint', {}, 'Mit den Werkzeugen links auf der Karte zeichnen.'),
+      h('button.icon', { title: 'Löschen', onclick: () => act({ type: 'drawing.delete', sceneId: sc.id, id: d.id }) }, '🗑')))) : h('p.hint', {}, 'Noch keine Objekte oder Schablonen. Zeichnungen stehen unter „Zeichnen und Malen“.'),
   ];
 }
 
@@ -969,12 +1014,12 @@ function sliderSpin({ label, unit, min, max, step, value, name, onCommit }) {
 
 /** Licht bzw. Nebel/Wolken malen: Knöpfe, Farbe, Rückgängig, alles löschen (Tag und Nacht). */
 const PAINT = {
-  light: { list: 'lights', legend: '🕯️ Licht', brush: '🕯️ Licht malen', eraser: '🌑 Licht radieren', clearQ: 'Alle Lichter löschen?', clear: 'Alle Lichter löschen', count: (n) => `${n} Licht(er)`,
+  light: { list: 'lights', legend: 'Licht', brush: 'Licht malen', eraser: 'Licht radieren', clearQ: 'Alle Lichter löschen?', clear: 'Alle Lichter löschen', count: (n) => `${n} Licht(er)`,
     hint: 'Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.' },
-  cloud: { list: 'clouds', legend: '🌫️ Nebel und Wolken', brush: '🌫️ Nebel malen', eraser: '💨 Nebel radieren', clearQ: 'Allen Nebel löschen?', clear: 'Allen Nebel löschen', count: (n) => `${n} Nebelstrich(e)`,
+  cloud: { list: 'clouds', legend: 'Nebel und Wolken', brush: 'Nebel malen', eraser: 'Nebel radieren', clearQ: 'Allen Nebel löschen?', clear: 'Allen Nebel löschen', count: (n) => `${n} Nebelstrich(e)`,
     hint: 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.' },
-  bolt: { list: 'bolts', legend: '⚡ Blitze', brush: '⚡ Blitze malen', eraser: '🫥 Blitze radieren', clearQ: 'Alle Blitze löschen?', clear: 'Alle Blitze löschen', count: (n) => `${n} Blitzgebiet(e)`,
-    hint: 'Ein Gebiet malen, z. B. eine Gewitterwolke oder einen magischen Sturm: Dort zucken zufällig Blitze auf, an und aus, für alle sichtbar. Unter dem Werkzeug: 🎲 = jeder Blitz in einer anderen Farbe, sonst eine feste Farbe.' },
+  bolt: { list: 'bolts', legend: 'Blitze', brush: 'Blitze malen', eraser: 'Blitze radieren', clearQ: 'Alle Blitze löschen?', clear: 'Alle Blitze löschen', count: (n) => `${n} Blitzgebiet(e)`,
+    hint: 'Ein Gebiet malen, z. B. unter einer Gewitterwolke: Dort blitzt es grell auf, in unregelmäßigen Abständen an und aus, für alle sichtbar. Die Farbe des Blitzlichts wählst du unter dem Werkzeug.' },
 };
 
 /** Licht, Nebel/Wolken bzw. Blitze malen: Knöpfe, Rückgängig, alles löschen (Tag und Nacht). */
@@ -982,11 +1027,12 @@ function paintBox(sc, kind) {
   const k = PAINT[kind];
   const list = sc[k.list] || [];
   const n = list.filter((l) => !l.erase).length;
-  return h('fieldset.lights-box', {}, h('legend', {}, k.legend),
+  const on = (t) => board.tool === t;
+  return h('fieldset.lights-box', {}, h('legend', {}, icon(`${kind}-brush`, 18), ` ${k.legend}`),
     h('p.hint', {}, k.hint),
     h('div.row.wrap', {},
-      h('button.small', { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); } }, k.brush),
-      h('button.small', { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); } }, k.eraser),
+      h(`button.small.tool-btn${on(`${kind}-brush`) ? '.active' : ''}`, { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); renderPanel(true); } }, icon(`${kind}-brush`, 18), ` ${k.brush}`),
+      h(`button.small.tool-btn${on(`${kind}-eraser`) ? '.active' : ''}`, { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); renderPanel(true); } }, icon(`${kind}-eraser`, 18), ` ${k.eraser}`),
       h('button.small', { disabled: !list.length, onclick: () => act({ type: `${kind}.undo`, sceneId: sc.id }) }, 'Rückgängig'),
       h('button.small', { disabled: !list.length, onclick: async () => {
         if (await dialog({ title: k.clearQ, okText: 'Löschen', danger: true })) act({ type: `${kind}.clear`, sceneId: sc.id });

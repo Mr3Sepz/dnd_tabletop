@@ -4,6 +4,7 @@
 // Der Server schickt jede Nachricht nur an Absender und Empfänger und speichert sie nicht im
 // Spielstand. Was nicht an den DM geht, kann der DM also nicht lesen.
 
+import { icon } from './icons.js';
 import { h, toast, dialog } from './util.js';
 
 const keyOf = (ids) => ids.map(String).sort().join(',');
@@ -16,7 +17,7 @@ export class ChatPanel {
     this.active = 'all';
     this.groups = new Set(); // selbst angelegte Gruppen-Tabs
     this.unread = new Map();
-    this.button = h('button.chat-toggle', { title: 'Chat', onclick: () => this.toggle() }, '💬', this.badge = h('span.badge.hidden'));
+    this.button = h('button.fab.chat-toggle', { title: 'Chat', 'aria-label': 'Chat', onclick: () => this.toggle() }, icon('chat', 26), this.badge = h('span.badge.hidden'));
     this.panel = h('div.chat-panel.hidden');
     document.body.append(this.button, this.panel);
     this.render();

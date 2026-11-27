@@ -70,6 +70,9 @@ export class Journal {
 
   variant() { return VARIANTS[currentTheme()] || VARIANTS.light; }
 
+  /** Geräte (PADD, PDA, Tablet) scrollen wie ein Bildschirm; Bücher werden geblättert. */
+  scrolls() { return this.variant().kind === 'device'; }
+
   /** Zwei Seiten nebeneinander nur beim Buch auf breiten Bildschirmen. */
   spread() { return this.variant().kind === 'book' && window.innerWidth >= 860 ? 2 : 1; }
 
@@ -91,6 +94,7 @@ export class Journal {
         h('div.journal-body', {}, this.pagesEl, h('div.journal-navs', {}, this.prevBtn, this.nextBtn))));
     document.body.append(this.el);
     this.onKey = (e) => {
+      if (document.querySelector('.overlay')) return; // ein Dialog (z. B. „Löschen?“) liegt darüber
       if (e.key === 'Escape') { this.close(); return; }
       if (/TEXTAREA|INPUT/.test(document.activeElement?.tagName)) return;
       if (e.key === 'ArrowLeft') this.flip(-1);
@@ -107,6 +111,7 @@ export class Journal {
   }
 
   flip(dir) {
+    if (this.scrolls()) return;
     const sp = this.spread();
     const max = this.pageCount() - 1;
     const next = Math.max(0, Math.min(max, this.page[this.section] + dir * sp));
@@ -134,6 +139,8 @@ export class Journal {
     }
     const sp = this.spread();
     this.pagesEl.dataset.spread = String(sp);
+    this.el.querySelector('.journal').classList.toggle('scrolling', this.scrolls());
+    if (this.scrolls()) { this.renderScrolling(); return; }
     // leere Seitenrahmen anlegen, damit ihre Größe fürs Umbrechen feststeht
     const frames = Array.from({ length: sp }, () => h('div.jpage', {}, h('div.jpage-content'), h('div.jpage-num')));
     this.pagesEl.replaceChildren(...frames);
@@ -142,6 +149,39 @@ export class Journal {
     const first = this.page[this.section];
     this.prevBtn.disabled = first <= 0;
     this.nextBtn.disabled = first + sp >= this.pageCount();
+  }
+
+  /** Gerät: eine lange Seite, die scrollt – alle Quests bzw. der ganze Text am Stück. */
+  renderScrolling() {
+    const id = this.section;
+    const page = h('div.jpage.jscroll', {}, h('div.jpage-content'));
+    this.pagesEl.replaceChildren(page);
+    const c = page.firstChild;
+    if (id === 'quests') {
+      c.append(h('div.jpage-head', {}, h('h2', {}, 'Quests'),
+        h('button.small.jbtn', { onclick: async () => {
+          const r = await this.opts.act({ type: 'quest.add', title: '' });
+          if (r && r.id) setTimeout(() => { this.renderPages(); this.el?.querySelector(`[data-q="${r.id}:title"]`)?.focus(); }, 150);
+        } }, '+ Eintrag')));
+      const list = this.sortedQuests();
+      if (!list.length) c.append(h('p.jhint', {}, 'Noch keine Quests. Mit „+ Eintrag“ hält jeder Aufträge, Hinweise und Erlebnisse fest.'));
+      for (const q of list) c.append(this.questCard(q));
+      return;
+    }
+    const title = id === 'shared' ? 'Gemeinsame Notizen' : 'Privates Tagebuch';
+    const sub = id === 'shared' ? 'Alle sehen und schreiben mit.' : this.opts.privateHint;
+    // Seitenumbrüche aus dem Buch (\f) als Leerzeile anzeigen und beim Speichern so lassen
+    const text = this.sectionText(id).replace(/\f/g, '\n\n');
+    const ta = h('textarea.jtext.jtext-grow', { spellcheck: 'true', placeholder: id === 'shared' ? 'Wichtige Namen, Orte, offene Fragen …' : 'Was ist heute passiert?' });
+    ta.value = text;
+    const grow = () => { ta.style.height = 'auto'; ta.style.height = `${Math.max(ta.scrollHeight, c.clientHeight - 90)}px`; };
+    ta.oninput = () => {
+      this.text[id] = ta.value;
+      if (id === 'shared') this.saveShared(ta.value); else this.savePrivate(ta.value);
+      grow();
+    };
+    c.append(h('div.jpage-head', {}, h('h2', {}, title)), h('p.jsub', {}, sub), ta);
+    requestAnimationFrame(grow);
   }
 
   // ------------------------------------------------------------ Quests

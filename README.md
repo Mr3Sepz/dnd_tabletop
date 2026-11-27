@@ -84,12 +84,12 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 
 | Bereich | Was dort passiert |
 | --- | --- |
-| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** bzw. **🟢 Ist live / ✏️ Bearbeitung** · **Spielersicht**-Vorschau · Zoom · **🌍 Weltkarte** · **🗺 Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
+| **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** bzw. **🟢 Ist live / ✏️ Bearbeitung** · **Spielersicht**-Vorschau · Zoom · **Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
-| **Werkzeugleiste** (links auf der Karte) | 🖐 Auswählen · 📏 Messen · ▭ ◯ ✎ Zeichnen · 🧱 Objekt · 🔥 Zauberschablone · ☀ ☁ Nebel aufdecken/verdecken |
+| **Werkzeugleiste** (links auf der Karte) | Auswählen · Messen · Ping · **Würfel** · Rechteck, Ellipse, Freihand, Radierer · Objekt · Zauberschablone · Fog of War · Licht, Nebel, Blitze. Alle Werkzeuge haben eigene, schlichte Symbole; mit der Maus darüber steht der Name |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
-| **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · Szenen · Figuren · Bilder · Spiel*. Quests und Notizen stehen im **📖 Tagebuch** oben |
-| **🎲 💬** (unten links) | Würfel mit Protokoll und Fuß-↔-Meter-Rechner · Chat |
+| **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · **Inhalte** · Spiel*. *Inhalte* hat vier Unterreiter: **Szenen · Figuren · Bilder · Zeichnen und Malen** |
+| **Runde Knöpfe** (unten links) | **Weltkarte** (grün) · **Chat** (blau) · **Tagebuch** (rot) mit Quests und Notizen |
 
 Auf dem Tablet oder Handy klappt die Seitenleiste mit **☰** auf und zu.
 
@@ -119,7 +119,7 @@ Reiter **Spiel**:
 - **Raum-PIN:** Ist sie gesetzt, kommen nur Spieler rein, die sie kennen. Wer schon drin ist, bleibt drin.
 - **Anzahl Spielerplätze:** Standard ist 5, möglich sind 1 bis 20. Belegte Plätze werden beim Verkleinern nie entfernt.
 
-Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. Einen Platz freigeben kannst du im Reiter **Szenen** unter *Plätze*.
+Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. Einen Platz freigeben kannst du unter *Inhalte → Szenen* bei *Plätze*.
 
 <details>
 <summary>Spieler von zu Hause (Tailscale) einrichten</summary>
@@ -130,6 +130,21 @@ Fliegt jemand kurz aus dem WLAN, landet er automatisch wieder auf seinem Platz. 
 </details>
 
 <br clear="right">
+
+### Der Reiter „Inhalte“
+
+Alles, was zur Karte gehört, steckt im Reiter **Inhalte**, mit vier Unterreitern wie bei *NPCs / Gegner*:
+
+| Unterreiter | Was drin ist |
+| --- | --- |
+| **Szenen** | Szenen anlegen und wechseln, Karte, Raster, Nachtfilter, Notiz zur Szene, ganz unten die Plätze der Spieler |
+| **Figuren** | Liste der Objekte und Schablonen der Szene |
+| **Bilder** | Deine Bildersammlung mit Ordnern |
+| **Zeichnen und Malen** | Rechteck, Ellipse, Freihand, Radierer und die Zeichnungen der Szene · Fog of War · Licht · Nebel und Wolken · Blitze · Regen |
+
+Die Zauberschablonen bleiben in der Werkzeugleiste, weil auch die Spieler sie benutzen.
+
+<img src="docs/img/67-zeichnen-und-malen.webp" width="300" alt="Unterreiter Zeichnen und Malen mit Zeichenwerkzeugen und Fog of War">
 
 ### 2. Szenen und Karten
 
@@ -148,11 +163,14 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
-- **Licht malen** (Tag und Nacht): Mit **🕯️** in der Werkzeugleiste malst du über Fackeln, Lagerfeuer oder Fenster. Dort leuchtet es für alle; bei Nacht wird es dort hell. Die **Farbe des Scheins** wählst du unter dem Werkzeug, Standard ist warmes Feuer-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **🌑 Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. Die Größe stellst du unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im Kasten *Licht*.
-- **Blitze malen:** Mit **⚡** malst du ein Gebiet, z. B. eine Gewitterwolke oder einen magischen Sturm. Dort zucken zufällig Blitze auf: an, kurz aus, nochmal an, aus. Unter dem Werkzeug wählst du **🎲** (jeder Blitz in einer anderen Farbe) oder eine feste Farbe. **🫥** radiert Blitzgebiete wieder weg. Alle sehen die Blitze; im Fog of War bleiben sie verborgen.
+- **Licht malen** (Tag und Nacht, *Inhalte → Zeichnen und Malen* oder Laterne in der Werkzeugleiste): Du malst über Fackeln, Lagerfeuer oder Fenster. Dort leuchtet es für alle; bei Nacht wird es dort hell. Die **Farbe des Scheins** wählst du unter dem Werkzeug, Standard ist warmes Feuer-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. Die Größe stellst du unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im Kasten *Licht*.
+- **Blitze malen:** Du malst ein Gebiet, z. B. unter einer Gewitterwolke. Dort **blitzt es grell auf**, ein kräftiger Lichtschein ohne gezackte Linien. Zufällig ist das Timing: mal lange nichts, dann ein Flackern, ein-, zwei- oder dreimal hintereinander. Jedes gemalte Gebiet blitzt für sich. Die **Farbe des Blitzlichts** wählst du unter dem Werkzeug (Standard: kaltes Weiß). **Blitze radieren** nimmt Gebiete wieder weg. Alle sehen es; im Fog of War bleibt es verborgen.
 
-  <img src="docs/img/66-blitze.webp" width="460" alt="Ein Blitz zuckt über dem Waldweg">
-- **Nebel und Wolken malen:** Mit **🌫️** malst du Nebelschwaden, Rauch oder Wolken über die Karte, mit **💨** radierst du sie wieder weg. Alle sehen sie. Die Farbe wählst du unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar; zum Verbergen ist der [Fog of War](#11-fog-of-war) da. *Rückgängig* und *Allen Nebel löschen* stehen im Kasten *Nebel und Wolken*.
+  <img src="docs/img/66-blitze.webp" width="460" alt="Greller Blitzschein über dem Waldweg">
+- **Regen:** *Aus · Niesel · Regen · Starkregen*. Ein animierter Regen fällt über die ganze Karte, für alle sichtbar. Er gilt pro Szene.
+
+  <img src="docs/img/68-regen.webp" alt="Starkregen über dem Waldweg">
+- **Nebel und Wolken malen:** Mit **Nebel malen** malst du Nebelschwaden, Rauch oder Wolken über die Karte, mit **Nebel radieren** nimmst du sie wieder weg. Alle sehen sie. Die Farbe wählst du unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar; zum Verbergen ist der [Fog of War](#11-fog-of-war) da. *Rückgängig* und *Allen Nebel löschen* stehen im Kasten *Nebel und Wolken*.
 
   <img src="docs/img/57-nebel-und-tageslicht.webp" alt="Nebelschwaden oben links und ein blaues Licht am Tag">
 
@@ -175,7 +193,7 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 
 <img src="docs/img/19-bilder.webp" width="300" align="right" alt="Reiter Bilder mit Ordnern Charaktere/NPCs, Objekte, Karten, Sonstiges">
 
-**Bildersammlung** (Reiter **Bilder**, nur für dich): **+ Bilder** oder Dateien ins Browserfenster ziehen. Danach fragt die App, in welchen **Ordner** sie gehören:
+**Bildersammlung** (*Inhalte → Bilder*, nur für dich): **+ Bilder** oder Dateien ins Browserfenster ziehen. Danach fragt die App, in welchen **Ordner** sie gehören:
 
 | Ordner | Wofür | Wo es auftaucht |
 | --- | --- | --- |
@@ -212,11 +230,11 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 <br clear="right">
 
-**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: ein Bild aus *Charaktere/NPCs* antippen → **📍 Als NPC auf die Karte setzen**. Ziehst du ein Bild direkt auf die Karte, wird es eine **Figur** (ohne Werte). Eine Figur ohne Bild setzt du im Reiter *Figuren* mit **Figur ohne Bild setzen**.
+**NPCs** (Reiter *NPCs*): **+ Neuer NPC**, Porträt und Werte eintragen, dann **Auf Karte setzen …** Schneller: ein Bild aus *Charaktere/NPCs* antippen → **📍 Als NPC auf die Karte setzen**. Ziehst du ein Bild direkt auf die Karte, wird es eine **Figur** (ohne Werte). Eine Figur ohne Bild setzt du unter *Inhalte → Figuren* mit **Figur ohne Bild setzen**.
 
 <img src="docs/img/52-bildausschnitt.webp" width="300" align="right" alt="Dialog Bildausschnitt: Porträt im Kreis mit Zoomregler">
 
-**Bildausschnitt im runden Rahmen:** Ist ein Bild nicht quadratisch, schneidet der Kreis es manchmal ungünstig ab. Im Bogen eines Charakters oder NPCs gibt es dafür **✂️ Bildausschnitt**, im Reiter *Bilder* (Ordner Charaktere/NPCs) **✂️ Ausschnitt anpassen**. Im Kreis ziehst du das Bild an die richtige Stelle, mit dem **Zoom**-Regler (oder dem Mausrad) vergrößerst du es. Der Ausschnitt gilt überall, wo das Bild rund erscheint: auf der Figur, in der Porträtleiste, im Bogen und bei den Spielern. Das Originalbild bleibt erhalten. *Ganzes Bild (zurücksetzen)* nimmt den Ausschnitt wieder weg.
+**Bildausschnitt im runden Rahmen:** Ist ein Bild nicht quadratisch, schneidet der Kreis es manchmal ungünstig ab. Im Bogen eines Charakters oder NPCs gibt es dafür **✂️ Bildausschnitt**, unter *Inhalte → Bilder* (Ordner Charaktere/NPCs) **✂️ Ausschnitt anpassen**. Im Kreis ziehst du das Bild an die richtige Stelle, mit dem **Zoom**-Regler (oder dem Mausrad) vergrößerst du es. Der Ausschnitt gilt überall, wo das Bild rund erscheint: auf der Figur, in der Porträtleiste, im Bogen und bei den Spielern. Das Originalbild bleibt erhalten. *Ganzes Bild (zurücksetzen)* nimmt den Ausschnitt wieder weg.
 
 <br clear="right">
 
@@ -245,10 +263,10 @@ Beim Setzen eines NPCs wählst du:
 
 | Werkzeug | Wofür |
 | --- | --- |
-| ▭ ◯ ✎ | Rechteck, Ellipse, Freihand, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Leiste ein |
-| 🧽 **Radierer** | Über Freihandlinien wischen. Wo du drüberfährst, verschwindet die Linie, der Rest bleibt stehen. Die Größe stellst du unter dem Werkzeug ein. Rechtecke, Ellipsen und Objekte radiert er nicht, die löschst du mit dem Mülleimer |
-| 🧱 **Objekt** | Jedes **eigene Bild** aus deiner Bildersammlung als **eckiges, drehbares** Ding auf der Karte: Wagen, Tür, Tisch, Kiste, Lagerfeuer. Der Unterschied zur Figur: Figuren sind rund und für Lebewesen gedacht (mit HP, Zuständen, Initiative). Objekte sind Gegenstände, die du frei drehen und strecken kannst |
-| 🔥 **Schablone** | Kreis, Kegel, Linie oder Würfel in Fuß, z. B. „Feuerball, 20 ft“ |
+| Rechteck, Ellipse, Freihand | Auch unter *Inhalte → Zeichnen und Malen*, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Leiste ein |
+| **Radierer** | Über Freihandlinien wischen. Wo du drüberfährst, verschwindet die Linie, der Rest bleibt stehen. Die Größe stellst du unter dem Werkzeug ein. Rechtecke, Ellipsen und Objekte radiert er nicht, die löschst du mit dem Mülleimer |
+| **Objekt** (Würfelkiste) | Jedes **eigene Bild** aus deiner Bildersammlung als **eckiges, drehbares** Ding auf der Karte: Wagen, Tür, Tisch, Kiste, Lagerfeuer. Der Unterschied zur Figur: Figuren sind rund und für Lebewesen gedacht (mit HP, Zuständen, Initiative). Objekte sind Gegenstände, die du frei drehen und strecken kannst |
+| **Schablone** | Kreis, Kegel, Linie oder Würfel in Fuß, z. B. „Feuerball, 20 ft“ |
 
 <img src="docs/img/44-zeichnung-muelleimer.webp" width="460" align="right" alt="Ausgewählte Freihandlinie mit rotem Mülleimer oben rechts am Rahmen">
 
@@ -256,9 +274,9 @@ Ein Klick mit 🖐 auf eine Zeichnung oder ein Objekt zeigt Griffe zum **Verschi
 
 <br clear="right">
 
-<img src="docs/img/43-werkzeugleiste.webp" width="130" align="left" alt="Werkzeugleiste mit Radierer und Freihand-Einstellungen, endet über dem Würfelknopf">
+<img src="docs/img/43-werkzeugleiste.webp" width="130" align="left" alt="Werkzeugleiste mit eigenen Symbolen, endet über den runden Knöpfen">
 
-Die **Werkzeugleiste** endet über dem Würfelknopf 🎲. Passt nicht alles hinein, z. B. die Einstellungen zum Freihandzeichnen (Farbe, Füllung, Strichstärke), scrollst du in der Leiste nach unten. Darin steckt auch der **🧽 Radierer**.
+Die **Werkzeugleiste** endet über den runden Knöpfen. Passt nicht alles hinein, z. B. die Einstellungen zum Freihandzeichnen (Farbe, Füllung, Strichstärke), scrollst du in der Leiste nach unten. Statt Emojis haben die Werkzeuge **eigene Symbole**, die überall gleich aussehen: Lineal, Zielscheibe (Ping), W20 (Würfel), Radiergummi, gestricheltes Feld mit Auge (Nebel aufdecken) bzw. durchgestrichenem Auge (verdecken), Laterne (Licht), Wolke, Blitzschein. Die Radier-Varianten haben einen kleinen roten Radiergummi.
 
 <br clear="left">
  Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
@@ -377,7 +395,7 @@ Spieler und NPCs haben denselben Bogen:
 - **Werte** wie die RK (Rüstungsklasse), frei benennbar. Spieler sehen und ändern ihre eigene RK. Die RK von Gegnern sehen sie nie.
 - **Zauberplätze als blaue Rauten** mit dem Grad (I, II, III …). Jede Raute gilt **einzeln**: Antippen = genau dieser Platz ist verbraucht und wird grau, egal in welcher Reihenfolge du tippst. Nochmal antippen = wieder frei. „Anzahl ändern“ legt fest, wie viele es pro Grad gibt. „Alle frei“ setzt nach einer langen Rast zurück.
 - **Zähler:** Ki, Kampfrausch, Heiltränke …
-- **Notiz** (NPC). Das private Tagebuch der Spieler steht im [📖 Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch).
+- **Notiz** (NPC). Das private Tagebuch der Spieler steht im [Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch).
 
 <br clear="right">
 
@@ -469,8 +487,8 @@ Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spiele
 </tr>
 </table>
 
-1. Reiter **Szenen** → **Fog of War** → *Alles verdecken*.
-2. Werkzeuge links: **☀▭** Rechteck aufdecken, **☀✎** mit dem Pinsel aufdecken (Größe einstellbar), **☁▭ / ☁✎** wieder verdecken.
+1. *Inhalte → Zeichnen und Malen* → **Fog of War** → *Alles verdecken*.
+2. Werkzeuge: **Feld aufdecken** (Rechteck), **Pinsel aufdecken** (Größe einstellbar), **Feld verdecken / Pinsel verdecken**. Sie stehen im Kasten und in der Werkzeugleiste (Auge = aufdecken, durchgestrichenes Auge = verdecken).
 3. *Rückgängig* nimmt den letzten Schritt zurück. *Alles aufdecken* deckt mit einem Klick alles auf.
 
 Eigene Figuren sieht jeder Spieler immer, auch im Nebel.
@@ -479,7 +497,7 @@ Eigene Figuren sieht jeder Spieler immer, auch im Nebel.
 
 <img src="docs/img/09-getrennte-gruppen.webp" width="300" align="right" alt="Plätze mit Ort-Auswahl">
 
-Die Gruppe teilt sich auf? Im Reiter **Szenen** wählst du unter *Plätze* bei jedem Platz den **Ort**, also die Szene, die dieser Spieler sieht. Tom klettert allein in die Höhle, Mia bleibt am Waldweg.
+Die Gruppe teilt sich auf? Unter *Inhalte → Szenen* wählst du bei *Plätze* bei jedem Platz den **Ort**, also die Szene, die dieser Spieler sieht. Tom klettert allein in die Höhle, Mia bleibt am Waldweg.
 
 - Die Kopfzeile zeigt dann *„Spieler sehen: Waldweg (Platz 2 woanders)“*.
 - In der Szenenliste steht, wie viele Spieler gerade wo sind.
@@ -501,9 +519,9 @@ Nach einem Wahrnehmungswurf hat nur Mia den Goblin im Gebüsch bemerkt? Figurenm
 
 ### Ping: Stelle auf der Karte zeigen
 
-<img src="docs/img/58-ping.webp" width="460" align="right" alt="Zwei Pings auf der Karte: rot von Aria, lila vom DM">
+<img src="docs/img/58-ping.webp" width="460" align="right" alt="Zwei Pings auf der Karte: rot von Aria, weiß vom DM">
 
-Mit **📍** in der Werkzeugleiste und einem Tipp auf die Karte (oder **Alt + Klick**) leuchtet die Stelle bei allen in derselben Szene ein paar Sekunden auf, mit Ringen und dem Namen. Jeder Spieler wählt beim Einloggen **seine Farbe**: Rot, Grün, Blau, Gelb oder Weiß. Jede Farbe gibt es nur einmal, wer zuerst kommt, bekommt sie. Der DM pingt immer in **Lila**. Wird ein Platz freigegeben, ist seine Farbe wieder frei. Im Reiter *Szenen* unter *Plätze* siehst du die Farbe jedes Spielers.
+Mit dem **Ping** (Zielscheibe) in der Werkzeugleiste und einem Tipp auf die Karte (oder **Alt + Klick**) leuchtet die Stelle bei allen in derselben Szene ein paar Sekunden auf, mit Ringen und dem Namen. Jeder Spieler wählt beim Einloggen **seine Farbe**: Rot, Grün, Blau, Gelb oder Lila. Jede Farbe gibt es nur einmal, wer zuerst kommt, bekommt sie. Der DM pingt immer in **Weiß**. Wird ein Platz freigegeben, ist seine Farbe wieder frei. Unter *Inhalte → Szenen* bei *Plätze* siehst du die Farbe jedes Spielers.
 
 <img src="docs/img/56-farbe-waehlen.webp" width="200" alt="Beitreten: Name und Farbwahl">
 
@@ -513,7 +531,7 @@ Mit **📍** in der Werkzeugleiste und einem Tipp auf die Karte (oder **Alt + Kl
 
 <img src="docs/img/13-wuerfel.webp" alt="Würfel-Panel: Vorteil und W20 eingeschaltet, Knopf Würfeln, verdeckter DM-Wurf im Protokoll">
 
-**🎲** unten links, bewusst schlicht:
+Der **Würfel** (W20) steht in der Werkzeugleiste, bewusst schlicht. Ist die Karte ausgeblendet, gibt es dafür einen runden Würfelknopf unten links:
 
 Erst einstellen, dann würfeln:
 
@@ -541,7 +559,7 @@ Oben bei **Spielersicht** einen Platz wählen: Du siehst **genau** das, was dies
 
 ### 17. Tagebuch: Quests, Notizen, privates Tagebuch
 
-**📖** oben in der Kopfzeile öffnet das Tagebuch groß in der Mitte, vor allem anderen. Es sieht je nach [Theme](#themes-und-darkmode) anders aus:
+Der rote runde **Tagebuch**-Knopf unten links (rechts neben dem Chat) öffnet das Tagebuch groß in der Mitte, vor allem anderen. Auch die Rückfrage beim Löschen einer Quest erscheint davor. Es sieht je nach [Theme](#themes-und-darkmode) anders aus:
 
 | Theme | Tagebuch |
 | --- | --- |
@@ -556,7 +574,9 @@ Die drei **Lesezeichen** bzw. **Farbpunkte** führen zu:
 - **Gemeinsame Notizen:** sehen alle, alle schreiben mit.
 - **Privates Tagebuch:** nur für dich. Das Tagebuch eines Spielers sieht auch der DM nicht.
 
-**Blättern statt Scrollen:** Die Seiten scrollen nicht. Ist eine Seite voll, läuft der Text von selbst auf die nächste weiter. Mit den Pfeilen **◀ ▶** in den unteren Ecken blätterst du um, auch auf ein freies Blatt hinter dem Ende, wenn du dort neu anfangen willst. Die Pfeile bleiben im gewählten Bereich; zwischen Quests, Notizen und Tagebuch wechselst du nur über die Lesezeichen. Das Buch zeigt am PC zwei Seiten nebeneinander, am Handy eine. Schließen: **×**, **Esc** oder daneben tippen.
+**Buch: Blättern statt Scrollen.** In den Büchern scrollen die Seiten nicht. Ist eine Seite voll, läuft der Text von selbst auf die nächste weiter. Mit den Pfeilen **◀ ▶** in den unteren Ecken blätterst du um, auch auf ein freies Blatt hinter dem Ende, wenn du dort neu anfangen willst. Die Pfeile bleiben im gewählten Bereich; zwischen Quests, Notizen und Tagebuch wechselst du nur über die Lesezeichen. Das Buch zeigt am PC zwei Seiten nebeneinander, am Handy eine. Schließen: **×**, **Esc** oder daneben tippen.
+
+**Geräte scrollen:** PADD, PDA und Tablet verhalten sich wie ein Bildschirm. Dort gibt es keine Pfeile; Quests, Notizen und Tagebuch stehen auf einer langen Seite, durch die du scrollst.
 
 <img src="docs/img/63-tagebuch-buch.webp" alt="Tagebuch als rotes Buch mit Lesezeichen Quests, Gemeinsame Notizen, Privates Tagebuch">
 
@@ -581,12 +601,12 @@ Die drei **Lesezeichen** bzw. **Farbpunkte** führen zu:
 
 <img src="docs/img/31-chat.webp" width="420" alt="Chat: Nachricht an einen Spieler, Nachricht des DM an alle">
 
-**💬** unten links neben dem Würfel. Jede Unterhaltung hat **einen eigenen Tab**, so geht nichts aus Versehen an alle:
+Der blaue runde **Chat**-Knopf unten links, zwischen Weltkarte und Tagebuch. Jede Unterhaltung hat **einen eigenen Tab**, so geht nichts aus Versehen an alle:
 
 - **📢 Alle:** alle lesen mit.
 - **Ein Tab pro Person:** z. B. *Tom*. Was du dort schreibst, lesen nur Tom und du.
 - **+ Gruppe:** eigene Unterhaltung mit mehreren, z. B. *Tom + Mia*.
-- Über der Nachrichtenliste steht immer, wer mitliest. Ungelesenes zeigt eine rote Zahl am Tab und am 💬.
+- Über der Nachrichtenliste steht immer, wer mitliest. Ungelesenes zeigt eine rote Zahl am Tab und am Chat-Knopf.
 - **Was nicht an dich geht, kannst du nicht lesen.** Der Server schickt jede Nachricht nur an Absender und Empfänger.
 - Der Chat wird **nicht gespeichert**, auch nicht im Spielstand. Nach einem Neustart des Servers ist er leer.
 
@@ -594,7 +614,7 @@ Die drei **Lesezeichen** bzw. **Farbpunkte** führen zu:
 
 <img src="docs/img/32-weltkarte.webp" alt="Weltkarte mit goldgelben DM-Pins und einem blauen Spieler-Pin">
 
-**🌍** in der Kopfzeile öffnet die Weltkarte, für dich und für alle Spieler.
+Der grüne runde **Weltkarte**-Knopf unten links öffnet die Weltkarte, für dich und für alle Spieler.
 
 - **Bild festlegen:** oben in der Auswahl oder in der Bildersammlung *⋯ Verwenden → Als Weltkarte*.
 - **+ Pin**, dann auf die Karte tippen und einen Namen eingeben. **Goldgelb** = deine Pins, **blau** = Pins der Spieler. Spieler dürfen eigene Pins setzen, umbenennen und löschen, fremde nicht.
@@ -696,7 +716,7 @@ Die Texte sind kurze deutsche Zusammenfassungen der **5e-Regeln von 2014 (SRD 5.
 
 ## Notizen, Speichern, Beenden
 
-**Notizen** stehen im **[📖 Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch)**: Quests und gemeinsame Notizen (sehen alle, alle schreiben mit) und dein **privates Tagebuch** (nur für dich). Die privaten Tagebücher der Spieler siehst du nicht. Notizen zu einzelnen Szenen stehen im Reiter *Szenen*.
+**Notizen** stehen im **[Tagebuch](#17-tagebuch-quests-notizen-privates-tagebuch)**: Quests und gemeinsame Notizen (sehen alle, alle schreiben mit) und dein **privates Tagebuch** (nur für dich). Die privaten Tagebücher der Spieler siehst du nicht. Notizen zu einzelnen Szenen stehen unter *Inhalte → Szenen*.
 
 Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 
@@ -725,9 +745,9 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 - **Charakter:** HP, Werte, Zauberplätze, Zähler, Zustände, ⚙ *Bogen anpassen* und ✎ *Bearbeiten*.
 - **Attribute:** Attribute, Rettungswürfe, Fertigkeiten, Angaben (optional).
 - **Inventar:** Waffen mit Munition, vorbereitete Zauber, Münzen, Gegenstände.
-- **📖 Tagebuch** oben: Quests, gemeinsame Notizen und ihr **privates Tagebuch**, das auch du nicht siehst.
-- **Oben:** Runde und Effekttimer (eigene starten), 🌍 Weltkarte mit eigenen Pins.
-- **Werkzeuge:** 📏 Messen, 🔥 eigene Zauberschablonen legen und drehen, 🎲 Würfeln mit Fuß-↔-Meter-Rechner, 💬 Chat, **🗺 Karte aus** (am Handy wie am PC), ⛶ Vollbild, **EN/DE** Sprache.
+- **Tagebuch** (roter Knopf unten links): Quests, gemeinsame Notizen und ihr **privates Tagebuch**, das auch du nicht siehst.
+- **Oben:** Runde und Effekttimer (eigene starten). **Unten links:** Weltkarte mit eigenen Pins, Chat, Tagebuch.
+- **Werkzeuge:** Messen, Ping, eigene Zauberschablonen legen und drehen, Würfel mit Fuß-↔-Meter-Rechner (alles in der Werkzeugleiste), **Karte aus** (am Handy wie am PC), Vollbild, **EN/DE** Sprache.
 
 <img src="docs/img/25-inventar-handy.webp" width="260" alt="Inventar am Handy: Münzen und Gegenstände">
 
@@ -745,10 +765,10 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Bild als NPC, Objekt, Karte, Weltkarte | *Bilder* → Bild antippen |
 | Spielerbild zuordnen | *Bilder* → *Charaktere/NPCs* → Bild antippen → **Porträt für …** |
 | Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
-| Lagerfeuer bei Nacht | *Szenen* → Nachtfilter → **🕯️ Licht malen** (zu viel? **🌑 Licht radieren**) |
-| Nebelschwaden über dem Sumpf | Werkzeug **🌫️** (wegwischen mit **💨**) |
-| Gewitter | Werkzeug **⚡** (wegwischen mit **🫥**) |
-| Notizen und Quests | **📖** oben |
+| Lagerfeuer bei Nacht | *Inhalte → Szenen* → Nachtfilter, dann *Zeichnen und Malen* → **Licht malen** (zu viel? **Licht radieren**) |
+| Nebelschwaden über dem Sumpf | *Zeichnen und Malen* → **Nebel malen** (weg mit **Nebel radieren**) |
+| Gewitter | *Zeichnen und Malen* → **Blitze malen** und **Regen** |
+| Notizen und Quests | roter **Tagebuch**-Knopf unten links |
 | Auf eine Stelle zeigen | **📍** und auf die Karte tippen, oder **Alt + Klick** |
 | Karte umbauen, ohne dass die Spieler zusehen | **🟢 Ist live** antippen → bearbeiten → **✏️ Bearbeitung · Live schalten** |
 | Sechseck-Raster | *Szenen* → Raster → *Rasterform* |
@@ -766,12 +786,12 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Effekt mitzählen (Segen, Netz …) | Leiste links **+ ⏳** → Name, Runden |
 | Kampf beenden | **Leeren** (Runde 1, Effekte weg) |
 | Höhle erkunden | Szene → *Alles verdecken* → ☀▭ / ☀✎ Stück für Stück aufdecken |
-| Gruppe teilt sich | Reiter *Szenen* → *Plätze* → *Ort* pro Platz |
+| Gruppe teilt sich | *Inhalte → Szenen* → *Plätze* → *Ort* pro Platz |
 | Nur einer bemerkt etwas | Figurenmenü → *Sichtbar für …* |
 | Krieger ohne Zauberplätze | Bogen → *⚙ Bogen anpassen* → Zauberplätze aus |
 | Beute verteilen | Reiter *Inventar* → Charakter wählen → Münzen / Gegenstände |
-| Geheim würfeln | 🎲 → *Verdeckt würfeln* |
-| Mit Vorteil würfeln | 🎲 → **Vorteil** an · **W20** · **🎲 Würfeln** |
+| Geheim würfeln | Würfel → *Verdeckt würfeln* |
+| Mit Vorteil würfeln | Würfel → **Vorteil** an · **W20** · **🎲 Würfeln** |
 | Zeichnung löschen | mit 🖐 antippen → **🗑** am Rahmen oder `Entf` |
 | Teil einer Freihandlinie wegradieren | Werkzeug **🧽** → drüberwischen |
 | Bogen eines Gegners aus der Leiste öffnen | Porträt **doppelt** anklicken |
@@ -779,10 +799,10 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Karte drehen | *Szenen* → **⟲ 90°** / **⟳ 90°** |
 | Sprache wechseln | **EN** / **DE** oben |
 | Münzbild ändern | *Inventar* → aufs Münzbild tippen |
-| Fuß in Meter umrechnen | 🎲 → *Fuß ↔ Meter* |
+| Fuß in Meter umrechnen | Würfel → *Fuß ↔ Meter* |
 | Einem Spieler heimlich etwas sagen | 💬 → Tab mit seinem Namen |
-| Quest festhalten | **📖** → Lesezeichen *Quests* → **+ Eintrag** |
-| Ort auf der Weltkarte markieren | 🌍 → **+ Pin** |
+| Quest festhalten | **Tagebuch** → Lesezeichen *Quests* → **+ Eintrag** |
+| Ort auf der Weltkarte markieren | **Weltkarte** (grüner Knopf) → **+ Pin** |
 | Karte auf dem Fernseher zeigen | *Spiel* → *Zuschauer-Ansicht öffnen* → F11 |
 | Münzen umbenennen | *Inventar* → ⚙ bei „Münzen“ |
 | Infotext anpassen | ⓘ → **✎ Text ändern** |
@@ -823,7 +843,7 @@ Umgebungsvariablen gehen auch: `PORT`, `DND_DM_PASSWORD`, `DND_PIN`, `DND_SEATS`
 <details>
 <summary><b>„Platz ist schon belegt“</b></summary>
 
-Reiter *Szenen* → *Plätze* → bei dem Platz **Freigeben**. Danach kann sich der Spieler neu anmelden.
+*Inhalte → Szenen* → *Plätze* → bei dem Platz **Freigeben**. Danach kann sich der Spieler neu anmelden.
 </details>
 
 <details>

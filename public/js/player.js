@@ -12,6 +12,7 @@ import { renderInitiative } from './initiative.js';
 import { DicePanel } from './dice.js';
 import { AbilitySheet } from './charsheet.js';
 import { Journal } from './journal.js';
+import { icon } from './icons.js';
 import { ChatPanel } from './chat.js';
 import { WorldMap } from './worldmap.js';
 import { setHelpOverrides } from './help.js';
@@ -82,7 +83,9 @@ const chat = new ChatPanel({
   people: () => [{ id: 'dm', label: 'DM' }, ...(state ? state.seats.filter((x) => x.seat !== seat && x.taken).map((x) => ({ id: x.seat, label: seatName(x.seat) })) : [])],
 });
 const world = new WorldMap({ isDM: false, mySeat: seat, act: (a) => conn.act(a), seatName });
-$('#worldBtn').onclick = () => { world.update(state); world.open(); };
+// Runde Knöpfe unten links: Weltkarte · Chat · Tagebuch
+const worldFab = h('button.fab.world-fab', { id: 'worldBtn', title: 'Weltkarte', 'aria-label': 'Weltkarte', onclick: () => { world.update(state); world.open(); } }, icon('world', 26));
+document.body.append(worldFab);
 // Tagebuch: Quests, gemeinsame Notizen und das private Tagebuch (sieht nicht einmal der DM)
 const journal = new Journal({
   getState: () => state,
@@ -95,7 +98,9 @@ const journal = new Journal({
   },
   privateHint: 'Nur für dich. Auch der DM sieht es nicht.',
 });
-$('#journalBtn').onclick = () => journal.toggle();
+const journalFab = h('button.fab.journal-fab', { id: 'journalBtn', title: 'Tagebuch: Quests, gemeinsame Notizen, privates Tagebuch', 'aria-label': 'Tagebuch', onclick: () => journal.toggle() }, icon('journal', 26));
+document.body.append(journalFab);
+$('#mapToggle').replaceChildren(icon('map-off', 20)); // Karte aus/ein
 
 function gone(title, msg) {
   conn.socket.close();
@@ -106,10 +111,12 @@ function gone(title, msg) {
 
 function renderToolbar() {
   const tool = board.tool;
-  const btn = (key, icon) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon);
+  const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], 'aria-label': TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon(key));
   $('#toolbar').replaceChildren(
-    btn('select', '🖐'), btn('measure', '📏'), btn('ping', '📍'),
-    h('button.tool', { title: 'Zauberschablone legen', onclick: placeTemplate }, '🔥'),
+    btn('select'), btn('measure'), btn('ping'),
+    h('button.tool', { title: 'Zauberschablone legen', 'aria-label': 'Zauberschablone legen', onclick: placeTemplate }, icon('template')),
+    h('span.tb-sep'),
+    dice.button,
   );
 }
 

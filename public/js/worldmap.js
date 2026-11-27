@@ -58,7 +58,7 @@ export class WorldMap {
     if (!url) {
       this.stage.replaceChildren();
       this.viewport.replaceChildren(h('div.wm-empty', {}, o.isDM
-        ? 'Noch keine Weltkarte. Wähle oben ein Bild aus der Bildersammlung (oder im Reiter „Figuren“ beim Bild: ⋯ → „Als Weltkarte“).'
+        ? 'Noch keine Weltkarte. Wähle oben ein Bild aus der Bildersammlung (oder unter „Inhalte → Bilder“ beim Bild: ⋯ → „Als Weltkarte“).'
         : 'Der DM hat noch keine Weltkarte hinterlegt.'));
       return;
     }

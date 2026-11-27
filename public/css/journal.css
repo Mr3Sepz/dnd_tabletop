@@ -153,3 +153,10 @@
 :root[data-skin="retro"] .journal button.journal-mark { box-shadow: none; }
 .journal.device .journal-mark .mark-label { overflow-wrap: normal; hyphens: manual; }
 .journal.device.v-tablet .journal-mark, .journal.device.v-neon .journal-mark { font-family: var(--j-font); font-size: 0.85rem; }
+
+/* Geräte scrollen: eine lange Seite, keine Blätter-Pfeile */
+.journal.scrolling .journal-navs { display: none; }
+.journal.scrolling .jpage.jscroll { padding-bottom: 20px; }
+.journal.scrolling .jscroll .jpage-content { overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--j-accent) transparent; }
+.journal.scrolling .jscroll .jquest { flex: none; }
+.journal textarea.jtext.jtext-grow { flex: none; overflow: hidden; min-height: 200px; }

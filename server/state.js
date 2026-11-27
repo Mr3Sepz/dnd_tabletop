@@ -19,8 +19,8 @@ const NAMES = {
   en: { character: 'Character', ac: 'AC', npc: 'New NPC', scene: 'New scene', firstScene: 'First scene', copy: 'copy' },
 };
 // Ping-Farben: Spieler wählen beim Einloggen eine davon (jede nur einmal), der DM hat Lila
-const PING_COLORS = ['#a71313', '#006D5B', '#2b53a7', '#d6a444', '#e3ded5'];
-const DM_PING_COLOR = '#c99be0';
+const PING_COLORS = ['#a71313', '#006D5B', '#2b53a7', '#d6a444', '#c99be0'];
+const DM_PING_COLOR = '#e3ded5'; // Weiß
 
 // Farbmarker für mehrere gleiche NPCs (statt Zahl oder Buchstabe), zufällig vergeben
 const BADGE_COLORS = [
@@ -722,6 +722,7 @@ function applyAction(state, who, action) {
       if ('name' in p) sc.name = str(p.name, 80) || sc.name;
       if ('notes' in p) sc.notes = str(p.notes, LONG_TEXT);
       if ('night' in p) sc.night = bool(p.night);
+      if ('rain' in p) sc.rain = ['off', 'light', 'medium', 'heavy'].includes(p.rain) ? p.rain : 'off'; // Regen-Overlay
       if ('mapScale' in p) sc.mapScale = Math.min(10, Math.max(0.05, num(p.mapScale, 1)));
       if ('background' in p) {
         sc.background = p.background && p.background.assetId ? { assetId: str(p.background.assetId, 60) } : null;
@@ -1560,7 +1561,7 @@ function viewForPlayer(state, seatNo) {
     activeSceneId: scene.id,
     scenes: [{
       id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale, rotation: scene.rotation || 0,
-      grid: scene.grid, night: scene.night, lights: scene.lights || [], clouds: scene.clouds || [], bolts: scene.bolts || [], tokens, drawings,
+      grid: scene.grid, night: scene.night, lights: scene.lights || [], clouds: scene.clouds || [], bolts: scene.bolts || [], rain: scene.rain || 'off', tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
     seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken, color: s.claimToken ? s.color || null : null })),

@@ -103,7 +103,7 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Münzbilder | ✅ | Standardbilder, eigene Bilder (DM), nicht in der Bildersammlung |
 | — | Zweisprachig | ✅ | Deutsch mit englischen Fachbegriffen darunter; komplette englische Oberfläche (UK), umschaltbar pro Gerät; Infotexte in beiden Sprachen |
 | — | Attribut-Effekte | ✅ | +/− Wert auf ein Attribut für X Runden (Tränke, Zauber, Flüche), grün/rot im Bogen, abhängige Werte rechnen mit, laufen von selbst ab; mehrere gleichzeitig |
-| — | Bildersammlung als eigener Reiter mit Ordnern | ✅ | Charaktere/NPCs, Objekte, Karten, Sonstiges; Auswahllisten zeigen nur den passenden Ordner; nur für den DM |
+| — | Bildersammlung (Inhalte → Bilder) mit Ordnern | ✅ | Charaktere/NPCs, Objekte, Karten, Sonstiges; Auswahllisten zeigen nur den passenden Ordner; nur für den DM |
 | — | NPCs mit Werten | ✅ | NPCs haben Attribute, Fertigkeiten, Rettungswürfe; reine Figuren ohne Verknüpfung bleiben möglich |
 | — | NPC ↔ Figur verbunden | ✅ | Name und Bild gehen auf die Figuren über; NPC löschen löscht seine Figuren |
 | — | Farbmarker | ✅ | Mehrere gleiche NPCs mit zufällig gefärbtem Kreis statt Zahl/Buchstabe |
@@ -117,13 +117,16 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Sechseck-Raster | ✅ | Quadrate, Sechsecke (Spitze oder flache Seite oben); Einrasten und Lineal zählen Sechsecke |
 | — | Bearbeitungsmodus | ✅ | Spieler sehen den letzten Live-Stand, bis der DM live schaltet |
 | — | NPCs/Gegner | ✅ | Unterreiter, Angriffe, Werte über Attributen, einklappbare Liste, Kopien im aktuellen Zustand mit freiem Marker |
-| — | Ping | ✅ | 📍 oder Alt + Klick; Spielerfarbe beim Einloggen (je Farbe einmal), DM lila |
-| — | Tagebuch | ✅ | 📖 groß in der Mitte, Buch/PADD/PDA/Tablet je nach Theme, Lesezeichen Quests · Gemeinsame Notizen · Privates Tagebuch, Umblättern statt Scrollen; ersetzt den Reiter Notizen |
-| — | Blitze malen | ✅ | ⚡ Gebiete mit zufällig zuckenden Blitzen, bunt oder feste Farbe |
+| — | Ping | ✅ | Zielscheibe oder Alt + Klick; Spielerfarbe beim Einloggen (Rot, Grün, Blau, Gelb, Lila; je Farbe einmal), DM weiß |
+| — | Tagebuch | ✅ | Runder Knopf unten links, groß in der Mitte, Buch/PADD/PDA/Tablet je nach Theme, Lesezeichen Quests · Gemeinsame Notizen · Privates Tagebuch; Bücher blättern, Geräte scrollen; Löschen-Rückfrage liegt davor |
+| — | Blitze malen | ✅ | Gemalte Gebiete blitzen grell auf (Lichtschein, keine Strich-Blitze), zufälliges An/Aus je Gebiet, Farbe wählbar |
+| — | Regen | ✅ | Animiertes Overlay pro Szene: Aus, Niesel, Regen, Starkregen; für alle sichtbar |
+| — | Reiter „Inhalte“ | ✅ | Unterreiter Szenen · Figuren · Bilder · Zeichnen und Malen (Zeichnen, Fog of War, Licht, Nebel, Blitze, Regen) |
+| — | Eigene Symbole | ✅ | SVG-Symbole statt Emojis in der Werkzeugleiste und bei Weltkarte, Chat, Tagebuch, Würfel |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |
 | — | Themes | ✅ | Standard, Nacht (Darkmode), Pergament, Gruft, Messing, Zukunft, Neon, 8-Bit, Konsole; pro Gerät, Schriften lokal (OFL/Apache) |
-| — | Weltkarte mit Pins | ✅ | 🌍 für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
+| — | Weltkarte mit Pins | ✅ | Runder Knopf unten links, für alle; Pins goldgelb (DM) / blau (Spieler); DM verknüpft Pins mit Szenen |
 | — | Zuschauer-Bildschirm | ✅ | `/spectator`: Live-Szene wie bei Spielern, nur Karte und Leiste, belegt keinen Platz |
 | — | Bildersammlung: „Verwenden als“ | ✅ | Figur, NPC, Objekt, Szenenkarte, Weltkarte |
 
