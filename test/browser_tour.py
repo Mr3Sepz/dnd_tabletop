@@ -191,18 +191,23 @@ try:
         dialog_ok(dm)
         click_world(dm, G * 5.5, G * 2.5)
 
-        step('Zeichnen: Grat als Rechteck')
-        dm.click('button.tool[title="Rechteck zeichnen"]')
+        step('Zeichnen: Grat als Rechteck (Inhalte → Zeichnen und Malen)')
+        sub(dm, 'paint')
+        assert dm.locator('#toolbar button.tool[title="Rechteck zeichnen"]').count() == 0, 'nichts zum Zeichnen in der Werkzeugleiste'
+        dm.locator('#tabBody button.tool-btn', has_text='Rechteck').click()
+        assert dm.locator('#toolbar .tb-current').count() == 1, 'aktives Werkzeug steht in der Werkzeugleiste'
         drag_world(dm, (G * 12.5, G * 10.2), (G * 18.5, G * 13))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
 
         step('Freihand: Linie auswählen, Mülleimer und Entf-Taste löschen, Radierer')
-        dm.click('#toolbar button.tool[title="Freihand zeichnen"]')
-        # alle Optionen der Werkzeugleiste sind erreichbar, nichts liegt unter dem Würfelknopf
+        dm.locator('#tabBody button.tool-btn', has_text='Freihand').click()
+        # Werkzeugleiste: nur noch Auswählen, Messen, Ping, Würfel, Objekt, Schablone (+ aktives Malwerkzeug)
         tb = dm.locator('#toolbar').bounding_box(); dice_btn = dm.locator('.world-fab').bounding_box()
-        assert tb['y'] + tb['height'] <= dice_btn['y'], 'Werkzeugleiste endet über dem Würfelknopf'
-        dm.locator('#toolbar .tb-style').last.scroll_into_view_if_needed()
-        shot(dm, '43-werkzeugleiste.png', clip={'x': 0, 'y': tb['y'] - 10, 'width': 260, 'height': 900 - tb['y'] + 10})
+        assert tb['y'] + tb['height'] <= dice_btn['y'], 'Werkzeugleiste endet über den runden Knöpfen'
+        assert dm.locator('#toolbar .tb-style').count() == 0
+        assert dm.locator('#toolbar .tb-current').count() == 1
+        dm.locator('#tabBody .paint-range', has_text='Strichstärke').locator('input').evaluate("(el) => { el.value = 6; el.dispatchEvent(new Event('input')); }")
+        shot(dm, '43-werkzeugleiste.png', clip={'x': 0, 'y': tb['y'] - 10, 'width': 260, 'height': tb['height'] + 110})
         drag_world(dm, (G * 1, G * 12), (G * 5, G * 13))
         drag_world(dm, (G * 1, G * 14), (G * 6, G * 14))
         n_before = dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length")
@@ -214,7 +219,7 @@ try:
         shot(dm, '44-zeichnung-muelleimer.png', clip={'x': max(0, lx - 260), 'y': ly - 200, 'width': 560, 'height': 320})
         dm.keyboard.press('Delete'); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length") == 1, 'Entf löscht'
-        dm.click('#toolbar button.tool[title^="Radierer"]')
+        dm.locator('#tabBody button.tool-btn', has_text='Radierer').click()
         drag_world(dm, (G * 3.5, G * 13.3), (G * 3.5, G * 14.7)); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.drawings.filter(d => d.type === 'line').length") == 2, 'Radierer teilt die Linie'
         dm.click('button.tool[title="Auswählen und Verschieben"]')
@@ -620,7 +625,7 @@ try:
         sub(dm, 'paint')
         assert dm.locator('.content-subtabs button.active').get_attribute('data-sub') == 'paint'
         dm.locator('#tabBody button.tool-btn', has_text='Licht malen').click(); time.sleep(0.2)
-        dm.locator('#toolbar input[type=color]').first.evaluate("(el) => { el.value = '#4aa8ff'; el.dispatchEvent(new Event('change')); }")
+        dm.locator('#tabBody fieldset', has_text='Farbe des Lichts').locator('input[type=color]').evaluate("(el) => { el.value = '#4aa8ff'; el.dispatchEvent(new Event('input')); }")
         click_world(dm, G * 15.5, G * 9.5); time.sleep(0.5)
         assert dm.evaluate("window.dnd.board.scene.lights.at(-1).color") == '#4aa8ff'
         dm.locator('#tabBody button.tool-btn', has_text='Nebel malen').click(); time.sleep(0.2)
@@ -640,6 +645,40 @@ try:
         shot(dm, '68-regen.png')
         dm.get_by_role('button', name='Aus', exact=True).click(); time.sleep(0.4)
         assert dm.locator('.rain-overlay').count() == 0
+
+        # Unterreiter bleiben stehen, nur der Inhalt scrollt
+        dm.evaluate("document.getElementById('tabBody').scrollTop = 99999"); time.sleep(0.2)
+        st_top = dm.locator('.content-subtabs').bounding_box()['y']; body_top = dm.locator('#tabBody').bounding_box()['y']
+        assert abs(st_top - body_top) < 12, (st_top, body_top)
+
+        # Feuerschein: flackert, Stärke und Flackern einstellbar, getrennt vom Licht
+        sub(dm, 'scenes')
+        dm.locator('label.check', has_text='Nachtfilter').locator('input').check(); time.sleep(0.4)
+        sub(dm, 'paint')
+        n_lights = dm.evaluate("window.dnd.board.scene.lights.length")
+        fire_box = dm.locator('#tabBody fieldset', has_text='Feuerschein')
+        fire_box.locator('button.tool-btn', has_text='Feuerschein malen').click(); time.sleep(0.2)
+        fire_box.locator('.paint-range', has_text='Stärke').locator('input').evaluate("(el) => { el.value = 9; el.dispatchEvent(new Event('input')); }")
+        fire_box.locator('.paint-range', has_text='Flackern').locator('input').evaluate("(el) => { el.value = 8; el.dispatchEvent(new Event('input')); }")
+        drag_world(dm, (G * 3, G * 10.5), (G * 4.5, G * 10.8)); time.sleep(0.5)
+        f = dm.evaluate("window.dnd.board.scene.fires.at(-1)")
+        assert (f['i'], f['f']) == (0.9, 0.8), f
+        assert mia.evaluate("window.dnd.board.scene.fires.length") == 1, 'Spieler sehen den Feuerschein'
+        assert dm.evaluate("window.dnd.board.scene.lights.length") == n_lights, 'Licht bleibt getrennt'
+        ops = set()
+        for _ in range(12):
+            ops.add(round(dm.evaluate("window.dnd.board.fireCache.chunks[0].node.opacity()"), 2)); time.sleep(0.08)
+        assert len(ops) > 3, f'Feuer flackert: {ops}'
+        fx, fy = world(dm, G * 3.8, G * 10.6)
+        shot(dm, '70-feuerschein.png', clip={'x': max(0, fx - 330), 'y': max(0, fy - 190), 'width': 660, 'height': 380})
+        dm.evaluate("(() => { const b = document.getElementById('tabBody'); const f = [...b.querySelectorAll('fieldset')].find((x) => x.textContent.includes('Feuerschein')); b.scrollTop = f.offsetTop - 60; })()"); time.sleep(0.2)
+        panel_shot(dm, '71-feuerschein-regler.png', 900)
+        dm.click('button.tool[title="Auswählen und Verschieben"]'); time.sleep(0.2)
+        dm.get_by_role('button', name='Allen Feuerschein löschen').click(); dialog_ok(dm); time.sleep(0.3)
+        assert dm.evaluate("window.dnd.board.scene.fires.length") == 0
+        sub(dm, 'scenes')
+        dm.locator('label.check', has_text='Nachtfilter').locator('input').uncheck(); time.sleep(0.4)
+        sub(dm, 'paint')
         dm.locator('#tabBody button.tool-btn', has_text='Blitze malen').click(); time.sleep(0.2)
         drag_world(dm, (G * 11, G * 2.5), (G * 15, G * 3.5)); time.sleep(0.3)
         assert dm.evaluate("window.dnd.board.scene.bolts.at(-1).color") == '#e6f0ff'
@@ -674,7 +713,8 @@ try:
         dm.click('#goLive'); time.sleep(0.4)
         assert 'Bearbeitung' in dm.locator('#goLive').inner_text()
         n_mia = mia.evaluate("window.dnd.board.scene.drawings.length")
-        dm.click('button.tool[title="Rechteck zeichnen"]')
+        sub(dm, 'paint')
+        dm.click('#tabBody button.tool-btn[title="Rechteck zeichnen"]')
         drag_world(dm, (G * 20, G * 2), (G * 24, G * 4)); time.sleep(0.4)
         dm.click('button.tool[title="Auswählen und Verschieben"]')
         assert mia.evaluate("window.dnd.board.scene.drawings.length") == n_mia, 'Spieler sehen die Änderung noch nicht'
@@ -822,9 +862,9 @@ try:
         upload(dm, 'Bild hochladen', art('hoehle.jpg'))
         sub(dm, 'paint')
         dm.get_by_role('button', name='Alles verdecken').click(); time.sleep(0.3)
-        dm.click('button.tool[title="Nebel aufdecken (Rechteck)"]')
+        dm.click('#tabBody button.tool-btn[title="Nebel aufdecken (Rechteck)"]')
         drag_world(dm, (G * 1.6, G * 1.6), (G * 7.4, G * 6.4))
-        dm.click('button.tool[title="Nebel aufdecken (Pinsel)"]')
+        dm.click('#tabBody button.tool-btn[title="Nebel aufdecken (Pinsel)"]')
         drag_world(dm, (G * 5, G * 6.4), (G * 5, G * 8.5))
         dm.click('button.tool[title="Auswählen und Verschieben"]')
         # Plätze (wer ist wo) stehen jetzt im Reiter „Szenen“
@@ -1008,6 +1048,30 @@ try:
         b.close()
 except Exception as e:
     errors.append(f'Startfenster-Bild: {e}')
+
+# Neustart: Der letzte Spielstand wird nicht von selbst geladen, der DM wird gefragt
+try:
+    srv = subprocess.Popen(['node', 'server/index.js'], cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    time.sleep(1.2)
+    with sync_playwright() as p:
+        chrome = os.environ.get('CHROME')
+        b = p.chromium.launch(executable_path=chrome, args=['--no-sandbox']) if chrome else p.chromium.launch()
+        dm = b.new_page(locale='de-DE', viewport={'width': 1440, 'height': 900}, device_scale_factor=1)
+        watch(dm, 'dm-neustart')
+        dm.goto(BASE + '/dm')
+        dm.wait_for_selector('.restore-dialog'); time.sleep(0.4)
+        assert 'Waldweg' in dm.locator('.restore-dialog').inner_text()
+        assert dm.evaluate("window.dnd.state.scenes.some((s) => s.name === 'Waldweg')") is False, 'noch nicht geladen'
+        dm.locator('.restore-dialog').screenshot(path=os.path.join(OUT, '72-spielstand-laden.png'))
+        dm.locator('.restore-dialog button.primary', has_text='Laden').click(); time.sleep(0.8)
+        assert dm.locator('.restore-dialog').count() == 0
+        assert dm.evaluate("window.dnd.state.scenes.some((s) => s.name === 'Waldweg')"), 'geladen'
+        steps.append('Neustart: Rückfrage „Letzten Spielstand laden?“')
+        b.close()
+except Exception as e:
+    errors.append(f'Neustart: {e}')
+finally:
+    srv.terminate(); srv.communicate(timeout=5)
 
 print('\nSchritte:', len(steps))
 print('Konsolenfehler:', json.dumps(errors, indent=1, ensure_ascii=False))

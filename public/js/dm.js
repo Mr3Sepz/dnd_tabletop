@@ -115,7 +115,7 @@ function open(payload) {
     onState: (s) => { detectDowned(s); state = s; setHelpOverrides(s.helpTexts); dice.setLog(s.diceLog || []); world.update(s); render(); },
     onChat: (m) => chat.receive(m),
     onChatHistory: (list) => chat.setHistory(list),
-    onInfo: (i) => { info = i; if (tab === 'game') renderPanel(true); },
+    onInfo: (i) => { info = i; if (i.pendingSave) askRestore(i.pendingSave); if (tab === 'game') renderPanel(true); },
     onSaved: (i) => { if (info) info.lastSaved = i.lastSaved; if (tab === 'game') renderPanel(); },
     onDice: (r) => dice.announce(r),
     onPing: (m) => { window.dnd.lastPing = m; if (board.scene && m.sceneId === board.scene.id) board.showPing(m.x, m.y, m.color, m.name); },
@@ -221,9 +221,7 @@ const board = new Board($('#board'), {
   onDrawingContext: (d, x, y) => { if (!previewSeat) drawingMenu(d, x, y); },
   onCreateDrawing: (d) => act({ type: 'drawing.create', sceneId: editScene().id, drawing: d }),
   onFogShape: (shape) => act({ type: 'fog.add', sceneId: editScene().id, shape }),
-  onLight: (light) => act({ type: 'light.add', sceneId: editScene().id, light }),
-  onCloud: (cloud) => act({ type: 'cloud.add', sceneId: editScene().id, cloud }),
-  onBolt: (bolt) => act({ type: 'bolt.add', sceneId: editScene().id, bolt }),
+  onPaint: (kind, stroke) => act({ type: `${kind}.add`, sceneId: editScene().id, [kind]: stroke }),
   onPing: (p) => conn.ping(boardSceneId(), p.x, p.y),
   onToolDone: () => renderToolbar(),
   onSelectionChange: (ids) => { selection = ids; renderSelbar(); if (tab === 'content' && contentSub === 'tokens') renderPanel(); },
@@ -307,8 +305,43 @@ function updateBanner(msg) {
   b.classList.toggle('hidden', parts.length === 0);
 }
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { placing = null; hideMenu(); updateBanner(); board.setTool('select'); renderToolbar(); }
+  if (e.key === 'Escape') { placing = null; hideMenu(); setTool('select'); }
 });
+
+// ================================================================ Spielstand beim Start
+
+/**
+ * Beim Start lädt der Server den letzten Spielstand nicht von selbst. Kleines Fenster:
+ * laden, nicht laden (neu beginnen) oder erst herunterladen.
+ */
+let restoreOpen = false;
+function askRestore(ps) {
+  if (restoreOpen) return;
+  restoreOpen = true;
+  const when = ps.savedAt ? new Date(ps.savedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  const decide = async (load) => {
+    const r = await conn.request('restore.decide', { load });
+    if (!r || !r.ok) return toast((r && r.error) || 'Hat nicht geklappt', 'error');
+    overlay.remove(); restoreOpen = false;
+    if (info) info.pendingSave = null;
+    toast(load ? 'Letzter Spielstand geladen' : 'Neues Spiel. Der alte Spielstand liegt im Ordner „alte-spielstaende“.');
+  };
+  const details = [
+    ps.sceneCount ? `${ps.sceneCount} Szene(n): ${ps.scenes.join(', ')}${ps.sceneCount > ps.scenes.length ? ' …' : ''}` : null,
+    ps.characters.length ? `Charaktere: ${ps.characters.join(', ')}` : null,
+  ].filter(Boolean);
+  const overlay = h('div.overlay.restore-overlay', {}, h('div.dialog.restore-dialog', { role: 'dialog', 'aria-label': 'Letzten Spielstand laden?' },
+    h('h3', {}, 'Letzten Spielstand laden?'),
+    h('p', {}, when ? `Gespeichert am ${when}.` : 'Es gibt einen gespeicherten Spielstand.'),
+    details.length ? h('ul.dialog-list', {}, ...details.map((d) => h('li', {}, d))) : null,
+    h('p.hint', {}, 'Bis du dich entscheidest, bleibt der Spielstand unverändert.'),
+    h('div.dialog-buttons.restore-buttons', {},
+      h('a.button', { href: `/api/export-saved?session=${encodeURIComponent(conn.session)}`, download: '' }, 'Herunterladen'),
+      h('button', { type: 'button', onclick: () => decide(false) }, 'Nicht laden'),
+      h('button.primary', { type: 'button', onclick: () => decide(true) }, 'Laden'))));
+  document.body.append(overlay);
+  setTimeout(() => overlay.querySelector('button.primary')?.focus(), 30);
+}
 
 // ================================================================ Werkzeugleiste
 
@@ -316,32 +349,29 @@ document.addEventListener('keydown', (e) => {
 function renderToolbar() {
   const tb = $('#toolbar');
   const tool = board.tool;
-  const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], 'aria-label': TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); } }, icon(key));
-  const style = board.drawStyle;
-  tb.replaceChildren(...[
+  const btn = (key) => h(`button.tool${tool === key ? '.active' : ''}`, { title: TOOLS[key], 'aria-label': TOOLS[key], onclick: () => setTool(key) }, icon(key));
+  // Zeichnen und Malen steht nur noch unter „Inhalte → Zeichnen und Malen“
+  tb.replaceChildren(
     btn('select'), btn('measure'), btn('ping'), dice.button,
     h('span.tb-sep'),
-    btn('rect'), btn('ellipse'), btn('line'), btn('eraser'),
     h('button.tool', { title: 'Objekt aus der Bildersammlung setzen (z. B. Wagen, Tür)', 'aria-label': 'Objekt setzen', onclick: placeObject }, icon('object')),
     h('button.tool', { title: 'Zauberschablone setzen (Kreis, Kegel, Linie, Würfel)', 'aria-label': 'Zauberschablone setzen', onclick: () => placeTemplate() }, icon('template')),
-    h('span.tb-sep'),
-    btn('fog-rect-reveal'), btn('fog-rect-hide'), btn('fog-brush-reveal'), btn('fog-brush-hide'),
-    h('span.tb-sep'),
-    btn('light-brush'), btn('light-eraser'), btn('cloud-brush'), btn('cloud-eraser'), btn('bolt-brush'), btn('bolt-eraser'),
-    ['rect', 'ellipse', 'line'].includes(tool) ? h('div.tb-style', {},
-      h('label', { title: 'Linienfarbe' }, h('input', { type: 'color', value: style.stroke, onchange: (e) => { style.stroke = e.target.value; } })),
-      h('label', { title: 'Füllung' }, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderToolbar(); } }),
-        style.fill ? h('input', { type: 'color', value: style.fill, onchange: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } }) : 'füllen'),
-      h('label', { title: 'Strichstärke' }, h('input', { type: 'range', min: 1, max: 30, value: style.strokeWidth, onchange: (e) => { style.strokeWidth = Number(e.target.value); } }))) : null,
-    tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') || tool.startsWith('bolt-') ? h('div.tb-style', {},
-      tool === 'bolt-brush' ? h('label', { title: 'Farbe des Blitzlichts' }, h('input', { type: 'color', value: board.boltColor, onchange: (e) => { board.boltColor = e.target.value; } })) : null,
-      tool === 'light-brush' ? h('label', { title: 'Farbe des Lichtscheins' }, h('input', { type: 'color', value: board.lightColor, onchange: (e) => { board.lightColor = e.target.value; } })) : null,
-      tool === 'cloud-brush' ? h('label', { title: 'Farbe des Nebels' }, h('input', { type: 'color', value: board.cloudColor, onchange: (e) => { board.cloudColor = e.target.value; } })) : null,
-      h('label', { title: 'Pinselgröße' }, 'Pinsel',
-        h('input', { type: 'range', min: 15, max: 300, value: board.brushRadius, onchange: (e) => { board.brushRadius = Number(e.target.value); } }))) : null,
-    tool === 'eraser' ? h('div.tb-style', {}, h('label', { title: 'Größe des Radierers' }, 'Größe',
-      h('input', { type: 'range', min: 5, max: 120, value: board.eraserRadius, onchange: (e) => { board.eraserRadius = Number(e.target.value); } }))) : null,
-  ].filter(Boolean));
+    isPaintTool(tool) ? h('button.tool.active.tb-current', { title: `${TOOLS[tool]} – antippen zum Beenden`, 'aria-label': `${TOOLS[tool]} beenden`, onclick: () => setTool('select') }, icon(tool)) : null,
+  );
+}
+
+/** Zeichnen- und Malwerkzeuge (nur im Unterreiter „Zeichnen und Malen“ wählbar). */
+const PAINT_TOOLS = new Set(['rect', 'ellipse', 'line', 'eraser', 'fog-rect-reveal', 'fog-rect-hide', 'fog-brush-reveal', 'fog-brush-hide',
+  ...['light', 'fire', 'cloud', 'bolt'].flatMap((k) => [`${k}-brush`, `${k}-eraser`])]);
+const isPaintTool = (t) => PAINT_TOOLS.has(t);
+
+/** Werkzeug wählen; ein aktives Malwerkzeug steht zusätzlich unten in der Werkzeugleiste (antippen = beenden). */
+function setTool(key) {
+  board.setTool(key);
+  renderToolbar();
+  if (tab === 'content' && contentSub === 'paint') renderPanel(true);
+  // Am Handy liegt die Seitenleiste über der Karte: zum Malen zuklappen
+  if (isPaintTool(key) && window.matchMedia('(max-width: 900px)').matches) document.body.classList.remove('panel-open');
 }
 
 async function placeObject(assetId) {
@@ -756,13 +786,14 @@ function tabContent() {
 function tabPaint() {
   const sc = editScene();
   const tool = (key, label) => h(`button.small.tool-btn${board.tool === key ? '.active' : ''}`, {
-    title: TOOLS[key], onclick: () => { board.setTool(key); renderToolbar(); renderPanel(true); },
+    title: TOOLS[key], onclick: () => setTool(board.tool === key ? 'select' : key),
   }, icon(key, 18), ` ${label}`);
   const drawn = sc.drawings.filter((d) => ['rect', 'ellipse', 'line'].includes(d.type));
   return [
     h('fieldset.lights-box', {}, h('legend', {}, 'Zeichnen'),
-      h('p.hint', {}, 'Rechtecke, Ellipsen und Freihandlinien, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Werkzeugleiste links ein. Ausgewählte Zeichnung löschen: 🗑 am Rahmen oder Entf.'),
+      h('p.hint', {}, 'Rechtecke, Ellipsen und Freihandlinien, z. B. für Deckung, Gelände oder einen brennenden Busch. Ausgewählte Zeichnung löschen: 🗑 am Rahmen oder Entf.'),
       h('div.row.wrap', {}, tool('rect', 'Rechteck'), tool('ellipse', 'Ellipse'), tool('line', 'Freihand'), tool('eraser', 'Radierer')),
+      drawStyleControls(),
       drawn.length ? h('ul.list', {}, ...drawn.map((d) => h('li', {},
         icon(d.type, 16),
         h('span', {}, d.label || { rect: 'Rechteck', ellipse: 'Ellipse', line: 'Linie' }[d.type]),
@@ -772,12 +803,14 @@ function tabPaint() {
     h('fieldset.lights-box', {}, h('legend', {}, 'Fog of War (Sicht der Spieler)'),
       h('label.check', {}, h('input', { type: 'checkbox', checked: sc.fog.enabled, onchange: (e) => act({ type: 'fog.update', sceneId: sc.id, patch: { enabled: e.target.checked } }) }), 'Nebel an (Spieler sehen nur Aufgedecktes)'),
       h('div.row.wrap', {}, tool('fog-rect-reveal', 'Feld aufdecken'), tool('fog-rect-hide', 'Feld verdecken'), tool('fog-brush-reveal', 'Pinsel aufdecken'), tool('fog-brush-hide', 'Pinsel verdecken')),
+      paintRange('Pinselgröße', 15, 300, 1, board.brushSizes.fog, (v) => { board.brushSizes.fog = v; }, ['klein', 'groß']),
       h('div.row.wrap', {},
         h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'hideAll' }) }, 'Alles verdecken'),
         h('button.small', { onclick: () => act({ type: 'fog.reset', sceneId: sc.id, mode: 'revealAll' }) }, 'Alles aufdecken'),
         h('button.small', { disabled: !sc.fog.shapes.length, onclick: () => act({ type: 'fog.undo', sceneId: sc.id }) }, 'Rückgängig')),
       h('p.hint', {}, 'Du siehst den Nebel halb durchsichtig, die Spieler schwarz. Figuren im Nebel kommen bei den Spielern gar nicht erst an.')),
     paintBox(sc, 'light'),
+    paintBox(sc, 'fire'),
     paintBox(sc, 'cloud'),
     paintBox(sc, 'bolt'),
     h('fieldset.lights-box', {}, h('legend', {}, icon('rain', 18), ' Regen'),
@@ -1015,11 +1048,15 @@ function sliderSpin({ label, unit, min, max, step, value, name, onCommit }) {
 /** Licht bzw. Nebel/Wolken malen: Knöpfe, Farbe, Rückgängig, alles löschen (Tag und Nacht). */
 const PAINT = {
   light: { list: 'lights', legend: 'Licht', brush: 'Licht malen', eraser: 'Licht radieren', clearQ: 'Alle Lichter löschen?', clear: 'Alle Lichter löschen', count: (n) => `${n} Licht(er)`,
-    hint: 'Über Fackeln, Lagerfeuer oder Fenster malen: Dort leuchtet es für alle, bei Nacht wird es dort hell. Die Farbe des Scheins wählst du unter dem Werkzeug. Antippen ohne Ziehen = runder Lichtkreis.' },
-  cloud: { list: 'clouds', legend: 'Nebel und Wolken', brush: 'Nebel malen', eraser: 'Nebel radieren', clearQ: 'Allen Nebel löschen?', clear: 'Allen Nebel löschen', count: (n) => `${n} Nebelstrich(e)`,
-    hint: 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Farbe unter dem Werkzeug, z. B. grünlich für Giftgas. Figuren bleiben darüber sichtbar.' },
-  bolt: { list: 'bolts', legend: 'Blitze', brush: 'Blitze malen', eraser: 'Blitze radieren', clearQ: 'Alle Blitze löschen?', clear: 'Alle Blitze löschen', count: (n) => `${n} Blitzgebiet(e)`,
-    hint: 'Ein Gebiet malen, z. B. unter einer Gewitterwolke: Dort blitzt es grell auf, in unregelmäßigen Abständen an und aus, für alle sichtbar. Die Farbe des Blitzlichts wählst du unter dem Werkzeug.' },
+    color: 'lightColor', colorLabel: 'Farbe des Lichts',
+    hint: 'Ruhiges Licht, z. B. Fenster, Laternen oder magisches Leuchten: Dort leuchtet es für alle, bei Nacht wird es dort hell. Antippen ohne Ziehen = runder Lichtkreis.' },
+  fire: { list: 'fires', legend: 'Feuerschein', brush: 'Feuerschein malen', eraser: 'Feuerschein radieren', clearQ: 'Allen Feuerschein löschen?', clear: 'Allen Feuerschein löschen', count: (n) => `${n} Feuer`,
+    color: 'fireColor', colorLabel: 'Farbe des Feuers',
+    hint: 'Flackernder Schein für Fackeln, Lagerfeuer, Kamine oder Brände. Wie stark es flackert, stellst du unten ein; ganz schwach ist fast ruhig.' },
+  cloud: { color: 'cloudColor', colorLabel: 'Farbe des Nebels', list: 'clouds', legend: 'Nebel und Wolken', brush: 'Nebel malen', eraser: 'Nebel radieren', clearQ: 'Allen Nebel löschen?', clear: 'Allen Nebel löschen', count: (n) => `${n} Nebelstrich(e)`,
+    hint: 'Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Grünlich passt z. B. für Giftgas. Figuren bleiben darüber sichtbar.' },
+  bolt: { color: 'boltColor', colorLabel: 'Farbe des Blitzlichts', list: 'bolts', legend: 'Blitze', brush: 'Blitze malen', eraser: 'Blitze radieren', clearQ: 'Alle Blitze löschen?', clear: 'Alle Blitze löschen', count: (n) => `${n} Blitzgebiet(e)`,
+    hint: 'Ein Gebiet malen, z. B. unter einer Gewitterwolke: Dort blitzt es grell auf, in unregelmäßigen Abständen an und aus, für alle sichtbar.' },
 };
 
 /** Licht, Nebel/Wolken bzw. Blitze malen: Knöpfe, Rückgängig, alles löschen (Tag und Nacht). */
@@ -1031,13 +1068,42 @@ function paintBox(sc, kind) {
   return h('fieldset.lights-box', {}, h('legend', {}, icon(`${kind}-brush`, 18), ` ${k.legend}`),
     h('p.hint', {}, k.hint),
     h('div.row.wrap', {},
-      h(`button.small.tool-btn${on(`${kind}-brush`) ? '.active' : ''}`, { onclick: () => { board.setTool(`${kind}-brush`); renderToolbar(); renderPanel(true); } }, icon(`${kind}-brush`, 18), ` ${k.brush}`),
-      h(`button.small.tool-btn${on(`${kind}-eraser`) ? '.active' : ''}`, { onclick: () => { board.setTool(`${kind}-eraser`); renderToolbar(); renderPanel(true); } }, icon(`${kind}-eraser`, 18), ` ${k.eraser}`),
+      h(`button.small.tool-btn${on(`${kind}-brush`) ? '.active' : ''}`, { onclick: () => setTool(on(`${kind}-brush`) ? 'select' : `${kind}-brush`) }, icon(`${kind}-brush`, 18), ` ${k.brush}`),
+      h(`button.small.tool-btn${on(`${kind}-eraser`) ? '.active' : ''}`, { onclick: () => setTool(on(`${kind}-eraser`) ? 'select' : `${kind}-eraser`) }, icon(`${kind}-eraser`, 18), ` ${k.eraser}`),
       h('button.small', { disabled: !list.length, onclick: () => act({ type: `${kind}.undo`, sceneId: sc.id }) }, 'Rückgängig'),
       h('button.small', { disabled: !list.length, onclick: async () => {
         if (await dialog({ title: k.clearQ, okText: 'Löschen', danger: true })) act({ type: `${kind}.clear`, sceneId: sc.id });
       } }, k.clear),
-      h('span.hint', {}, k.count(n))));
+      h('span.hint', {}, k.count(n))),
+    h('div.paint-settings', {},
+      h('label.field.paint-color', {}, h('span', {}, k.colorLabel),
+        h('input', { type: 'color', value: board[k.color], oninput: (e) => { board[k.color] = e.target.value; } })),
+      paintRange('Pinselgröße', 15, 300, 1, board.brushSizes[kind], (v) => { board.brushSizes[kind] = v; }, ['klein', 'groß']),
+      paintRange(kind === 'fire' ? 'Stärke des Scheins' : 'Stärke', 1, 10, 1, Math.round(board.intensity[kind] * 10), (v) => { board.intensity[kind] = v / 10; }, ['schwach', 'stark']),
+      kind === 'fire' ? paintRange('Flackern', 0, 10, 1, Math.round(board.fireFlicker * 10), (v) => { board.fireFlicker = v / 10; }, ['ruhig', 'wild']) : null,
+      h('p.hint', {}, 'Gilt für die nächsten Striche. Schon Gemaltes bleibt, wie es ist.')));
+}
+
+/** Regler mit Beschriftung an beiden Enden, z. B. schwach … stark. */
+function paintRange(label, min, max, step, value, onInput, ends) {
+  const out = h('output', {}, String(value));
+  return h('label.field.paint-range', {}, h('span', {}, label, ' ', out),
+    h('div.row', {}, h('span.unit', {}, ends[0]),
+      h('input', { type: 'range', min, max, step, value, 'aria-label': label,
+        oninput: (e) => { const v = Number(e.target.value); out.textContent = String(v); onInput(v); } }),
+      h('span.unit', {}, ends[1])));
+}
+
+/** Farbe, Füllung und Strichstärke für Rechteck, Ellipse und Freihand; Größe des Radierers. */
+function drawStyleControls() {
+  const style = board.drawStyle;
+  return h('div.paint-settings', {},
+    h('div.row.wrap', {},
+      h('label.field.paint-color', {}, h('span', {}, 'Linienfarbe'), h('input', { type: 'color', value: style.stroke, oninput: (e) => { style.stroke = e.target.value; } })),
+      h('label.check', {}, h('input', { type: 'checkbox', checked: !!style.fill, onchange: (e) => { style.fill = e.target.checked ? (style.lastFill || '#8a6d3b') : null; renderPanel(true); } }), 'Füllen'),
+      style.fill ? h('label.field.paint-color', {}, h('span', {}, 'Füllfarbe'), h('input', { type: 'color', value: style.fill, oninput: (e) => { style.fill = e.target.value; style.lastFill = e.target.value; } })) : null),
+    paintRange('Strichstärke', 1, 30, 1, style.strokeWidth, (v) => { style.strokeWidth = v; }, ['dünn', 'dick']),
+    paintRange('Größe des Radierers', 5, 120, 1, board.eraserRadius, (v) => { board.eraserRadius = v; }, ['klein', 'groß']));
 }
 
 /** Plätze der Spieler mit ihrem Ort (Szene), steht im Reiter „Szenen“. */
@@ -1442,4 +1508,4 @@ setupViewToggles('dm', board);
 start();
 
 // Für automatische Tests (Koordinaten der Karte): window.dnd.board
-window.dnd = { board, act: (a) => act(a) }; // für Tests und die Browser-Konsole
+window.dnd = { board, act: (a) => act(a), get state() { return state; } }; // für Tests und die Browser-Konsole

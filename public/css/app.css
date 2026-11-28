@@ -676,3 +676,20 @@ small.term-en.under { display: block; margin-top: 1px; padding-left: 4px; font-s
 .tool-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
 fieldset legend .ico { vertical-align: -3px; }
 .content-subtabs .subtab { font-size: 0.78rem; padding-left: 4px; padding-right: 4px; }
+
+/* Unterreiter (NPCs/Gegner, Inhalte) bleiben unter den Reitern stehen, nur der Inhalt scrollt */
+.tab-body > .subtabs { position: sticky; top: -4px; z-index: 6; margin: -4px -14px 10px; padding: 8px 14px 0; background: var(--paper); box-shadow: 0 6px 8px -8px rgba(0, 0, 0, 0.35); }
+
+/* Rückfrage beim Start: letzten Spielstand laden? */
+.restore-dialog .restore-buttons { flex-wrap: wrap; }
+.restore-dialog .restore-buttons .button { text-decoration: none; margin-right: auto; }
+.paint-settings { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); display: grid; gap: 4px; }
+.paint-settings .paint-color { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; margin: 0; text-align: left; }
+.paint-settings .paint-color input[type=color] { width: 44px; height: 30px; padding: 0; }
+.paint-range { margin: 2px 0; }
+.paint-range > span output { font-weight: 700; color: var(--muted); }
+.paint-range .row { align-items: center; gap: 6px; }
+.paint-range input[type=range] { flex: 1; min-width: 0; }
+.paint-range .unit { font-size: 0.75rem; color: var(--muted); min-width: 2.4em; }
+.paint-range .unit:last-child { text-align: right; }
+#toolbar .tb-current { outline: 2px solid var(--accent); }

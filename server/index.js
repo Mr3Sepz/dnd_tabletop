@@ -45,12 +45,26 @@ const safeEqual = (a, b) => {
   return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
 };
 
+/** Kurzbeschreibung eines gespeicherten Spielstands für die Rückfrage beim Start. */
+function describeSave(st, at) {
+  return {
+    savedAt: at ? at.toISOString() : null,
+    scenes: st.scenes.map((s) => s.name).slice(0, 6),
+    sceneCount: st.scenes.length,
+    characters: st.characters.map((c) => c.name).filter(Boolean).slice(0, 8),
+  };
+}
+
 function createApp(overrides = {}) {
   const config = loadConfig(overrides);
   S.configureLanguage(config.language);
   S.configureSeats(config.seats);
   const store = new Store(config.dataDir);
-  let state = store.loadLatest() || S.createInitialState();
+  // Letzten Spielstand nicht einfach laden: Der DM entscheidet beim ersten Öffnen
+  // (laden, nicht laden, herunterladen). Bis dahin wird nichts überschrieben.
+  const saved = store.loadLatest();
+  let pendingSave = saved && !config.autoLoadSave ? describeSave(saved, store.savedAt()) : null;
+  let state = (config.autoLoadSave && saved) || S.createInitialState();
   if (config.pin && !state.settings.pin) state.settings.pin = String(config.pin);
   let dirty = false;
 
@@ -133,9 +147,22 @@ function createApp(overrides = {}) {
     res.send(store.exportZip(state));
   });
 
+  // Den beim Start gefundenen, noch nicht geladenen Spielstand herunterladen
+  app.get('/api/export-saved', requireDM, (_req, res) => {
+    const st = store.loadLatest();
+    if (!st) return res.sendStatus(404);
+    const d = store.savedAt() || new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const name = `dnd-spielstand_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.zip`;
+    res.set('Content-Type', 'application/zip');
+    res.set('Content-Disposition', `attachment; filename="${name}"`);
+    res.send(store.exportZip(st));
+  });
+
   app.post('/api/import', requireDM, express.raw({ type: () => true, limit: '1gb' }), (req, res) => {
     try {
       const fresh = store.importZip(req.body);
+      pendingSave = null;
       // Spieler bleiben auf ihren Plätzen.
       fresh.seats.forEach((seat) => { seat.claimToken = state.seats.find((x) => x.seat === seat.seat)?.claimToken || null; });
       state = fresh;
@@ -203,7 +230,7 @@ function createApp(overrides = {}) {
     const addresses = networkAddresses(config.port);
     for (const a of addresses) a.qr = await QRCode.toDataURL(a.url, { margin: 1, width: 220 });
     return {
-      addresses, pin: state.settings.pin, dmPasswordSet: !!config.dmPassword, autosaveMinutes: config.autosaveMinutes, lastSaved,
+      addresses, pin: state.settings.pin, dmPasswordSet: !!config.dmPassword, autosaveMinutes: config.autosaveMinutes, lastSaved, pendingSave,
       dataDir: config.dataDir, configPath: config.configPath, canShutdown: !!shutdownHandler, maxSeats: S.MAX_SEATS,
     };
   }
@@ -345,8 +372,31 @@ function createApp(overrides = {}) {
       ack({ ok: true });
     });
 
+    // Beim Start gefundener Spielstand: laden oder beiseitelegen und neu beginnen
+    socket.on('restore.decide', (req, ack = () => {}) => {
+      if (!who || who.role !== 'dm') return ack({ ok: false, error: 'Nur für den DM' });
+      if (!pendingSave) return ack({ ok: true });
+      if (req && req.load) {
+        const st = store.loadLatest();
+        if (!st) return ack({ ok: false, error: 'Spielstand nicht lesbar' });
+        // Wer schon auf einem Platz sitzt, bleibt dort
+        st.seats.forEach((seat) => { const cur = state.seats.find((x) => x.seat === seat.seat); if (cur && cur.claimToken) { seat.claimToken = cur.claimToken; seat.color = cur.color; } });
+        state = st;
+        pendingSave = null;
+        dirty = false;
+      } else {
+        store.archive();
+        pendingSave = null;
+        dirty = true;
+        saveNow();
+      }
+      broadcastNow();
+      ack({ ok: true });
+    });
+
     socket.on('save.now', (ack = () => {}) => {
       if (!who || who.role !== 'dm') return ack({ ok: false, error: 'Nur für den DM' });
+      if (pendingSave) return ack({ ok: false, error: 'Erst entscheiden, ob der letzte Spielstand geladen wird' });
       saveNow();
       ack({ ok: true, lastSaved });
     });
@@ -394,6 +444,7 @@ function createApp(overrides = {}) {
   // ---------- Autosave (L1) ----------
   let lastSaved = null;
   function saveNow() {
+    if (pendingSave) return; // alter Spielstand bleibt unangetastet, bis der DM entschieden hat
     try {
       store.save(state);
       dirty = false;
@@ -409,6 +460,7 @@ function createApp(overrides = {}) {
   return {
     app, server, io, config,
     getState: () => state,
+    getPendingSave: () => pendingSave,
     saveNow,
     setShutdownHandler(fn) { shutdownHandler = fn; },
     start() {

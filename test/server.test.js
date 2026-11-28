@@ -1153,3 +1153,25 @@ test('Regen: nur DM, nur gültige Stufen, Spieler sehen ihn', async () => {
   assert.equal(sc.rain, 'off');
   p.c.close(); dm.c.close();
 });
+
+test('Feuerschein: eigene Ebene mit Stärke und Flackern, Stärke auch bei Licht, Nebel, Blitzen', async () => {
+  const dm = await joinDM();
+  const p = await joinPlayer(1);
+  const st = inst.getState();
+  const sc = st.scenes.find((x) => x.id === st.activeSceneId);
+  assert.equal((await act(p.c, { type: 'fire.add', sceneId: sc.id, fire: { points: [1, 1], r: 30 } })).ok, false);
+  await act(dm.c, { type: 'fire.add', sceneId: sc.id, fire: { points: [10, 10, 40, 40], r: 50, color: '#ff7a1a', i: 0.9, f: 2 } });
+  await act(dm.c, { type: 'fire.add', sceneId: sc.id, fire: { points: [10, 10], r: 20, erase: true, i: 1 } });
+  assert.deepEqual([sc.fires[0].i, sc.fires[0].f], [0.9, 1], 'Flackern auf 0–1 begrenzt');
+  assert.equal(sc.fires[1].i, undefined, 'Radierstrich ohne Stärke');
+  assert.equal(require('../server/state').viewForPlayer(st, 1).scenes[0].fires.length, 2);
+  for (const kind of ['light', 'cloud', 'bolt']) {
+    await act(dm.c, { type: `${kind}.add`, sceneId: sc.id, [kind]: { points: [5, 5], r: 40, i: 0.02 } });
+  }
+  assert.deepEqual([sc.lights.at(-1).i, sc.clouds.at(-1).i, sc.bolts.at(-1).i], [0.1, 0.1, 0.1], 'Stärke mindestens 0,1');
+  await act(dm.c, { type: 'fire.undo', sceneId: sc.id });
+  assert.equal(sc.fires.length, 1);
+  await act(dm.c, { type: 'fire.clear', sceneId: sc.id });
+  assert.equal(sc.fires.length, 0);
+  p.c.close(); dm.c.close();
+});

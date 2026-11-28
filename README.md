@@ -86,7 +86,7 @@ Im Reiter **Spiel** steht ein QR-Code. Die Spieler scannen ihn mit dem Handy, w�
 | --- | --- |
 | **Kopfzeile** | Welche Szene die Spieler sehen · welche Szene du gerade bearbeitest · **Live schalten** bzw. **🟢 Ist live / ✏️ Bearbeitung** · **Spielersicht**-Vorschau · Zoom · **Karte aus/ein** · **⛶ Vollbild** · **EN/DE** Sprache · **🎨** Theme (Darkmode, Pergament, Gruft …) · grüner Punkt = verbunden |
 | **Porträtleiste** (oben) | Links **Runde** und **Effekttimer**, daneben alle Kampfteilnehmer in Initiative-Reihenfolge. Wer dran ist, hat einen roten Rahmen. Die Spieler sehen die Leiste auch |
-| **Werkzeugleiste** (links auf der Karte) | Auswählen · Messen · Ping · **Würfel** · Rechteck, Ellipse, Freihand, Radierer · Objekt · Zauberschablone · Fog of War · Licht, Nebel, Blitze. Alle Werkzeuge haben eigene, schlichte Symbole; mit der Maus darüber steht der Name |
+| **Werkzeugleiste** (links auf der Karte) | Auswählen · Messen · Ping · **Würfel** · Objekt · Zauberschablone. Zeichnen und Malen stehen unter *Inhalte → Zeichnen und Malen*; ist dort ein Werkzeug aktiv, steht es zusätzlich unten in der Leiste (antippen = fertig). Alle Werkzeuge haben eigene, schlichte Symbole; mit der Maus darüber steht der Name |
 | **Karte** (Mitte) | Mausrad oder zwei Finger = Zoom, Fläche ziehen = verschieben, **Rechtsklick** oder **lange drücken** auf eine Figur = Menü |
 | **Seitenleiste** (rechts) | Reiter *Spieler · NPCs · Inventar · **Inhalte** · Spiel*. *Inhalte* hat vier Unterreiter: **Szenen · Figuren · Bilder · Zeichnen und Malen** |
 | **Runde Knöpfe** (unten links) | **Weltkarte** (grün) · **Chat** (blau) · **Tagebuch** (rot) mit Quests und Notizen |
@@ -140,9 +140,9 @@ Alles, was zur Karte gehört, steckt im Reiter **Inhalte**, mit vier Unterreiter
 | **Szenen** | Szenen anlegen und wechseln, Karte, Raster, Nachtfilter, Notiz zur Szene, ganz unten die Plätze der Spieler |
 | **Figuren** | Liste der Objekte und Schablonen der Szene |
 | **Bilder** | Deine Bildersammlung mit Ordnern |
-| **Zeichnen und Malen** | Rechteck, Ellipse, Freihand, Radierer und die Zeichnungen der Szene · Fog of War · Licht · Nebel und Wolken · Blitze · Regen |
+| **Zeichnen und Malen** | Rechteck, Ellipse, Freihand, Radierer und die Zeichnungen der Szene · Fog of War · Licht · **Feuerschein** · Nebel und Wolken · Blitze · Regen. Jeder Kasten hat seine Einstellungen direkt dabei: Farbe, Pinselgröße und **Stärke** (schwach bis stark), beim Feuer zusätzlich **Flackern** |
 
-Die Zauberschablonen bleiben in der Werkzeugleiste, weil auch die Spieler sie benutzen.
+Alle Zeichen- und Malwerkzeuge gibt es **nur hier**, die Werkzeugleiste bleibt dadurch kurz. Objekte und Zauberschablonen bleiben in der Werkzeugleiste, weil auch die Spieler Schablonen benutzen. Beim Scrollen bleiben die Unterreiter (wie bei *NPCs / Gegner*) oben stehen, nur der Inhalt darunter scrollt. Am Handy klappt die Seitenleiste nach der Wahl eines Malwerkzeugs von selbst zu, damit du auf der Karte malen kannst.
 
 <img src="docs/img/67-zeichnen-und-malen.webp" width="300" alt="Unterreiter Zeichnen und Malen mit Zeichenwerkzeugen und Fog of War">
 
@@ -163,7 +163,12 @@ Eine **Szene** ist ein Ort mit eigener Karte, eigenen Figuren, Zeichnungen und e
 - **Figuren rasten im Feld ein:** Figuren springen beim Loslassen in die Feldmitte. Pro Szene abschaltbar.
 - **Karte drehen:** **⟲ 90°** und **⟳ 90°** drehen die ganze Szene. Figuren, Zeichnungen, Nebel und Raster drehen mit, nichts verrutscht. Praktisch, wenn eine Karte im Hochformat ist oder anders herum auf dem Tisch liegen soll.
 - **Nachtfilter:** Macht aus einer Tagkarte eine Nachtszene.
-- **Licht malen** (Tag und Nacht, *Inhalte → Zeichnen und Malen* oder Laterne in der Werkzeugleiste): Du malst über Fackeln, Lagerfeuer oder Fenster. Dort leuchtet es für alle; bei Nacht wird es dort hell. Die **Farbe des Scheins** wählst du unter dem Werkzeug, Standard ist warmes Feuer-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. Die Größe stellst du unter dem Werkzeug ein. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im Kasten *Licht*.
+- **Licht malen** (Tag und Nacht, *Inhalte → Zeichnen und Malen*): **ruhiges** Licht für Fenster, Laternen oder magisches Leuchten. Dort leuchtet es für alle; bei Nacht wird es dort hell. **Farbe**, **Pinselgröße** und **Stärke** (schwach bis stark) stellst du im Kasten *Licht* ein, Standard ist ein warmes Gelb-Orange; Blau passt z. B. für magisches Licht, Grün für Irrlichter. Antippen ohne Ziehen = runder Lichtkreis. Mit **Licht radieren** wischst du über eine helle Stelle und nimmst das Licht dort weg. *Rückgängig* (auch fürs Radieren) und *Alle Lichter löschen* stehen im selben Kasten.
+- **Feuerschein malen:** bewusst getrennt vom Licht. Der Schein **flackert** unruhig, Stück für Stück verschieden, wie bei Fackeln, Lagerfeuern, Kaminen oder einem brennenden Haus. Im Kasten *Feuerschein* stellst du **Stärke des Scheins** (schwach bis stark) und **Flackern** (ruhig bis wild) ein, dazu Farbe und Pinselgröße. Bei Nacht hellt der Feuerschein die Dunkelheit auf. **Feuerschein radieren** nimmt ihn an einer Stelle wieder weg.
+
+  <img src="docs/img/70-feuerschein.webp" width="460" alt="Flackernder Feuerschein neben dem Wagen bei Nacht">
+  <img src="docs/img/71-feuerschein-regler.webp" width="300" alt="Kasten Feuerschein mit Reglern für Pinselgröße, Stärke und Flackern">
+- **Stärke bei allen Maleffekten:** Licht, Feuerschein, Nebel und Blitze haben neben der Pinselgröße einen Regler **Stärke** von schwach bis stark. Er gilt für die nächsten Striche; schon Gemaltes bleibt, wie es ist. So kannst du z. B. dünnen Dunst und dichten Nebel in derselben Szene malen.
 - **Blitze malen:** Du malst ein Gebiet, z. B. unter einer Gewitterwolke. Dort **blitzt es grell auf**, ein kräftiger Lichtschein ohne gezackte Linien. Zufällig ist das Timing: mal lange nichts, dann ein Flackern, ein-, zwei- oder dreimal hintereinander. Jedes gemalte Gebiet blitzt für sich. Die **Farbe des Blitzlichts** wählst du unter dem Werkzeug (Standard: kaltes Weiß). **Blitze radieren** nimmt Gebiete wieder weg. Alle sehen es; im Fog of War bleibt es verborgen.
 
   <img src="docs/img/66-blitze.webp" width="460" alt="Greller Blitzschein über dem Waldweg">
@@ -220,7 +225,7 @@ Jede Auswahl zeigt nur die Bilder aus ihrem Ordner. Ein Bild antippen öffnet di
 
 <img src="docs/img/62-gegner-angriffe.webp" width="340" align="right" alt="Unterreiter Gegner mit Bugbear: Angriffe mit Morgenstern">
 
-**NPCs und Gegner:** Der Reiter *NPCs* hat zwei gleich aufgebaute Unterreiter, **NPCs** (Händler, Verbündete, Pferde …) und **Gegner**. Neue Einträge landen in dem Unterreiter, in dem du gerade bist. Verschieben geht im Bogen mit **→ zu Gegnern** / **→ zu NPCs** oder für mehrere über die Auswahl. Ein Doppelklick in der Porträtleiste springt automatisch in den richtigen Unterreiter.
+**NPCs und Gegner:** Der Reiter *NPCs* hat zwei gleich aufgebaute Unterreiter, **NPCs** (Händler, Verbündete, Pferde …) und **Gegner**. Neue Einträge landen in dem Unterreiter, in dem du gerade bist. Verschieben geht im Bogen mit **→ zu Gegnern** / **→ zu NPCs** oder für mehrere über die Auswahl. Ein Doppelklick in der Porträtleiste springt automatisch in den richtigen Unterreiter. Die Unterreiter bleiben beim Scrollen oben stehen.
 
 **Bogen eines NPCs:** Trefferpunkte, Zustände, dann **Angriffe**, aufgebaut wie *Aktuelle Waffen* im Inventar: Name, Angriffsbonus, Schaden/Art und auf Wunsch ein Munitionszähler. Danach Zauberplätze, Zähler und Notiz. Die **Werte** (RK usw.) stehen ganz unten, direkt über den Attributen.
 
@@ -263,8 +268,8 @@ Beim Setzen eines NPCs wählst du:
 
 | Werkzeug | Wofür |
 | --- | --- |
-| Rechteck, Ellipse, Freihand | Auch unter *Inhalte → Zeichnen und Malen*, z. B. für Deckung, Gelände oder einen brennenden Busch. Farbe, Füllung und Strichstärke stellst du in der Leiste ein |
-| **Radierer** | Über Freihandlinien wischen. Wo du drüberfährst, verschwindet die Linie, der Rest bleibt stehen. Die Größe stellst du unter dem Werkzeug ein. Rechtecke, Ellipsen und Objekte radiert er nicht, die löschst du mit dem Mülleimer |
+| Rechteck, Ellipse, Freihand | Unter *Inhalte → Zeichnen und Malen*, z. B. für Deckung, Gelände oder einen brennenden Busch. Linienfarbe, Füllung und Strichstärke stehen direkt darunter |
+| **Radierer** | Über Freihandlinien wischen. Wo du drüberfährst, verschwindet die Linie, der Rest bleibt stehen. Ebenfalls unter *Zeichnen und Malen*, mit Regler für die Größe. Rechtecke, Ellipsen und Objekte radiert er nicht, die löschst du mit dem Mülleimer |
 | **Objekt** (Würfelkiste) | Jedes **eigene Bild** aus deiner Bildersammlung als **eckiges, drehbares** Ding auf der Karte: Wagen, Tür, Tisch, Kiste, Lagerfeuer. Der Unterschied zur Figur: Figuren sind rund und für Lebewesen gedacht (mit HP, Zuständen, Initiative). Objekte sind Gegenstände, die du frei drehen und strecken kannst |
 | **Schablone** | Kreis, Kegel, Linie oder Würfel in Fuß, z. B. „Feuerball, 20 ft“ |
 
@@ -274,9 +279,9 @@ Ein Klick mit 🖐 auf eine Zeichnung oder ein Objekt zeigt Griffe zum **Verschi
 
 <br clear="right">
 
-<img src="docs/img/43-werkzeugleiste.webp" width="130" align="left" alt="Werkzeugleiste mit eigenen Symbolen, endet über den runden Knöpfen">
+<img src="docs/img/43-werkzeugleiste.webp" width="130" align="left" alt="Kurze Werkzeugleiste: Auswählen, Messen, Ping, Würfel, Objekt, Schablone und das gerade aktive Malwerkzeug">
 
-Die **Werkzeugleiste** endet über den runden Knöpfen. Passt nicht alles hinein, z. B. die Einstellungen zum Freihandzeichnen (Farbe, Füllung, Strichstärke), scrollst du in der Leiste nach unten. Statt Emojis haben die Werkzeuge **eigene Symbole**, die überall gleich aussehen: Lineal, Zielscheibe (Ping), W20 (Würfel), Radiergummi, gestricheltes Feld mit Auge (Nebel aufdecken) bzw. durchgestrichenem Auge (verdecken), Laterne (Licht), Wolke, Blitzschein. Die Radier-Varianten haben einen kleinen roten Radiergummi.
+Die **Werkzeugleiste** ist kurz: Auswählen, Messen, Ping, Würfel, Objekt und Schablone. Ist unter *Zeichnen und Malen* ein Werkzeug aktiv, steht es zusätzlich unten in der Leiste; antippen beendet es (wie **Esc**). Statt Emojis haben die Werkzeuge **eigene Symbole**, die überall gleich aussehen: Lineal, Zielscheibe (Ping), W20 (Würfel), Radiergummi, gestricheltes Feld mit Auge (Nebel aufdecken) bzw. durchgestrichenem Auge (verdecken), Laterne (Licht), Wolke, Blitzschein. Die Radier-Varianten haben einen kleinen roten Radiergummi.
 
 <br clear="left">
  Per Rechtsklick kannst du sie **verstecken** (z. B. eine Falltür, die erst später auftaucht), **sperren**, nach vorne oder hinten legen, beschriften oder löschen.
@@ -488,7 +493,7 @@ Die **Spieler** pflegen ihr Inventar im eigenen Reiter *Inventar*. Andere Spiele
 </table>
 
 1. *Inhalte → Zeichnen und Malen* → **Fog of War** → *Alles verdecken*.
-2. Werkzeuge: **Feld aufdecken** (Rechteck), **Pinsel aufdecken** (Größe einstellbar), **Feld verdecken / Pinsel verdecken**. Sie stehen im Kasten und in der Werkzeugleiste (Auge = aufdecken, durchgestrichenes Auge = verdecken).
+2. Werkzeuge: **Feld aufdecken** (Rechteck), **Pinsel aufdecken** (Größe einstellbar), **Feld verdecken / Pinsel verdecken**. Sie stehen im Kasten *Fog of War*, mit eigenem Regler für die Pinselgröße (Auge = aufdecken, durchgestrichenes Auge = verdecken).
 3. *Rückgängig* nimmt den letzten Schritt zurück. *Alles aufdecken* deckt mit einem Klick alles auf.
 
 Eigene Figuren sieht jeder Spieler immer, auch im Nebel.
@@ -721,7 +726,10 @@ Die Texte sind kurze deutsche Zusammenfassungen der **5e-Regeln von 2014 (SRD 5.
 Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 
 **Speichern** (Reiter *Spiel*)
-- **Automatisch** alle 5 Minuten und beim Beenden. Beim nächsten Start geht es genau dort weiter.
+- **Automatisch** alle 5 Minuten und beim Beenden.
+- **Beim nächsten Start fragt die App**, bevor sie etwas lädt: Ein kleines Fenster zeigt, wann gespeichert wurde, welche Szenen und Charaktere drin sind, und bietet **Laden**, **Nicht laden** und **Herunterladen** an. *Herunterladen* speichert den alten Stand als ZIP, das Fenster bleibt offen. *Nicht laden* beginnt ein neues Spiel; der alte Stand wird nicht gelöscht, sondern landet im Datenordner unter `alte-spielstaende/`. Bis du dich entscheidest, überschreibt der Autosave nichts. Wer das alte Verhalten möchte (immer sofort laden): `"autoLoadSave": true` in der [config.json](#einstellungen).
+
+  <img src="docs/img/72-spielstand-laden.webp" width="400" alt="Fenster: Letzten Spielstand laden? Mit Herunterladen, Nicht laden, Laden">
 - **Spielstand herunterladen:** eine ZIP-Datei mit *allem* (Szenen, Bilder, Figuren, Nebel, Zeichnungen, Werte, Inventare, Notizen). Du kannst so oft speichern, wie du willst.
 - **Spielstand laden:** stellt den Stand exakt wieder her, auch auf einem anderen Rechner.
 
@@ -765,7 +773,7 @@ Münzen und Gegenstände findest du im Reiter **[Inventar](#10-inventar)**.
 | Bild als NPC, Objekt, Karte, Weltkarte | *Bilder* → Bild antippen |
 | Spielerbild zuordnen | *Bilder* → *Charaktere/NPCs* → Bild antippen → **Porträt für …** |
 | Trank: +8 Stärke für 8 Runden | Bogen → *Attribute* → **+ Effekt hinzufügen** |
-| Lagerfeuer bei Nacht | *Inhalte → Szenen* → Nachtfilter, dann *Zeichnen und Malen* → **Licht malen** (zu viel? **Licht radieren**) |
+| Lagerfeuer bei Nacht | *Inhalte → Szenen* → Nachtfilter, dann *Zeichnen und Malen* → **Feuerschein malen** (Flackern und Stärke einstellen) |
 | Nebelschwaden über dem Sumpf | *Zeichnen und Malen* → **Nebel malen** (weg mit **Nebel radieren**) |
 | Gewitter | *Zeichnen und Malen* → **Blitze malen** und **Regen** |
 | Notizen und Quests | roter **Tagebuch**-Knopf unten links |
@@ -821,6 +829,7 @@ Normalerweise musst du nichts einstellen. Wenn doch: Lege eine Datei **`config.j
 | `pin` | Start-PIN für Spieler (im Spiel änderbar) | leer |
 | `seats` | Spielerplätze für neue Spielstände (im Spiel änderbar, 1–20) | `5` |
 | `autosaveMinutes` | Autosave-Intervall | `5` |
+| `autoLoadSave` | `true` = letzten Spielstand beim Start **ohne Rückfrage** laden | `false` |
 | `dataDir` | Ordner für Spielstand und Bilder | `data` bzw. `~/.local/share/dnd-tabletop` |
 | `openBrowser` | DM-Ansicht beim Start öffnen | `true` |
 | `language` | `de` oder `en`: Sprache für Standardnamen neuer Spielstände („Erste Szene“ / „First scene“). Die Oberfläche wählt jeder selbst | Systemsprache |

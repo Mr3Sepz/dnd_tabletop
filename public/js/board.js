@@ -40,7 +40,15 @@ export const TOOLS = {
   'bolt-brush': 'Blitze malen',
   'bolt-eraser': 'Blitze radieren',
   'cloud-eraser': 'Nebel/Wolken radieren',
+  'fire-brush': 'Feuerschein malen',
+  'fire-eraser': 'Feuerschein radieren',
 };
+
+/** Malwerkzeuge (Pinsel): Art aus dem Werkzeugnamen, z. B. 'fire-brush' → 'fire'. */
+export const PAINT_KINDS = ['fog', 'light', 'fire', 'cloud', 'bolt'];
+const paintKind = (tool) => { const k = String(tool).split('-')[0]; return PAINT_KINDS.includes(k) && tool !== 'fog-rect-reveal' && tool !== 'fog-rect-hide' ? k : null; };
+/** Stärke eines Strichs als Faktor: 0,6 (Standard) = 1. */
+const power = (st) => (st && typeof st.i === 'number' ? st.i : 0.6) / 0.6;
 
 export class Board {
   /**
@@ -82,10 +90,14 @@ export class Board {
     this.tool = 'select';
     this.toolOpts = {};
     this.drawStyle = { stroke: '#2b2118', fill: null, strokeWidth: 4 };
-    this.brushRadius = 60;
+    this.brushSizes = { fog: 60, light: 60, fire: 50, cloud: 60, bolt: 60 }; // Pinselgröße je Malart
+    this.intensity = { light: 0.6, fire: 0.6, cloud: 0.6, bolt: 0.6 }; // Stärke 0,1–1
+    this.fireFlicker = 0.5; // wie stark der Feuerschein flackert, 0–1
     this.eraserRadius = 18;
-    this.lightColor = '#ff8c1e'; // Feuerschein
+    this.lightColor = '#ffb050'; // ruhiges, warmes Licht
+    this.fireColor = '#ff7a1a'; // Feuerschein
     this.cloudColor = '#e8eef2'; // Nebelweiß
+    this.fireTimer = setInterval(() => this.#fireTick(), 70);
 
     new ResizeObserver(() => {
       this.stage.size({ width: container.clientWidth, height: container.clientHeight });
@@ -189,6 +201,14 @@ export class Board {
     };
   }
 
+  /** Pinselgröße des Werkzeugs (je Malart getrennt einstellbar). */
+  brushRadiusFor(tool) { return this.brushSizes[paintKind(tool)] || 60; }
+  /** Farbe der Malart. */
+  colorFor(kind) { return { light: this.lightColor, fire: this.fireColor, cloud: this.cloudColor, bolt: this.boltColor }[kind] || null; }
+  /** Kompatibel: brushRadius = Größe des aktuellen Pinsels. */
+  get brushRadius() { return this.brushRadiusFor(this.tool); }
+  set brushRadius(v) { const k = paintKind(this.tool) || 'fog'; this.brushSizes[k] = v; }
+
   // ------------------------------------------------------------ Daten
 
   setData(state, scene) {
@@ -197,6 +217,7 @@ export class Board {
     const sceneChanged = !this.scene || !scene || this.scene.id !== scene.id;
     this.scene = scene;
     if (sceneChanged) { this.selection.clear(); this.selectedDrawing = null; this.fxLayer.destroyChildren(); this.boltCache = null; }
+    this.#updateFire(scene);
     for (const id of [...this.selection]) if (!scene || !scene.tokens.some((t) => t.id === id)) this.selection.delete(id);
     this.#drawMap();
     this.#drawDrawings();
@@ -258,7 +279,7 @@ export class Board {
       layer.add(lines);
     }
     if ((scene.clouds || []).length) layer.add(this.#cloudOverlay(scene, w, h));
-    if (scene.night || (scene.lights || []).length) layer.add(this.#nightOverlay(scene, w, h));
+    if (scene.night || (scene.lights || []).length || (scene.fires || []).length) layer.add(this.#nightOverlay(scene, w, h));
     layer.draw();
   }
 
@@ -271,7 +292,10 @@ export class Board {
     const group = new Konva.Group({ listening: false });
     if (night) group.add(new Konva.Rect({ x: 0, y: 0, width: w, height: h, fill: '#0a1440', opacity: 0.62 }));
     const lights = scene.lights || [];
-    if (!lights.length) return group;
+    const fireHoles = night ? paintAreas(scene.fires || []) : [];
+    if (!lights.length && !fireHoles.length) {
+      return group;
+    }
     const radial = (x, y, r, stops) => new Konva.Circle({ x, y, radius: r * 1.35,
       fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
       fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r * 1.35, fillRadialGradientColorStops: stops });
@@ -279,14 +303,15 @@ export class Board {
     // ein Radierstrich nimmt das Licht an seiner Stelle wieder weg. Spätere Lichter können dort neu leuchten.
     let blobs = [];
     const flush = () => {
-      if (night) for (const [x, y, r] of blobs) {
-        const hole = radial(x, y, r, [0, 'rgba(0,0,0,1)', 0.55, 'rgba(0,0,0,0.85)', 1, 'rgba(0,0,0,0)']);
+      if (night) for (const [x, y, r, , k] of blobs) {
+        const a = Math.min(1, k);
+        const hole = radial(x, y, r * (0.75 + 0.25 * Math.min(1.6, k)), [0, `rgba(0,0,0,${a})`, 0.55, `rgba(0,0,0,${0.85 * a})`, 1, 'rgba(0,0,0,0)']);
         hole.globalCompositeOperation('destination-out');
         group.add(hole);
       }
-      for (const [x, y, r, c] of blobs) {
+      for (const [x, y, r, c, k] of blobs) {
         const [R, G, B] = rgb(c || '#ff8c1e');
-        const a = night ? [0.38, 0.18] : [0.42, 0.2];
+        const a = (night ? [0.38, 0.18] : [0.42, 0.2]).map((v) => Math.min(0.95, v * k));
         group.add(radial(x, y, r, [0, `rgba(${R},${G},${B},${a[0]})`, 0.55, `rgba(${Math.round(R * 0.94)},${Math.round(G * 0.7)},${Math.round(B * 0.7)},${a[1]})`, 1, `rgba(${R},${G},${B},0)`]));
       }
       blobs = [];
@@ -302,9 +327,18 @@ export class Board {
         if (night) group.add(new Konva.Line({ ...line, stroke: '#0a1440', opacity: 0.62 }));
         continue;
       }
-      for (const [x, y] of strokeBlobs(l.points, l.r)) blobs.push([x, y, l.r, l.color]);
+      for (const [x, y] of strokeBlobs(l.points, l.r)) blobs.push([x, y, l.r, l.color, power(l)]);
     }
     flush();
+    // Feuerschein: Die Dunkelheit wird dort ruhig aufgehellt, das Flackern liegt darüber im fxLayer
+    for (const ar of fireHoles) {
+      for (const [x, y] of ar.blobs) {
+        const a = Math.min(1, 0.85 * ar.k);
+        const hole = radial(x, y, ar.r * 1.1, [0, `rgba(0,0,0,${a})`, 0.6, `rgba(0,0,0,${0.7 * a})`, 1, 'rgba(0,0,0,0)']);
+        hole.globalCompositeOperation('destination-out');
+        group.add(hole);
+      }
+    }
     // Zwischenspeichern, damit die Löcher nur die Dunkelheit treffen und nicht die Karte
     group.cache({ x: 0, y: 0, width: w, height: h, pixelRatio: Math.min(1, 2400 / Math.max(w, h)) });
     return group;
@@ -324,6 +358,8 @@ export class Board {
         continue;
       }
       const [R, G, B] = rgb(c.color || '#e8eef2');
+      const k = power(c);
+      const al = [0.42, 0.22].map((v) => Math.min(0.95, v * k));
       for (const [x, y] of strokeBlobs(c.points, c.r)) {
         // mehrere versetzte Flecken je Punkt ergeben einen wolkigen Rand
         for (let k = 0; k < 4; k++) {
@@ -332,7 +368,7 @@ export class Board {
           group.add(new Konva.Circle({ x: x + ox, y: y + oy, radius: rr,
             fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
             fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: rr,
-            fillRadialGradientColorStops: [0, `rgba(${R},${G},${B},0.42)`, 0.6, `rgba(${R},${G},${B},0.22)`, 1, `rgba(${R},${G},${B},0)`] }));
+            fillRadialGradientColorStops: [0, `rgba(${R},${G},${B},${al[0]})`, 0.6, `rgba(${R},${G},${B},${al[1]})`, 1, `rgba(${R},${G},${B},0)`] }));
         }
       }
     }
@@ -444,16 +480,7 @@ export class Board {
     const strokes = sc && sc.bolts;
     if (!strokes || !strokes.length || document.hidden) return;
     if (!this.boltCache || this.boltCache.key !== strokes) {
-      // Gebiete: pro Malstrich die Punkte, die nicht später wegradiert wurden
-      const areas = [];
-      strokes.forEach((b, i) => {
-        if (b.erase) return;
-        const blobs = [];
-        for (const [x, y] of strokeBlobs(b.points, b.r)) {
-          if (!strokes.slice(i + 1).some((e) => e.erase && segNear(e.points, x, y, e.r))) blobs.push([x, y]);
-        }
-        if (blobs.length) areas.push({ blobs, r: b.r, color: b.color && b.color !== 'random' ? b.color : '#e6f0ff', busy: false, next: 0 });
-      });
+      const areas = paintAreas(strokes).map((a) => ({ ...a, color: a.color && a.color !== 'random' ? a.color : '#e6f0ff', busy: false, next: 0 }));
       this.boltCache = { key: strokes, areas };
     }
     const now = performance.now();
@@ -469,12 +496,14 @@ export class Board {
   #flashArea(ar) {
     const [R, G, B] = rgb(ar.color);
     const g = new Konva.Group({ listening: false });
+    const k = Math.min(1.67, ar.k);
+    const a = (v) => Math.min(1, v * (0.45 + 0.55 * k));
     for (const [x, y] of ar.blobs) {
-      const rr = ar.r * 1.7;
+      const rr = ar.r * (1.25 + 0.45 * k);
       g.add(new Konva.Circle({ x, y, radius: rr, globalCompositeOperation: 'lighter',
         fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
         fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: rr,
-        fillRadialGradientColorStops: [0, `rgba(255,255,255,0.95)`, 0.25, `rgba(${R},${G},${B},0.85)`, 0.6, `rgba(${R},${G},${B},0.35)`, 1, `rgba(${R},${G},${B},0)`] }));
+        fillRadialGradientColorStops: [0, `rgba(255,255,255,${a(0.95)})`, 0.25, `rgba(${R},${G},${B},${a(0.85)})`, 0.6, `rgba(${R},${G},${B},${a(0.35)})`, 1, `rgba(${R},${G},${B},0)`] }));
     }
     this.fxLayer.add(g);
     ar.busy = true;
@@ -494,6 +523,51 @@ export class Board {
       setTimeout(step, ms);
     };
     step();
+  }
+
+  /**
+   * Feuerschein: ein warmer Schein, der unruhig flackert. Jedes Gebiet besteht aus kleinen Stücken,
+   * die unabhängig voneinander heller und dunkler werden. Stärke (i) und Flackern (f) je Strich.
+   */
+  #updateFire(scene) {
+    const strokes = (scene && scene.fires) || [];
+    if (this.fireCache && this.fireCache.key === strokes) return;
+    if (this.fireCache) for (const c of this.fireCache.chunks) c.node.destroy();
+    const chunks = [];
+    for (const ar of paintAreas(strokes)) {
+      const [R, G, B] = rgb(ar.color || '#ff7a1a');
+      const k = Math.min(1.67, ar.k);
+      const al = (v) => Math.min(1, v * k);
+      for (let i = 0; i < ar.blobs.length; i += 3) {
+        const g = new Konva.Group({ listening: false, globalCompositeOperation: 'lighter' });
+        for (const [x, y] of ar.blobs.slice(i, i + 3)) {
+          const rr = ar.r * 1.3;
+          g.add(new Konva.Circle({ x, y, radius: rr,
+            fillRadialGradientStartPoint: { x: 0, y: 0 }, fillRadialGradientStartRadius: 0,
+            fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: rr,
+            fillRadialGradientColorStops: [0, `rgba(255,${Math.min(255, G + 90)},${Math.min(255, B + 60)},${al(0.5)})`, 0.35, `rgba(${R},${G},${B},${al(0.38)})`, 0.7, `rgba(${R},${Math.round(G * 0.6)},${Math.round(B * 0.4)},${al(0.14)})`, 1, `rgba(${R},${G},${B},0)`] }));
+        }
+        this.fxLayer.add(g);
+        chunks.push({ node: g, f: ar.f, level: 1, target: 1, p: Math.random() * 6.28 });
+      }
+    }
+    this.fireCache = { key: strokes, chunks };
+    this.fxLayer.batchDraw();
+  }
+
+  #fireTick() {
+    const c = this.fireCache;
+    if (!c || !c.chunks.length || document.hidden) return;
+    const t = performance.now() / 1000;
+    for (const ch of c.chunks) {
+      if (!ch.node.getLayer()) continue;
+      // Ziel ab und zu neu würfeln, dazu ein leichtes Wogen; f = 0 heißt ruhiger Schein
+      if (Math.random() < 0.35) ch.target = 1 - ch.f * Math.random() * 0.75;
+      ch.level += (ch.target - ch.level) * 0.5;
+      const wave = 1 - ch.f * 0.12 * (1 + Math.sin(t * 2.3 + ch.p));
+      ch.node.opacity(Math.max(0.05, ch.level * wave));
+    }
+    this.fxLayer.batchDraw();
   }
 
   /** Regen: einfache Animation über der ganzen Karte (Bildschirm-Ebene), Stärke aus scene.rain. */
@@ -918,15 +992,14 @@ export class Board {
         this.uiLayer.add(draft.node);
         return;
       }
-      if (tool === 'line' || tool.startsWith('fog-brush') || tool.startsWith('light-') || tool.startsWith('cloud-') || tool.startsWith('bolt-')) {
-        const fog = tool.startsWith('fog');
-        const light = tool === 'light-brush';
-        const lightErase = tool === 'light-eraser' || tool === 'cloud-eraser' || tool === 'bolt-eraser';
-        const cloud = tool === 'cloud-brush' || tool === 'bolt-brush';
-        const width = fog || light || lightErase || cloud ? this.brushRadius * 2 : this.drawStyle.strokeWidth;
-        const [R, G, B] = rgb(light ? this.lightColor : tool === 'bolt-brush' ? this.boltColor : this.cloudColor);
+      const pk = paintKind(tool);
+      if (tool === 'line' || pk) {
+        const fog = pk === 'fog';
+        const erase = tool.endsWith('-eraser');
+        const width = pk ? this.brushRadiusFor(tool) * 2 : this.drawStyle.strokeWidth;
+        const [R, G, B] = rgb(this.colorFor(pk) || '#ffffff');
         draft = { kind: tool, points: [p.x, p.y], node: new Konva.Line({ points: [p.x, p.y, p.x + 0.1, p.y], lineCap: 'round', lineJoin: 'round',
-          stroke: lightErase ? 'rgba(10,20,64,0.6)' : light || cloud ? `rgba(${R},${G},${B},0.5)` : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : this.drawStyle.stroke, strokeWidth: width }) };
+          stroke: erase ? 'rgba(10,20,64,0.6)' : fog ? (tool.endsWith('reveal') ? 'rgba(63,155,87,0.45)' : 'rgba(0,0,0,0.55)') : pk ? `rgba(${R},${G},${B},0.5)` : this.drawStyle.stroke, strokeWidth: width }) };
         this.uiLayer.add(draft.node);
         return;
       }
@@ -983,13 +1056,13 @@ export class Board {
         const a = d.node.attrs;
         if (a.width > 4 && a.height > 4) this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'rect', x: a.x, y: a.y, w: a.width, h: a.height });
       } else if (d.kind.startsWith('fog-brush')) {
-        this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadius });
-      } else if (d.kind === 'light-brush' || d.kind === 'light-eraser') {
-        this.opts.onLight?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'light-eraser', color: this.lightColor });
-      } else if (d.kind === 'bolt-brush' || d.kind === 'bolt-eraser') {
-        this.opts.onBolt?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'bolt-eraser', color: this.boltColor });
-      } else if (d.kind === 'cloud-brush' || d.kind === 'cloud-eraser') {
-        this.opts.onCloud?.({ points: d.points, r: this.brushRadius, erase: d.kind === 'cloud-eraser', color: this.cloudColor });
+        this.opts.onFogShape?.({ op: d.kind.endsWith('reveal') ? 'reveal' : 'hide', type: 'stroke', points: d.points, r: this.brushRadiusFor(d.kind) });
+      } else if (paintKind(d.kind)) {
+        const k = paintKind(d.kind);
+        const erase = d.kind.endsWith('-eraser');
+        const stroke = { points: d.points, r: this.brushRadiusFor(d.kind), erase, color: this.colorFor(k) };
+        if (!erase) { stroke.i = this.intensity[k]; if (k === 'fire') stroke.f = this.fireFlicker; }
+        this.opts.onPaint?.(k, stroke);
       } else if (d.kind === 'eraser') {
         this.#erase(d.points, this.eraserRadius);
       }
@@ -1032,6 +1105,23 @@ function segNear(points, x, y, r) {
 }
 
 /** Punkte entlang eines Pinselstrichs, nicht zu dicht (für Licht und Nebel). */
+/**
+ * Gemalte Gebiete (Blitze, Feuer): pro Malstrich die Punkte, die nicht später wegradiert wurden.
+ * k = Stärke als Faktor, f = Flackern.
+ */
+function paintAreas(strokes) {
+  const areas = [];
+  strokes.forEach((b, i) => {
+    if (b.erase) return;
+    const blobs = [];
+    for (const [x, y] of strokeBlobs(b.points, b.r)) {
+      if (!strokes.slice(i + 1).some((e) => e.erase && segNear(e.points, x, y, e.r))) blobs.push([x, y]);
+    }
+    if (blobs.length) areas.push({ blobs, r: b.r, color: b.color, k: power(b), f: typeof b.f === 'number' ? b.f : 0.5 });
+  });
+  return areas;
+}
+
 function strokeBlobs(points, r) {
   const out = [];
   const step = Math.max(8, r * 0.45);

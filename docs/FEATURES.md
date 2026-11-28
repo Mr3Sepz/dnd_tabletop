@@ -120,8 +120,11 @@ Grundlage sind die vom DM bestätigte Featureliste (20.11.2026) und die Vorschl�
 | — | Ping | ✅ | Zielscheibe oder Alt + Klick; Spielerfarbe beim Einloggen (Rot, Grün, Blau, Gelb, Lila; je Farbe einmal), DM weiß |
 | — | Tagebuch | ✅ | Runder Knopf unten links, groß in der Mitte, Buch/PADD/PDA/Tablet je nach Theme, Lesezeichen Quests · Gemeinsame Notizen · Privates Tagebuch; Bücher blättern, Geräte scrollen; Löschen-Rückfrage liegt davor |
 | — | Blitze malen | ✅ | Gemalte Gebiete blitzen grell auf (Lichtschein, keine Strich-Blitze), zufälliges An/Aus je Gebiet, Farbe wählbar |
+| — | Feuerschein | ✅ | Eigene Ebene neben dem Licht, flackert stückweise, Stärke und Flackern einstellbar, hellt die Nacht auf |
+| — | Stärke-Regler | ✅ | Licht, Feuerschein, Nebel, Blitze: Stärke schwach–stark je Strich, dazu Pinselgröße je Malart |
+| — | Rückfrage beim Start | ✅ | Letzter Spielstand: Laden, Nicht laden (alter Stand nach `alte-spielstaende/`), Herunterladen; Autosave wartet bis zur Entscheidung; `autoLoadSave` für das alte Verhalten |
 | — | Regen | ✅ | Animiertes Overlay pro Szene: Aus, Niesel, Regen, Starkregen; für alle sichtbar |
-| — | Reiter „Inhalte“ | ✅ | Unterreiter Szenen · Figuren · Bilder · Zeichnen und Malen (Zeichnen, Fog of War, Licht, Nebel, Blitze, Regen) |
+| — | Reiter „Inhalte“ | ✅ | Unterreiter Szenen · Figuren · Bilder · Zeichnen und Malen (Zeichnen, Fog of War, Licht, Feuerschein, Nebel, Blitze, Regen, mit allen Einstellungen); Zeichnen/Malen nur noch dort, nicht in der Werkzeugleiste; Unterreiter bleiben beim Scrollen stehen |
 | — | Eigene Symbole | ✅ | SVG-Symbole statt Emojis in der Werkzeugleiste und bei Weltkarte, Chat, Tagebuch, Würfel |
 | — | Porträtleiste | ✅ | Zustände rundherum (Platz für ~20), Knöpfe über dem Rundenzähler, Doppelklick öffnet den Bogen |
 | — | Licht im Nachtmodus | ✅ | DM malt beleuchtete Stellen, orangefarbener Feuerschein, für alle sichtbar |

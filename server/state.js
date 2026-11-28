@@ -155,6 +155,7 @@ function newScene(name = L('scene')) {
     lights: [], // von Hand gemalte, beleuchtete Stellen (Tag und Nacht), mit Farbe des Scheins
     clouds: [], // von Hand gemalter Nebel bzw. Wolken
     bolts: [], // Gebiete mit zufällig aufzuckenden Blitzen
+    fires: [], // flackernder Feuerschein (getrennt vom ruhigen Licht)
     notes: '',
     fog: { enabled: false, shapes: [] },
     drawings: [],
@@ -204,6 +205,7 @@ function normalizeState(raw) {
     lights: Array.isArray(sc.lights) ? sc.lights : [],
     clouds: Array.isArray(sc.clouds) ? sc.clouds : [],
     bolts: Array.isArray(sc.bolts) ? sc.bolts : [],
+    fires: Array.isArray(sc.fires) ? sc.fires : [],
     tokens: (Array.isArray(sc.tokens) ? sc.tokens : []).map((t) => ({ ...t, visibleTo: t.visibleTo ?? null, conditions: Array.isArray(t.conditions) ? t.conditions : [] })),
   }));
   if (!s.scenes.some((sc) => sc.id === s.activeSceneId)) s.activeSceneId = s.scenes[0].id;
@@ -434,7 +436,7 @@ function rotateScene(sc, state, dir) {
       f.points = out;
     }
   }
-  for (const l of [...(sc.lights || []), ...(sc.clouds || []), ...(sc.bolts || [])]) {
+  for (const l of [...(sc.lights || []), ...(sc.clouds || []), ...(sc.bolts || []), ...(sc.fires || [])]) {
     const out = [];
     for (let i = 0; i + 1 < l.points.length; i += 2) out.push(...pt(l.points[i], l.points[i + 1]));
     l.points = out;
@@ -699,6 +701,9 @@ const must = (cond, msg = 'Nicht gefunden') => { if (!cond) throw new ActionErro
  * Wendet eine Aktion an. `who` ist { role: 'dm' } oder { role: 'player', seat }.
  * Gibt ein Ergebnisobjekt zurück. Wirft ActionError bei Fehlern.
  */
+/** Malebenen einer Szene: Aktionspräfix → Liste */
+const PAINT_KEYS = { light: 'lights', cloud: 'clouds', bolt: 'bolts', fire: 'fires' };
+
 function applyAction(state, who, action) {
   if (!action || typeof action.type !== 'string') throw new ActionError('Ungültige Aktion');
   const isDM = who.role === 'dm';
@@ -840,32 +845,35 @@ function applyAction(state, who, action) {
     }
 
     // ---------- Licht und Nebel/Wolken malen (Tag und Nacht) ----------
-    case 'light.add': case 'cloud.add': case 'bolt.add': {
+    case 'light.add': case 'cloud.add': case 'bolt.add': case 'fire.add': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      const key = { 'light.add': 'lights', 'cloud.add': 'clouds', 'bolt.add': 'bolts' }[action.type];
+      const key = PAINT_KEYS[action.type.split('.')[0]];
       if (!Array.isArray(sc[key])) sc[key] = [];
       if (sc[key].length >= 500) throw new ActionError('Zu viele Striche');
-      const sh = action.light || action.cloud || action.bolt || {};
+      const sh = action.light || action.cloud || action.bolt || action.fire || {};
       const points = (Array.isArray(sh.points) ? sh.points : []).slice(0, 4000).map((v) => Math.round(num(v)));
       must(points.length >= 2, 'Strich ohne Punkte');
-      const stroke = { id: newId({ lights: 'l_', clouds: 'cl_', bolts: 'b_' }[key]), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) };
+      const stroke = { id: newId({ lights: 'l_', clouds: 'cl_', bolts: 'b_', fires: 'f_' }[key]), points, r: Math.max(10, Math.min(2000, num(sh.r, 120))) };
       if (sh.erase) stroke.erase = true; // Radierstrich: nimmt Licht, Nebel bzw. Blitze an dieser Stelle wieder weg
       else if (key === 'bolts' && sh.color === 'random') stroke.color = 'random'; // Blitze in wechselnden Farben
-      else if (sh.color) stroke.color = color(sh.color, { lights: '#ff8c1e', clouds: '#e8eef2', bolts: '#cfe8ff' }[key]);
+      else if (sh.color) stroke.color = color(sh.color, { lights: '#ff8c1e', clouds: '#e8eef2', bolts: '#cfe8ff', fires: '#ff7a1a' }[key]);
+      // Stärke (0,1–1) und beim Feuer das Flackern (0–1); ohne Angabe bleibt der Standard
+      if (!sh.erase && sh.i !== undefined) stroke.i = Math.round(Math.max(0.1, Math.min(1, num(sh.i, 0.6))) * 100) / 100;
+      if (!sh.erase && key === 'fires') stroke.f = Math.round(Math.max(0, Math.min(1, num(sh.f, 0.5))) * 100) / 100;
       sc[key].push(stroke);
       return {};
     }
-    case 'light.undo': case 'cloud.undo': case 'bolt.undo': {
+    case 'light.undo': case 'cloud.undo': case 'bolt.undo': case 'fire.undo': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      (sc[{ 'light.undo': 'lights', 'cloud.undo': 'clouds', 'bolt.undo': 'bolts' }[action.type]] || []).pop();
+      (sc[PAINT_KEYS[action.type.split('.')[0]]] || []).pop();
       return {};
     }
-    case 'light.clear': case 'cloud.clear': case 'bolt.clear': {
+    case 'light.clear': case 'cloud.clear': case 'bolt.clear': case 'fire.clear': {
       if (!isDM) deny();
       const sc = findScene(action.sceneId); must(sc);
-      sc[{ 'light.clear': 'lights', 'cloud.clear': 'clouds', 'bolt.clear': 'bolts' }[action.type]] = [];
+      sc[PAINT_KEYS[action.type.split('.')[0]]] = [];
       return {};
     }
 
@@ -1561,7 +1569,7 @@ function viewForPlayer(state, seatNo) {
     activeSceneId: scene.id,
     scenes: [{
       id: scene.id, name: scene.name, background: scene.background, mapScale: scene.mapScale, rotation: scene.rotation || 0,
-      grid: scene.grid, night: scene.night, lights: scene.lights || [], clouds: scene.clouds || [], bolts: scene.bolts || [], rain: scene.rain || 'off', tokens, drawings,
+      grid: scene.grid, night: scene.night, lights: scene.lights || [], clouds: scene.clouds || [], bolts: scene.bolts || [], fires: scene.fires || [], rain: scene.rain || 'off', tokens, drawings,
       fog: scene.fog.enabled ? { enabled: true, shapes: scene.fog.shapes } : { enabled: false, shapes: [] },
     }],
     seats: state.seats.map((s) => ({ seat: s.seat, playerName: s.playerName, taken: !!s.claimToken, color: s.claimToken ? s.color || null : null })),

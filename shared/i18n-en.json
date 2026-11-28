@@ -743,7 +743,41 @@
   "Noch keine Objekte oder Schablonen. Zeichnungen stehen unter „Zeichnen und Malen“.": "No objects or templates yet. Drawings are under “Draw & paint”.",
   "Erst Bilder in den Ordner „Objekte“ laden (Inhalte → Bilder).": "First upload images to the “Objects” folder (Content → Images).",
   "Figuren sind alles, was rund auf der Karte steht. Mit einem NPC oder Spielercharakter verbunden, übernimmt die Figur dessen Namen, Bild und Werte. Neue Figuren: Reiter „NPCs“ → „Auf Karte setzen …“ oder unter „Inhalte → Bilder“ ein Bild auf die Karte ziehen.": "Tokens are everything round on the map. Linked to an NPC or player character, a token takes on its name, image and stats. New tokens: NPCs tab → “Place on map …”, or drag an image from Content → Images onto the map.",
-  "Noch keine Weltkarte. Wähle oben ein Bild aus der Bildersammlung (oder unter „Inhalte → Bilder“ beim Bild: ⋯ → „Als Weltkarte“).": "No world map yet. Choose an image from the library above (or in the “Tokens” tab on the image: ⋯ → “As world map”)."
+  "Noch keine Weltkarte. Wähle oben ein Bild aus der Bildersammlung (oder unter „Inhalte → Bilder“ beim Bild: ⋯ → „Als Weltkarte“).": "No world map yet. Choose an image from the library above (or in the “Tokens” tab on the image: ⋯ → “As world map”).",
+  "Feuerschein": "Firelight",
+  "Feuerschein malen": "Paint firelight",
+  "Feuerschein radieren": "Erase firelight",
+  "Allen Feuerschein löschen?": "Delete all firelight?",
+  "Allen Feuerschein löschen": "Delete all firelight",
+  "Farbe des Lichts": "Light colour",
+  "Farbe des Feuers": "Fire colour",
+  "Stärke": "Strength",
+  "Stärke des Scheins": "Glow strength",
+  "Flackern": "Flicker",
+  "schwach": "weak",
+  "stark": "strong",
+  "ruhig": "calm",
+  "wild": "wild",
+  "klein": "small",
+  "groß": "large",
+  "dünn": "thin",
+  "dick": "thick",
+  "Füllen": "Fill",
+  "Gilt für die nächsten Striche. Schon Gemaltes bleibt, wie es ist.": "Applies to your next strokes. What is already painted stays as it is.",
+  "Rechtecke, Ellipsen und Freihandlinien, z. B. für Deckung, Gelände oder einen brennenden Busch. Ausgewählte Zeichnung löschen: 🗑 am Rahmen oder Entf.": "Rectangles, ellipses and freehand lines, e.g. for cover, terrain or a burning bush. Delete a selected drawing: 🗑 on its frame or Del.",
+  "Ruhiges Licht, z. B. Fenster, Laternen oder magisches Leuchten: Dort leuchtet es für alle, bei Nacht wird es dort hell. Antippen ohne Ziehen = runder Lichtkreis.": "Steady light, e.g. windows, lanterns or a magical glow: it shines there for everyone and lights up the night. Tap without dragging = round circle of light.",
+  "Flackernder Schein für Fackeln, Lagerfeuer, Kamine oder Brände. Wie stark es flackert, stellst du unten ein; ganz schwach ist fast ruhig.": "Flickering glow for torches, campfires, fireplaces or blazes. Set how much it flickers below; very low is almost steady.",
+  "Nebelschwaden, Rauch oder Wolken über die Karte malen; alle sehen sie. Grünlich passt z. B. für Giftgas. Figuren bleiben darüber sichtbar.": "Paint mist, smoke or clouds over the map; everyone sees them. Greenish works for poison gas. Tokens stay visible on top.",
+  "Ein Gebiet malen, z. B. unter einer Gewitterwolke: Dort blitzt es grell auf, in unregelmäßigen Abständen an und aus, für alle sichtbar.": "Paint an area, e.g. under a thundercloud: it flashes brightly there, on and off at irregular intervals, visible to everyone.",
+  "Letzten Spielstand laden?": "Load the last saved game?",
+  "Herunterladen": "Download",
+  "Nicht laden": "Don’t load",
+  "Bis du dich entscheidest, bleibt der Spielstand unverändert.": "Until you decide, the saved game stays untouched.",
+  "Es gibt einen gespeicherten Spielstand.": "There is a saved game.",
+  "Letzter Spielstand geladen": "Last saved game loaded",
+  "Neues Spiel. Der alte Spielstand liegt im Ordner „alte-spielstaende“.": "New game. The old save is in the “alte-spielstaende” folder.",
+  "Erst entscheiden, ob der letzte Spielstand geladen wird": "First decide whether to load the last saved game",
+  "Spielstand nicht lesbar": "Saved game not readable"
  },
  "patterns": [
   [
@@ -1173,6 +1207,46 @@
   [
    "(\\d+) Blitzgebiet\\(e\\)",
    "$1 lightning area(s)"
+  ],
+  [
+   "Gespeichert am (.+)\\.",
+   "Saved on $1."
+  ],
+  [
+   "(\\d+) Szene\\(n\\): (.+)",
+   "$1 scene(s): $2"
+  ],
+  [
+   "Charaktere: (.+)",
+   "Characters: $1"
+  ],
+  [
+   "(\\d+) Feuer$",
+   "$1 fire(s)"
+  ],
+  [
+   "Pinselgröße (\\d+)",
+   "Brush size $1"
+  ],
+  [
+   "Stärke des Scheins (\\d+)",
+   "Glow strength $1"
+  ],
+  [
+   "Stärke (\\d+)",
+   "Strength $1"
+  ],
+  [
+   "Flackern (\\d+)",
+   "Flicker $1"
+  ],
+  [
+   "Strichstärke (\\d+)",
+   "Stroke width $1"
+  ],
+  [
+   "Größe des Radierers (\\d+)",
+   "Eraser size $1"
   ]
  ]
 }

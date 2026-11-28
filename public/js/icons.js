@@ -26,6 +26,8 @@ const P = {
   'eye-off': '<path d="M12 16.5c2.7 0 4.6 1.6 5.6 3-1 1.4-2.9 3-5.6 3s-4.6-1.6-5.6-3c1-1.4 2.9-3 5.6-3z" transform="translate(4 -1)"/><path d="M11.5 22.5l9-8"/>',
   // Licht: Laterne mit Strahlen
   light: '<path d="M9 7h6l1 9H8z" stroke-linejoin="round"/><path d="M10 7V5h4v2M7.5 19h9M12 10.5v3"/><path d="M4 9l-2-1M20 9l2-1M4 14H2M20 14h2" opacity="0.7"/>',
+  // Feuerschein: Flamme
+  fire: '<path d="M12 21.5c-3.9 0-6.5-2.6-6.5-6.1 0-3.4 2.6-5.3 3.4-8.4 1.9 1.4 2.6 3.4 2.4 5.3 1-.6 1.9-1.9 2.1-3.6 2.4 2 3.6 4.3 3.6 6.7 0 3.5-2.6 6.1-5 6.1z" stroke-linejoin="round"/><path d="M12 21.5c-1.6 0-2.7-1.1-2.7-2.6 0-1.7 1.4-2.5 2.2-4 1.3 1.1 3.2 2.3 3.2 4 0 1.5-1.1 2.6-2.7 2.6z" fill="currentColor" fill-opacity="0.35" stroke-linejoin="round"/>',
   // Nebel/Wolken
   cloud: '<path d="M7 18h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 18z" stroke-linejoin="round"/><path d="M3 21h12" opacity="0.6"/>',
   // Blitzlicht: greller Lichtblitz (Stern mit Kranz), kein Strich-Blitz
@@ -53,6 +55,8 @@ const COMPOSED = {
   'fog-brush-hide': P['fog-brush'] + P['eye-off'],
   'light-brush': P.light,
   'light-eraser': P.light + ERASER_BADGE,
+  'fire-brush': P.fire,
+  'fire-eraser': P.fire + ERASER_BADGE,
   'cloud-brush': P.cloud,
   'cloud-eraser': P.cloud + ERASER_BADGE,
   'bolt-brush': P.flash,

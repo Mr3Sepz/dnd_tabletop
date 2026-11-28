@@ -35,6 +35,26 @@ class Store {
     }
   }
 
+  /** Zeitpunkt des letzten Autosaves oder null. */
+  savedAt() {
+    try { return fs.statSync(this.statePath).mtime; } catch { return null; }
+  }
+
+  /**
+   * Legt den letzten Autosave beiseite (data/alte-spielstaende/), statt ihn zu überschreiben.
+   * Die Bilder bleiben im Ordner assets/, damit die Sicherung vollständig bleibt.
+   */
+  archive() {
+    if (!fs.existsSync(this.statePath)) return null;
+    const dir = path.join(this.dataDir, 'alte-spielstaende');
+    fs.mkdirSync(dir, { recursive: true });
+    const d = this.savedAt() || new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const target = path.join(dir, `state_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}.json`);
+    fs.renameSync(this.statePath, target);
+    return target;
+  }
+
   /** Schreibt den Zustand atomar (erst temporäre Datei, dann umbenennen). */
   save(state) {
     const tmp = this.statePath + '.tmp';

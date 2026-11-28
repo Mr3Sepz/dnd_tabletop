@@ -27,6 +27,8 @@ const defaults = {
   // Start-PIN für Spieler. Kann der DM in der App jederzeit ändern.
   pin: '',
   autosaveMinutes: 5,
+  // true = letzten Spielstand beim Start ohne Rückfrage laden (früheres Verhalten)
+  autoLoadSave: false,
   // Anzahl der Spielerplätze (1–10). Der DM zählt nicht mit.
   seats: 5,
   dataDir: PACKAGED ? USER_DATA : path.join(ROOT, 'data'),

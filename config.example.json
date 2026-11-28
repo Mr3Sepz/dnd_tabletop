@@ -3,6 +3,7 @@
   "dmPassword": "",
   "pin": "",
   "autosaveMinutes": 5,
+  "autoLoadSave": false,
   "seats": 5,
   "dataDir": "data",
   "openBrowser": true
